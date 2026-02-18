@@ -1,17 +1,15 @@
 import 'package:church_attendance_app/core/enums/service_type.dart';
-import 'package:church_attendance_app/features/attendance/domain/models/attendance.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-Future<Attendance?> showQuickContactSheet(
+Future<CreateContactAttendanceResult?> showQuickContactSheet(
   BuildContext context, {
   required String phone,
   required ServiceType serviceType,
   required int recordedBy,
 }) async {
-  return showModalBottomSheet<Attendance?>(
+  return showModalBottomSheet<CreateContactAttendanceResult?>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true, // Adds top padding for notches
@@ -77,7 +75,7 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
     setState(() => _isLoading = true);
 
     try {
-      final attendance = await ref.read(attendanceProvider.notifier)
+      final result = await ref.read(attendanceProvider.notifier)
           .createContactAndRecordAttendance(
         phone: _phoneController.text.trim(),
         name: _nameController.text.trim(),
@@ -91,7 +89,29 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
       );
 
       if (mounted) {
-        Navigator.of(context).pop(attendance);
+        if (result.alreadyMarked) {
+          // Contact saved but already marked for today
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Contact saved! Already marked for this service today.'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.orange,
+            ),
+          );
+          Navigator.of(context).pop(result);
+        } else if (result.error != null) {
+          // Show error
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${result.error}'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: Colors.red.shade600,
+            ),
+          );
+        } else {
+          // Success - contact saved and attendance recorded
+          Navigator.of(context).pop(result);
+        }
       }
     } catch (e) {
       if (mounted) {

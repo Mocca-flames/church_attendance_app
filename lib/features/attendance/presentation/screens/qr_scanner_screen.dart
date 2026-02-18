@@ -65,15 +65,21 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
       } else {
         // Contact not found - show quick contact dialog
         if (mounted) {
-          final attendance = await showQuickContactSheet(
+          final result = await showQuickContactSheet(
             context,
             phone: phone,
             serviceType: widget.serviceType,
             recordedBy: _recordedBy,
           );
 
-          if (attendance != null && mounted) {
-            _showSuccess(attendance, contactName: phone);
+          if (result != null && mounted) {
+            if (result.alreadyMarked) {
+              _showWarning('$phone already marked for ${widget.serviceType.displayName} today');
+            } else if (result.error != null) {
+              _showError(result.error!);
+            } else if (result.attendance != null) {
+              _showSuccess(result.attendance!, contactName: phone);
+            }
           }
         }
       }

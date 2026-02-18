@@ -64,6 +64,21 @@ final attendanceRepositoryProvider = Provider<AttendanceRepository>((ref) {
   );
 });
 
+/// Result class for createContactAndRecordAttendance to handle different outcomes
+class CreateContactAttendanceResult {
+  final Attendance? attendance;
+  final bool contactSaved;
+  final bool alreadyMarked;
+  final String? error;
+
+  CreateContactAttendanceResult({
+    this.attendance,
+    this.contactSaved = false,
+    this.alreadyMarked = false,
+    this.error,
+  });
+}
+
 /// Attendance state notifier for managing attendance recording state.
 class AttendanceNotifier extends Notifier<AttendanceState> {
   late final AttendanceRepository _repository;
@@ -155,7 +170,8 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
   }
 
   /// Creates a quick contact and records attendance.
-  Future<Attendance?> createContactAndRecordAttendance({
+  /// Returns a CreateContactAttendanceResult to handle different outcomes.
+  Future<CreateContactAttendanceResult> createContactAndRecordAttendance({
     required String phone,
     required String name,
     required ServiceType serviceType,
@@ -167,13 +183,32 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     state = state.copyWith(isLoading: true, clearError: true);
     
     try {
-      // Create contact first
+      // Create contact first (returns existing if found)
       final contact = await _repository.createQuickContact(
         phone: phone,
         name: name,
         isMember: isMember,
         location: location,
       );
+      
+      // Check if attendance already exists for this contact today
+      final alreadyMarked = await _repository.checkAttendanceExists(
+        contactId: contact.id,
+        date: serviceDate,
+        serviceType: serviceType,
+      );
+      
+      if (alreadyMarked) {
+        // Contact exists/created but already marked
+        state = state.copyWith(
+          isLoading: false,
+          lastRecorded: null,
+        );
+        return CreateContactAttendanceResult(
+          contactSaved: true,
+          alreadyMarked: true,
+        );
+      }
       
       // Then record attendance
       final attendance = await _repository.recordAttendance(
@@ -190,19 +225,22 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
         recentRecords: [attendance, ...state.recentRecords],
       );
       
-      return attendance;
+      return CreateContactAttendanceResult(
+        attendance: attendance,
+        contactSaved: true,
+      );
     } on AttendanceException catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: e.message,
       );
-      return null;
+      return CreateContactAttendanceResult(error: e.message);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
       );
-      return null;
+      return CreateContactAttendanceResult(error: e.toString());
     }
   }
 

@@ -52,12 +52,19 @@ class SyncStatus {
   final DateTime? lastSyncTime;
   final int pendingCount;
   final String? error;
+  // Progress tracking
+  final int currentProgress;
+  final int totalProgress;
+  final String? progressMessage;
 
   const SyncStatus({
     this.isSyncing = false,
     this.lastSyncTime,
     this.pendingCount = 0,
     this.error,
+    this.currentProgress = 0,
+    this.totalProgress = 0,
+    this.progressMessage,
   });
 
   SyncStatus copyWith({
@@ -65,14 +72,27 @@ class SyncStatus {
     DateTime? lastSyncTime,
     int? pendingCount,
     String? error,
+    int? currentProgress,
+    int? totalProgress,
+    String? progressMessage,
     bool clearError = false,
+    bool clearProgress = false,
   }) {
     return SyncStatus(
       isSyncing: isSyncing ?? this.isSyncing,
       lastSyncTime: lastSyncTime ?? this.lastSyncTime,
       pendingCount: pendingCount ?? this.pendingCount,
       error: clearError ? null : (error ?? this.error),
+      currentProgress: clearProgress ? 0 : (currentProgress ?? this.currentProgress),
+      totalProgress: clearProgress ? 0 : (totalProgress ?? this.totalProgress),
+      progressMessage: clearProgress ? null : (progressMessage ?? this.progressMessage),
     );
+  }
+
+  /// Get progress as percentage (0-100)
+  double get progressPercent {
+    if (totalProgress == 0) return 0;
+    return (currentProgress / totalProgress) * 100;
   }
 
   /// Get human-readable time ago string.
@@ -105,19 +125,44 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
   }
 
   /// Pull contacts from server and update sync status.
-  Future<void> pullContacts({bool forceFullSync = false}) async {
-    state = state.copyWith(isSyncing: true, clearError: true);
+  /// Supports progress callbacks for UI feedback.
+  Future<void> pullContacts({
+    bool forceFullSync = false,
+    bool showProgress = true,
+  }) async {
+    state = state.copyWith(
+      isSyncing: true, 
+      clearError: true,
+      clearProgress: true,
+    );
 
     try {
-      await _syncManager.pullContacts(forceFullSync: forceFullSync);
+      // Create progress callback to update state
+      void onProgress(int current, int total, String message) {
+        if (showProgress) {
+          state = state.copyWith(
+            currentProgress: current,
+            totalProgress: total,
+            progressMessage: message,
+          );
+        }
+      }
+      
+      await _syncManager.pullContacts(
+        forceFullSync: forceFullSync,
+        progressCallback: onProgress,
+      );
+      
       state = state.copyWith(
         isSyncing: false,
         lastSyncTime: DateTime.now(),
+        clearProgress: true,
       );
     } catch (e) {
       state = state.copyWith(
         isSyncing: false,
         error: 'Failed to sync contacts: $e',
+        clearProgress: true,
       );
     }
   }

@@ -4,6 +4,7 @@ import 'package:church_attendance_app/features/attendance/presentation/providers
 import 'package:church_attendance_app/features/attendance/presentation/screens/attendance_history_screen.dart';
 import 'package:church_attendance_app/features/attendance/presentation/screens/qr_scanner_screen.dart';
 import 'package:church_attendance_app/features/attendance/presentation/widgets/contact_result_card.dart';
+import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:church_attendance_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -81,22 +82,44 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     );
   }
 
-  // Example trigger inside a scanner callback or button
   void _handleNewContact(String scannedPhone) async {
+    // Get current user ID from auth provider
+    final currentUser = ref.read(currentUserProvider);
+    final userId = currentUser?.id ?? 1; // Fallback to 1 if not logged in
+
     final result = await showQuickContactSheet(
       context,
       phone: scannedPhone,
-      serviceType: ServiceType.sunday, // Pass your current service type
-      recordedBy: 1, // Pass current user/admin ID
+      serviceType: _currentServiceType, // Use the current service type
+      recordedBy: userId, // Use the current user's ID
     );
 
     if (result != null) {
-      // The dialog returned an Attendance object (Success!)
-      print('Attendance recorded');
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Contact saved and attendance recorded!')),
-      );
+      if (result.alreadyMarked) {
+        // Contact saved but already marked for today
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contact saved! Already marked for this service today.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else if (result.error != null) {
+        // Show error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${result.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        // Success - contact saved and attendance recorded
+        print('Attendance recorded');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Contact saved and attendance recorded!')),
+        );
+      }
+      // Refresh the marked contacts list
+      _loadMarkedContacts();
     } else {
       // User cancelled the dialog
       print('User dismissed the dialog without saving.');

@@ -1,3 +1,4 @@
+import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/features/attendance/domain/models/attendance.dart';
@@ -12,8 +13,12 @@ class AttendanceLocalDataSource {
   AttendanceLocalDataSource(this._db);
 
   /// Gets a contact by phone number.
+  /// Phone number is normalized to +27XXXXXXXXX format before search.
   Future<Contact?> getContactByPhone(String phone) async {
-    final contactData = await _db.getContactByPhone(phone);
+    final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(phone);
+    if (normalizedPhone == null) return null;
+    
+    final contactData = await _db.getContactByPhone(normalizedPhone);
     if (contactData == null) return null;
     return Contact.fromJson(contactData.toJson());
   }
@@ -26,13 +31,19 @@ class AttendanceLocalDataSource {
   }
 
   /// Creates a new contact.
+  /// Phone number is normalized to +27XXXXXXXXX format before storing.
   Future<Contact> createContact({
     required String phone,
     String? name,
     Map<String, dynamic>? metadata,
   }) async {
+    final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(phone);
+    if (normalizedPhone == null) {
+      throw ArgumentError('Invalid phone number format: $phone');
+    }
+    
     final companion = ContactsCompanion(
-      phone: drift.Value(phone),
+      phone: drift.Value(normalizedPhone),
       name: drift.Value(name),
       metadata: drift.Value(metadata?.toString()),
       createdAt: drift.Value(DateTime.now()),
@@ -58,6 +69,7 @@ class AttendanceLocalDataSource {
   }
 
   /// Creates a new attendance record locally.
+  /// Phone number is normalized to +27XXXXXXXXX format before storing.
   Future<Attendance> createAttendance({
     required int contactId,
     required String phone,
@@ -65,9 +77,14 @@ class AttendanceLocalDataSource {
     required DateTime serviceDate,
     required int recordedBy,
   }) async {
+    final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(phone);
+    if (normalizedPhone == null) {
+      throw ArgumentError('Invalid phone number format: $phone');
+    }
+    
     final companion = AttendancesCompanion(
       contactId: drift.Value(contactId),
-      phone: drift.Value(phone),
+      phone: drift.Value(normalizedPhone),
       serviceType: drift.Value(serviceType.backendValue),
       serviceDate: drift.Value(serviceDate),
       recordedBy: drift.Value(recordedBy),

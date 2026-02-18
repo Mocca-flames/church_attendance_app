@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
@@ -155,16 +156,55 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
+  /// Searches contacts by name or phone number.
+  /// Phone numbers are normalized to +27 format for matching.
   Future<List<ContactEntity>> searchContacts(String query) {
+    final trimmedQuery = query.trim();
+    
+    // Normalize phone number if it looks like a South African number
+    final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(trimmedQuery);
+    
     return (select(contacts)
-          ..where((t) =>
-              (t.name.contains(query) | t.phone.contains(query)) &
-              t.isDeleted.equals(false)))
+          ..where((t) {
+            if (normalizedPhone != null) {
+              // If query is a valid phone number, search by normalized phone
+              // Also search by name for partial matches
+              return (t.name.contains(trimmedQuery) | t.phone.contains(normalizedPhone)) &
+                  t.isDeleted.equals(false);
+            } else {
+              // Regular search by name or phone
+              return (t.name.contains(trimmedQuery) | t.phone.contains(trimmedQuery)) &
+                  t.isDeleted.equals(false);
+            }
+          }))
         .get();
   }
 
   Future<int> insertContact(ContactsCompanion contact) =>
       into(contacts).insert(contact);
+
+  /// Batch insert multiple contacts efficiently
+  Future<void> batchInsertContacts(List<ContactsCompanion> contactsList) async {
+    await batch((batch) {
+      batch.insertAll(contacts, contactsList);
+    });
+  }
+
+  /// Batch update multiple contacts efficiently
+  Future<void> batchUpdateContacts(List<ContactsCompanion> contactsList) async {
+    await batch((batch) {
+      for (final contact in contactsList) {
+        final serverId = contact.serverId;
+        if (serverId.present && serverId.value != null) {
+          batch.update(
+            contacts,
+            contact,
+            where: (t) => t.serverId.equals(serverId.value!),
+          );
+        }
+      }
+    });
+  }
 
   Future<bool> updateContact(ContactsCompanion contact) =>
       update(contacts).replace(contact);

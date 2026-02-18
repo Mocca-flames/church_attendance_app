@@ -129,6 +129,13 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     bool isMember = false,
     String? location,
   }) async {
+    // Check if contact already exists with this phone number
+    final existingContact = await _localDataSource.getContactByPhone(phone);
+    if (existingContact != null) {
+      // Return existing contact instead of creating duplicate
+      return existingContact;
+    }
+
     // Create contact with optional member tag and location
     Map<String, dynamic>? metadata;
     if (isMember || location != null) {

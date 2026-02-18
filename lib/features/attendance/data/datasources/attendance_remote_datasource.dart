@@ -1,3 +1,4 @@
+import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/core/network/api_constants.dart';
 import 'package:church_attendance_app/core/network/dio_client.dart';
@@ -13,6 +14,7 @@ class AttendanceRemoteDataSource {
 
   /// Records attendance on the server.
   /// 
+  /// Phone number is normalized to +27XXXXXXXXX format before sending.
   /// Returns the created attendance record with server ID.
   Future<Attendance> recordAttendance({
     required int contactId,
@@ -21,10 +23,15 @@ class AttendanceRemoteDataSource {
     required DateTime serviceDate,
     required int recordedBy,
   }) async {
+    final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(phone);
+    if (normalizedPhone == null) {
+      throw ArgumentError('Invalid phone number format: $phone');
+    }
+    
     try {
       final requestData = {
         'contact_id': contactId,
-        'phone': phone,
+        'phone': normalizedPhone,
         'service_type': serviceType.backendValue,
         'service_date': serviceDate.toUtc().toIso8601String(),
         'recorded_by': recordedBy,
@@ -35,7 +42,7 @@ class AttendanceRemoteDataSource {
       print('║ RECORD ATTENDANCE REQUEST');
       print('╠═══════════════════════════════════════════════════════════');
       print('║ contact_id: $contactId');
-      print('║ phone: $phone');
+      print('║ phone: $normalizedPhone');
       print('║ service_type: ${serviceType.backendValue}');
       print('║ service_date: ${serviceDate.toUtc().toIso8601String()}');
       print('║ recorded_by: $recordedBy');
@@ -224,15 +231,21 @@ class AttendanceRemoteDataSource {
 
   /// Creates a contact on the server.
   /// 
+  /// Phone number is normalized to +27XXXXXXXXX format before sending.
   /// Returns the created contact with server ID.
   Future<Map<String, dynamic>> createContact({
     required String phone,
     required String name,
     List<String>? tags,
   }) async {
+    final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(phone);
+    if (normalizedPhone == null) {
+      throw ArgumentError('Invalid phone number format: $phone');
+    }
+    
     try {
       final requestData = {
-        'phone': phone,
+        'phone': normalizedPhone,
         'name': name,
         if (tags != null && tags.isNotEmpty) 'tags': tags,
       };
@@ -242,7 +255,7 @@ class AttendanceRemoteDataSource {
       print('║ CREATE CONTACT REQUEST');
       print('╠═══════════════════════════════════════════════════════════');
       print('║ Endpoint: ${ApiConstants.contacts}');
-      print('║ phone: $phone');
+      print('║ phone: $normalizedPhone');
       print('║ name: $name');
       print('║ tags: $tags');
       print('╚═══════════════════════════════════════════════════════════');

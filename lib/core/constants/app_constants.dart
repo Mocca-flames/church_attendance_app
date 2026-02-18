@@ -153,5 +153,81 @@ abstract final class AppDurations {
   static const Duration longAnimation = Duration(milliseconds: 500);
 }
 
+/// Phone number utility functions for South African numbers.
+abstract final class PhoneUtils {
+  PhoneUtils._();
+
+  /// Normalizes a South African phone number to +27XXXXXXXXX format.
+  /// 
+  /// Handles the following formats:
+  /// - 0821234567 → +27821234567
+  /// - +27821234567 → +27821234567 (unchanged)
+  /// - 27821234587 → +27821234567
+  /// - +27 82 123 4567 → +27821234567
+  /// 
+  /// Returns null if the phone number cannot be parsed.
+  static String? normalizeSouthAfricanPhone(String? phone) {
+    if (phone == null || phone.isEmpty) return null;
+    
+    // Remove all whitespace and non-digit characters except +
+    String cleaned = phone.replaceAll(RegExp(r'\s+'), '');
+    
+    // Handle +27 prefix
+    if (cleaned.startsWith('+27')) {
+      // Already in correct format, just ensure it's digits only
+      final digits = cleaned.substring(3).replaceAll(RegExp(r'\D'), '');
+      if (digits.length == 9) {
+        return '+27$digits';
+      }
+      return null;
+    }
+    
+    // Handle 27 prefix (without +)
+    if (cleaned.startsWith('27') && cleaned.length >= 10) {
+      final digits = cleaned.substring(2).replaceAll(RegExp(r'\D'), '');
+      if (digits.length == 9) {
+        return '+27$digits';
+      }
+      return null;
+    }
+    
+    // Handle 0 prefix (most common - e.g., 0821234567)
+    if (cleaned.startsWith('0') && cleaned.length >= 10) {
+      final digits = cleaned.substring(1).replaceAll(RegExp(r'\D'), '');
+      if (digits.length == 9) {
+        return '+27$digits';
+      }
+      return null;
+    }
+    
+    // If it's exactly 9 digits, assume it's without prefix
+    final digitsOnly = cleaned.replaceAll(RegExp(r'\D'), '');
+    if (digitsOnly.length == 9) {
+      return '+27$digitsOnly';
+    }
+    
+    return null;
+  }
+
+  /// Formats a +27XXXXXXXXX phone number for display as 0XX XXX XXXX.
+  /// 
+  /// Example: +27821234567 → 082 123 4567
+  static String formatForDisplay(String? phone) {
+    if (phone == null || phone.isEmpty) return '';
+    
+    // Normalize first
+    final normalized = normalizeSouthAfricanPhone(phone);
+    if (normalized == null) return phone;
+    
+    // Remove +27 prefix and format
+    final digits = normalized.substring(3);
+    if (digits.length == 9) {
+      return '0${digits.substring(0, 3)} ${digits.substring(3, 6)} ${digits.substring(6)}';
+    }
+    
+    return phone;
+  }
+}
+
 
   

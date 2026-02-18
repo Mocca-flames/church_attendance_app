@@ -119,12 +119,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const CircularProgressIndicator(),
-                        const SizedBox(height: AppDimens.paddingM),
-                        Text(
-                          'Syncing contacts...',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+                        if (syncStatus.totalProgress > 0) ...[
+                          // Show progress bar for known total
+                          SizedBox(
+                            width: 200,
+                            child: LinearProgressIndicator(
+                              value: syncStatus.progressPercent / 100,
+                              minHeight: 8,
+                            ),
+                          ),
+                          const SizedBox(height: AppDimens.paddingM),
+                          Text(
+                            '${syncStatus.currentProgress} / ${syncStatus.totalProgress}',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          if (syncStatus.progressMessage != null) ...[
+                            const SizedBox(height: AppDimens.paddingS),
+                            Text(
+                              syncStatus.progressMessage!,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ] else ...[
+                          // Show indeterminate progress
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: AppDimens.paddingM),
+                          Text(
+                            'Syncing contacts...',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ],
                         const SizedBox(height: AppDimens.paddingS),
                         Text(
                           'Please wait',

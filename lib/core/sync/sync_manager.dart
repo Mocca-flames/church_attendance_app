@@ -8,11 +8,20 @@ import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/network/dio_client.dart';
 import 'package:church_attendance_app/core/network/api_constants.dart';
 
+
+/// Callback for sync progress updates
+typedef SyncProgressCallback = void Function(int current, int total, String message);
+
 class SyncManager {
   final AppDatabase _db;
   final DioClient _dioClient;
   final Connectivity _connectivity = Connectivity();
   final Logger _logger = Logger();
+  
+  // Batch size for paginated fetching - balances network calls vs memory
+  static const int _defaultBatchSize = 500;
+  // Batch size for database inserts
+  static const int _dbBatchSize = 100;
   
   // SharedPreferences key for last sync timestamp
   static const String _lastSyncKey = 'last_contact_sync';
@@ -263,18 +272,27 @@ class SyncManager {
   // ==========================================================================
 
   /// Pull contacts from server and update local database.
-  /// Uses incremental sync with created_after/updated_after for efficiency.
-  Future<void> pullContacts({bool forceFullSync = false}) async {
-    if (!await hasInternetConnection()) return;
+  /// Uses server-side pagination (skip/limit) and batch processing for better performance.
+  /// 
+  /// [forceFullSync] - If true, ignores last sync time and fetches all contacts
+  /// [batchSize] - Number of contacts to fetch per API call (default: 500)
+  /// [progressCallback] - Optional callback for progress updates (current, total, message)
+  Future<void> pullContacts({
+    bool forceFullSync = false,
+    int batchSize = _defaultBatchSize,
+    SyncProgressCallback? progressCallback,
+  }) async {
+    if (!await hasInternetConnection()) {
+      _logger.w('No internet connection, skipping contact pull');
+      return;
+    }
 
     try {
       // Get last sync time
       final lastSync = await getLastSyncTime();
       
-      // Build query params
-      final queryParams = <String, dynamic>{
-        'limit': 9999999,
-      };
+      // Build base query params
+      final queryParams = <String, dynamic>{};
       
       // Use incremental sync if not forcing full sync and we have a last sync time
       if (!forceFullSync && lastSync != null) {
@@ -285,65 +303,116 @@ class SyncManager {
         _logger.i('Using full sync (first sync or forced)');
       }
 
-      final response = await _dioClient.get(
-        ApiConstants.contacts,
-        queryParameters: queryParams,
-      );
+      _logger.i('Starting paginated contact fetch with batch size $batchSize');
       
-      final List<dynamic> contactsJson = response.data;
+      // Fetch contacts using server-side pagination
+      int skip = 0;
+      int totalProcessed = 0;
+      List<dynamic> batch;
       
-      _logger.i('Received ${contactsJson.length} contacts from server');
-
-      for (final json in contactsJson) {
-        await _saveContactFromJson(json);
-      }
+      do {
+        // Set pagination params
+        queryParams['limit'] = batchSize;
+        queryParams['skip'] = skip;
+        
+        _logger.d('Fetching contacts: limit=$batchSize, skip=$skip');
+        
+        // Fetch a batch from server
+        final response = await _dioClient.get(
+          ApiConstants.contacts,
+          queryParameters: queryParams,
+        );
+        
+        batch = response.data as List<dynamic>? ?? [];
+        _logger.d('Received batch of ${batch.length} contacts');
+        
+        if (batch.isEmpty) {
+          break; // No more data
+        }
+        
+        // Process this batch in smaller DB chunks
+        for (var i = 0; i < batch.length; i += _dbBatchSize) {
+          final dbBatch = batch.skip(i).take(_dbBatchSize).toList();
+          await _saveContactBatch(dbBatch);
+          totalProcessed += dbBatch.length;
+          
+          // Report progress
+          progressCallback?.call(
+            totalProcessed, 
+            -1, // Unknown total until we finish
+            'Synced $totalProcessed contacts...',
+          );
+          
+          // Yield to allow UI to update
+          await Future.delayed(Duration.zero);
+        }
+        
+        skip += batchSize;
+        
+      } while (batch.length == batchSize); // Continue if we got a full batch
 
       // Save last sync time
       await _saveLastSyncTime();
 
-      _logger.i('Contact sync completed: ${contactsJson.length} contacts processed');
+      _logger.i('Contact sync completed: $totalProcessed contacts processed');
+      progressCallback?.call(totalProcessed, totalProcessed, 'Sync complete!');
     } catch (e) {
       _logger.e('Failed to pull contacts', error: e);
+      rethrow;
     }
   }
 
-  /// Save a single contact from JSON to the local database
-  Future<void> _saveContactFromJson(Map<String, dynamic> json) async {
-    final serverId = json['id'];
-    // Check if contact with this serverId already exists
+  /// Save a batch of contacts from JSON to the local database efficiently
+  Future<void> _saveContactBatch(List<dynamic> contactsJson) async {
+    _logger.d('Processing batch of ${contactsJson.length} contacts');
+    
+    // Get all server IDs from the batch
+    final serverIds = contactsJson.map((j) => j['id'] as int).toList();
+    
+    // Query existing contacts in one go
     final existingContacts = await (_db.select(_db.contacts)
-          ..where((t) => t.serverId.equals(serverId)))
+          ..where((t) => t.serverId.isIn(serverIds)))
         .get();
-
-    if (existingContacts.isEmpty) {
-      // Insert new contact
-      await _db.insertContact(
-        ContactsCompanion(
-          serverId: Value(serverId),
-          name: Value(json['name']),
-          phone: Value(json['phone']),
-          status: Value(json['status'] ?? 'active'),
-          optOutSms: Value(json['opt_out_sms'] ?? false),
-          optOutWhatsapp: Value(json['opt_out_whatsapp'] ?? false),
-          metadata: Value(json['metadata_']),
-          isSynced: const Value(true),
-        ),
+    
+    // Create a map for quick lookup
+    final existingMap = {for (var c in existingContacts) c.serverId: c};
+    
+    // Separate into inserts and updates
+    final List<ContactsCompanion> inserts = [];
+    final List<ContactsCompanion> updates = [];
+    
+    for (final json in contactsJson) {
+      final serverId = json['id'] as int;
+      final existing = existingMap[serverId];
+      
+      final companion = ContactsCompanion(
+        serverId: Value(serverId),
+        name: Value(json['name']),
+        phone: Value(json['phone']),
+        status: Value(json['status'] ?? 'active'),
+        optOutSms: Value(json['opt_out_sms'] ?? false),
+        optOutWhatsapp: Value(json['opt_out_whatsapp'] ?? false),
+        metadata: Value(json['metadata_']),
+        isSynced: const Value(true),
       );
-    } else {
-      // Update existing contact
-      await (_db.update(_db.contacts)
-            ..where((t) => t.serverId.equals(serverId)))
-          .write(
-        ContactsCompanion(
-          name: Value(json['name']),
-          phone: Value(json['phone']),
-          status: Value(json['status'] ?? 'active'),
-          optOutSms: Value(json['opt_out_sms'] ?? false),
-          optOutWhatsapp: Value(json['opt_out_whatsapp'] ?? false),
-          metadata: Value(json['metadata_']),
-          isSynced: const Value(true),
-        ),
-      );
+      
+      if (existing == null) {
+        inserts.add(companion);
+      } else {
+        updates.add(companion);
+      }
+    }
+    
+    // Batch insert new contacts
+    if (inserts.isNotEmpty) {
+      _logger.d('Batch inserting ${inserts.length} new contacts');
+      await _db.batchInsertContacts(inserts);
+    }
+    
+    // Batch update existing contacts
+    if (updates.isNotEmpty) {
+      _logger.d('Batch updating ${updates.length} existing contacts');
+      await _db.batchUpdateContacts(updates);
     }
   }
 
