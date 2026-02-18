@@ -13,16 +13,16 @@ class Contact with _$Contact {
 
   const factory Contact({
     required int id,
-    int? serverId,
-    String? name,
+    required DateTime createdAt,
     required String phone,
     @Default(ContactStatus.active) ContactStatus status,
     @Default(false) bool optOutSms,
     @Default(false) bool optOutWhatsapp,
     String? metadata,
-    required DateTime createdAt,
     @Default(false) bool isSynced,
     @Default(false) bool isDeleted,
+    int? serverId,
+    String? name,
   }) = _Contact;
 
   factory Contact.fromJson(Map<String, dynamic> json) =>

@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:drift/drift.dart';
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/network/dio_client.dart';
 import 'package:church_attendance_app/core/network/api_constants.dart';
@@ -11,18 +13,37 @@ class SyncManager {
   final DioClient _dioClient;
   final Connectivity _connectivity = Connectivity();
   final Logger _logger = Logger();
+  
+  // SharedPreferences key for last sync timestamp
+  static const String _lastSyncKey = 'last_contact_sync';
 
   SyncManager(this._db, this._dioClient);
 
   /// Check if device has internet connection
   Future<bool> hasInternetConnection() async {
     final connectivityResult = await _connectivity.checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+    return !connectivityResult.contains(ConnectivityResult.none);
   }
 
   /// Get pending sync count
   Future<int> getPendingSyncCount() async {
     return await _db.getPendingSyncCount();
+  }
+
+  /// Get the last sync timestamp
+  Future<DateTime?> getLastSyncTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    final timestamp = prefs.getString(_lastSyncKey);
+    if (timestamp != null) {
+      return DateTime.parse(timestamp);
+    }
+    return null;
+  }
+
+  /// Save the last sync timestamp
+  Future<void> _saveLastSyncTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastSyncKey, DateTime.now().toUtc().toIso8601String());
   }
 
   /// Sync all pending items
@@ -106,14 +127,14 @@ class SyncManager {
           ApiConstants.contacts,
           data: data,
         );
-        final newServerId = response.data['id'];
-        await _db.updateContact(
-          ContactsCompanion(
-            id: Value(localId),
-            serverId: Value(newServerId),
-            isSynced: const Value(true),
-          ),
-        );
+        final newServerId = response.data['id'] as int?;
+        if (newServerId != null) {
+          await _db.updateContactFields(
+            id: localId,
+            serverId: newServerId,
+            isSynced: true,
+          );
+        }
         break;
 
       case 'update':
@@ -121,11 +142,9 @@ class SyncManager {
           ApiConstants.contactById.replaceAll('{id}', serverId.toString()),
           data: data,
         );
-        await _db.updateContact(
-          ContactsCompanion(
-            id: Value(localId),
-            isSynced: const Value(true),
-          ),
+        await _db.updateContactFields(
+          id: localId,
+          isSynced: true,
         );
         break;
 
@@ -243,40 +262,108 @@ class SyncManager {
   // PULL DATA FROM SERVER
   // ==========================================================================
 
-  /// Pull contacts from server and update local database
-  Future<void> pullContacts() async {
+  /// Pull contacts from server and update local database.
+  /// Uses incremental sync with created_after/updated_after for efficiency.
+  Future<void> pullContacts({bool forceFullSync = false}) async {
     if (!await hasInternetConnection()) return;
 
     try {
-      final response = await _dioClient.get(ApiConstants.contacts);
+      // Get last sync time
+      final lastSync = await getLastSyncTime();
+      
+      // Build query params
+      final queryParams = <String, dynamic>{
+        'limit': 9999999,
+      };
+      
+      // Use incremental sync if not forcing full sync and we have a last sync time
+      if (!forceFullSync && lastSync != null) {
+        final lastSyncIso = lastSync.toUtc().toIso8601String();
+        queryParams['updated_after'] = lastSyncIso;
+        _logger.i('Using incremental sync since $lastSyncIso');
+      } else {
+        _logger.i('Using full sync (first sync or forced)');
+      }
+
+      final response = await _dioClient.get(
+        ApiConstants.contacts,
+        queryParameters: queryParams,
+      );
+      
       final List<dynamic> contactsJson = response.data;
+      
+      _logger.i('Received ${contactsJson.length} contacts from server');
 
       for (final json in contactsJson) {
-        final serverId = json['id'];
-        // Check if contact with this serverId already exists
-        final existingContacts = await (_db.select(_db.contacts)
-              ..where((t) => t.serverId.equals(serverId)))
-            .get();
-
-        if (existingContacts.isEmpty) {
-          // Insert new contact
-          await _db.insertContact(
-            ContactsCompanion(
-              serverId: Value(serverId),
-              name: Value(json['name']),
-              phone: Value(json['phone']),
-              status: Value(json['status'] ?? 'active'),
-              optOutSms: Value(json['opt_out_sms'] ?? false),
-              optOutWhatsapp: Value(json['opt_out_whatsapp'] ?? false),
-              metadata: Value(json['metadata_']),
-              isSynced: const Value(true),
-            ),
-          );
-        }
+        await _saveContactFromJson(json);
       }
+
+      // Save last sync time
+      await _saveLastSyncTime();
+
+      _logger.i('Contact sync completed: ${contactsJson.length} contacts processed');
     } catch (e) {
       _logger.e('Failed to pull contacts', error: e);
     }
+  }
+
+  /// Save a single contact from JSON to the local database
+  Future<void> _saveContactFromJson(Map<String, dynamic> json) async {
+    final serverId = json['id'];
+    // Check if contact with this serverId already exists
+    final existingContacts = await (_db.select(_db.contacts)
+          ..where((t) => t.serverId.equals(serverId)))
+        .get();
+
+    if (existingContacts.isEmpty) {
+      // Insert new contact
+      await _db.insertContact(
+        ContactsCompanion(
+          serverId: Value(serverId),
+          name: Value(json['name']),
+          phone: Value(json['phone']),
+          status: Value(json['status'] ?? 'active'),
+          optOutSms: Value(json['opt_out_sms'] ?? false),
+          optOutWhatsapp: Value(json['opt_out_whatsapp'] ?? false),
+          metadata: Value(json['metadata_']),
+          isSynced: const Value(true),
+        ),
+      );
+    } else {
+      // Update existing contact
+      await (_db.update(_db.contacts)
+            ..where((t) => t.serverId.equals(serverId)))
+          .write(
+        ContactsCompanion(
+          name: Value(json['name']),
+          phone: Value(json['phone']),
+          status: Value(json['status'] ?? 'active'),
+          optOutSms: Value(json['opt_out_sms'] ?? false),
+          optOutWhatsapp: Value(json['opt_out_whatsapp'] ?? false),
+          metadata: Value(json['metadata_']),
+          isSynced: const Value(true),
+        ),
+      );
+    }
+  }
+
+  /// Start periodic sync that runs every hour.
+  /// This keeps contacts updated for offline search.
+  /// Returns a timer that can be cancelled.
+  Timer startPeriodicSync({Duration interval = const Duration(hours: 1)}) {
+    return Timer.periodic(interval, (_) async {
+      if (await hasInternetConnection()) {
+        try {
+          // Pull fresh contacts from server
+          await pullContacts();
+          // Also sync any pending local changes
+          await syncAll();
+          _logger.i('Periodic sync completed');
+        } catch (e) {
+          _logger.e('Periodic sync failed', error: e);
+        }
+      }
+    });
   }
 }
 

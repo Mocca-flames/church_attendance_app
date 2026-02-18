@@ -44,4 +44,20 @@ enum ServiceType {
   /// Get all display names for UI dropdowns
   static List<String> get displayNames =>
       ServiceType.values.map((e) => e.displayName).toList();
+
+  /// Automatically select service type based on the day of the week.
+  /// - Sunday (weekday = 7) → Sunday Service
+  /// - Tuesday (weekday = 2) → Tuesday Service
+  /// - Any other day → Special Event
+  static ServiceType getServiceTypeByDay([DateTime? date]) {
+    final day = date ?? DateTime.now();
+    switch (day.weekday) {
+      case DateTime.sunday:
+        return ServiceType.sunday;
+      case DateTime.tuesday:
+        return ServiceType.tuesday;
+      default:
+        return ServiceType.specialEvent;
+    }
+  }
 }

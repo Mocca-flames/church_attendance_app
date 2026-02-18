@@ -8,7 +8,6 @@ part 'attendance.g.dart';
 sealed class Attendance with _$Attendance {
   const factory Attendance({
     required int id,
-    int? serverId,
     required int contactId,
     required String phone,
     required ServiceType serviceType,
@@ -16,6 +15,7 @@ sealed class Attendance with _$Attendance {
     required int recordedBy,
     required DateTime recordedAt,
     @Default(false) bool isSynced,
+    int? serverId,
   }) = _Attendance;
 
   factory Attendance.fromJson(Map<String, dynamic> json) =>

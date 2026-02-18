@@ -10,14 +10,15 @@ class Scenario with _$Scenario {
   const Scenario._();
 
   const factory Scenario({
-    required int id,
-    int? serverId,
-    required String name,
-    String? description,
     required List<String> filterTags,
-    @Default(ScenarioStatus.active) ScenarioStatus status,
+    required String name,
+    required int id,
     required int createdBy,
     required DateTime createdAt,
+    int? serverId,
+    String? description,
+    @Default(ScenarioStatus.active) ScenarioStatus status,
+    
     DateTime? completedAt,
     @Default(false) bool isSynced,
     @Default(false) bool isDeleted,
@@ -34,10 +35,11 @@ class Scenario with _$Scenario {
 class ScenarioTask with _$ScenarioTask {
   const factory ScenarioTask({
     required int id,
-    int? serverId,
     required int scenarioId,
     required int contactId,
     required String phone,
+    int? serverId,
+    
     String? name,
     @Default(false) bool isCompleted,
     int? completedBy,

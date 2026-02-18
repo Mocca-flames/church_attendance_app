@@ -115,9 +115,18 @@ class AppDatabase extends _$AppDatabase {
     return MigrationStrategy(
       onCreate: (Migrator m) async {
         await m.createAll();
+        // Add indexes for faster search queries
+        await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts(name)');
+        await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_phone ON contacts(phone)');
+        await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_is_deleted ON contacts(is_deleted)');
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        // Handle migrations here in future
+        // Add indexes on upgrade if they don't exist
+        if (from < 2) {
+          await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts(name)');
+          await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_phone ON contacts(phone)');
+          await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_is_deleted ON contacts(is_deleted)');
+        }
       },
     );
   }
@@ -127,6 +136,11 @@ class AppDatabase extends _$AppDatabase {
   // ==========================================================================
 
   Future<List<ContactEntity>> getAllContacts() => select(contacts).get();
+
+  Future<int> getContactCount() async {
+    final result = await select(contacts).get();
+    return result.length;
+  }
 
   Future<ContactEntity?> getContactById(int id) =>
       (select(contacts)..where((t) => t.id.equals(id))).getSingleOrNull();
@@ -154,6 +168,34 @@ class AppDatabase extends _$AppDatabase {
 
   Future<bool> updateContact(ContactsCompanion contact) =>
       update(contacts).replace(contact);
+
+  /// Updates specific fields of a contact by ID.
+  Future<int> updateContactFields({
+    required int id,
+    int? serverId,
+    String? name,
+    String? phone,
+    String? status,
+    bool? optOutSms,
+    bool? optOutWhatsapp,
+    String? metadata,
+    bool? isSynced,
+    bool? isDeleted,
+  }) {
+    final companion = ContactsCompanion(
+      id: Value(id),
+      serverId: serverId != null ? Value(serverId) : const Value.absent(),
+      name: name != null ? Value(name) : const Value.absent(),
+      phone: phone != null ? Value(phone) : const Value.absent(),
+      status: status != null ? Value(status) : const Value.absent(),
+      optOutSms: optOutSms != null ? Value(optOutSms) : const Value.absent(),
+      optOutWhatsapp: optOutWhatsapp != null ? Value(optOutWhatsapp) : const Value.absent(),
+      metadata: metadata != null ? Value(metadata) : const Value.absent(),
+      isSynced: isSynced != null ? Value(isSynced) : const Value.absent(),
+      isDeleted: isDeleted != null ? Value(isDeleted) : const Value.absent(),
+    );
+    return (update(contacts)..where((t) => t.id.equals(id))).write(companion);
+  }
 
   Future<int> deleteContact(int id) =>
       (delete(contacts)..where((t) => t.id.equals(id))).go();
