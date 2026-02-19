@@ -377,7 +377,7 @@ class _ModernMembershipSelector extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isMember 
-              ? activeColor.withOpacity(0.08) 
+              ? activeColor.withValues(alpha: 0.8) 
               : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -393,7 +393,7 @@ class _ModernMembershipSelector extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isMember 
-                    ? activeColor.withOpacity(0.15) 
+                    ? activeColor.withValues(alpha:0.15) 
                     : Colors.grey.shade100,
                 shape: BoxShape.circle,
               ),

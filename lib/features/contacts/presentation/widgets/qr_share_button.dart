@@ -15,8 +15,8 @@ class QRShareButton extends StatefulWidget {
   final Contact contact;
 
   const QRShareButton({
-    super.key,
-    required this.contact,
+    
+    required this.contact,super.key,
   });
 
   @override
@@ -81,10 +81,12 @@ God bless!
 ${widget.contact.phone}
 ''';
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: message,
-        subject: 'Your Church QR Code',
+      await SharePlus.instance.share(
+        ShareParams(
+          text: message,
+          files: [XFile(file.path)],
+          subject: 'Your Church QR Code',
+        ),
       );
 
       // Clean up temp file after a delay

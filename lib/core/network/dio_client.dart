@@ -40,14 +40,14 @@ class DioClient {
           // Add auth token to all requests
           final prefs = await SharedPreferences.getInstance();
           final token = prefs.getString('access_token');
-          print('DEBUG DIO: access_token from prefs: ${token != null ? "[PRESENT]" : "[NULL]"}');
+          
           if (token != null) {
-            print('DEBUG DIO: Token value: ${token.substring(0, 20)}...');
+        
             options.headers['Authorization'] = 'Bearer $token';
-            print('DEBUG DIO: Added Bearer token to request: ${options.method} ${options.path}');
-            print('DEBUG DIO: Request headers: ${options.headers}');
+            
+            _logger.d('DEBUG DIO: Added Bearer token to request: ${options.method} ${options.path}');
           } else {
-            print('DEBUG DIO: NO TOKEN - Request will be unauthenticated: ${options.method} ${options.path}');
+            _logger.d('DEBUG DIO: NO TOKEN - Request will be unauthenticated: ${options.method} ${options.path}');
           }
 
           // Detailed request logging for debugging

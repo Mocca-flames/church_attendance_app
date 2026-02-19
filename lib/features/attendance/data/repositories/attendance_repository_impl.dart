@@ -60,7 +60,6 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     // Try to sync to server
     if (await _isOnline()) {
       try {
-        print('DEBUG REPO: Online, calling remote recordAttendance...');
         final serverAttendance = await _remoteDataSource.recordAttendance(
           contactId: contactId,
           phone: phone,
@@ -68,33 +67,27 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
           serviceDate: serviceDate,
           recordedBy: recordedBy,
         );
-        print('DEBUG REPO: Remote recordAttendance succeeded, serverId=${serverAttendance.serverId}');
 
         // Update local record with server ID and mark as synced
         await _localDataSource.markAsSynced(
           attendance.id,
           serverAttendance.serverId ?? 0,
         );
-        print('DEBUG REPO: Local record marked as synced');
 
         return serverAttendance;
       } on AttendanceRemoteException catch (e) {
-        print('DEBUG REPO: AttendanceRemoteException: ${e.message}, isNetworkError: ${e.isNetworkError}');
         // If network error, add to sync queue
         if (e.isNetworkError) {
           await _localDataSource.addToSyncQueue(attendance);
         }
         // Return local record anyway
         return attendance;
-      } catch (e, stack) {
-        print('DEBUG REPO: Unexpected error: $e');
-        print('DEBUG REPO: Stack: $stack');
+      } catch (e) {
         // Add to sync queue and return local record
         await _localDataSource.addToSyncQueue(attendance);
         return attendance;
       }
     } else {
-      print('DEBUG REPO: Offline, adding to sync queue');
       // Offline: add to sync queue
       await _localDataSource.addToSyncQueue(attendance);
       return attendance;
@@ -140,28 +133,20 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     bool isMember = false,
     String? location,
   }) async {
-    print('DEBUG REPO: createQuickContact called with phone=$phone, name=$name');
     // Check if contact already exists with this phone number
-    print('DEBUG REPO: Calling getContactByPhone...');
     final existingContact = await _localDataSource.getContactByPhone(phone);
-    print('DEBUG REPO: getContactByPhone returned: $existingContact');
     
     if (existingContact != null) {
-      print('DEBUG REPO: Contact found - id=${existingContact.id}, name=${existingContact.name}, phone=${existingContact.phone}');
       // Check if this is a contact where phone == name (no real name was entered)
       // In this case, we need to update the contact with the new name, tags, and location
       if (existingContact.name != null && existingContact.name == existingContact.phone) {
-        print('DEBUG REPO: Contact name == phone, will update contact details');
         // This contact has phone == name, need to update it
-        print('DEBUG REPO: About to call updateContactDetails...');
-        print('DEBUG: Updating contact ${existingContact.id} - old name: ${existingContact.name}, new name: $name, isMember: $isMember, location: $location');
         final updatedContact = await _localDataSource.updateContactDetails(
           contactId: existingContact.id,
           name: name,
           isMember: isMember,
           location: location,
         );
-        print('DEBUG: Updated contact result: ${updatedContact.name}, metadata: ${updatedContact.metadata}');
         
         // Try to sync the update to server
         if (await _isOnline()) {
@@ -225,7 +210,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
 
     // Create contact with optional member tag and location
     // Location is stored as a tag (e.g., 'kanana', 'church')
-    List<String> tags = [];
+    final List<String> tags = [];
     if (isMember) {
       tags.add('member');
     }

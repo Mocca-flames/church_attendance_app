@@ -17,22 +17,21 @@ class AttendanceLocalDataSource {
   /// Gets a contact by phone number.
   /// Phone number is normalized to +27XXXXXXXXX format before search.
   Future<Contact?> getContactByPhone(String phone) async {
-    print('DEBUG LOCAL: getContactByPhone called with phone=$phone');
+   
     final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(phone);
-    print('DEBUG LOCAL: normalizedPhone=$normalizedPhone');
+  
     if (normalizedPhone == null) return null;
     
     final contactData = await _db.getContactByPhone(normalizedPhone);
-    print('DEBUG LOCAL: contactData from DB: $contactData');
     if (contactData == null) {
-      print('DEBUG LOCAL: contactData is null, returning null');
+     
       return null;
     }
-    print('DEBUG LOCAL: Converting contactData to JSON...');
+
     // Convert database entity to JSON with proper key mapping
     // Database uses 'metadata' but Contact model expects 'metadata_'
     final json = contactData.toJson();
-    print('DEBUG LOCAL: JSON: $json');
+    
     if (json.containsKey('metadata') && !json.containsKey('metadata_')) {
       json['metadata_'] = json.remove('metadata');
     }
@@ -44,35 +43,34 @@ class AttendanceLocalDataSource {
     if (json.containsKey('createdAt') && json['createdAt'] is int) {
       final epochMs = json['createdAt'] as int;
       json['createdAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
-      print('DEBUG LOCAL: converted createdAt to: ${json['createdAt']}');
+     
     }
     // Map createdAt to created_at for Contact model compatibility
     // (DB uses createdAt but Contact.fromJson expects created_at)
     if (json.containsKey('createdAt') && !json.containsKey('created_at')) {
       json['created_at'] = json.remove('createdAt');
     }
-    print('DEBUG LOCAL: About to call Contact.fromJson...');
+  
     try {
       final result = Contact.fromJson(json);
-      print('DEBUG LOCAL: Contact.fromJson succeeded: $result');
+    
       return result;
-    } catch (e, stack) {
-      print('DEBUG LOCAL: ERROR in Contact.fromJson: $e');
-      print('DEBUG LOCAL: Stack: $stack');
+    } catch (e) {
+      
       rethrow;
     }
   }
 
   /// Gets a contact by ID.
   Future<Contact?> getContactById(int id) async {
-    print('DEBUG getContactById: called with id=$id');
+   
     final contactData = await _db.getContactById(id);
-    print('DEBUG getContactById: contactData=$contactData');
+   
     if (contactData == null) return null;
     // Convert database entity to JSON with proper key mapping
     // Database uses 'metadata' but Contact model expects 'metadata_'
     final json = contactData.toJson();
-    print('DEBUG getContactById: json=$json');
+   
     if (json.containsKey('metadata') && !json.containsKey('metadata_')) {
       json['metadata_'] = json.remove('metadata');
     }
@@ -84,14 +82,14 @@ class AttendanceLocalDataSource {
     if (json.containsKey('createdAt') && json['createdAt'] is int) {
       final epochMs = json['createdAt'] as int;
       json['createdAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
-      print('DEBUG getContactById: converted createdAt to: ${json['createdAt']}');
+     
     }
     // Map createdAt to created_at for Contact model compatibility
     // (DB uses createdAt but Contact.fromJson expects created_at)
     if (json.containsKey('createdAt') && !json.containsKey('created_at')) {
       json['created_at'] = json.remove('createdAt');
     }
-    print('DEBUG getContactById: calling Contact.fromJson...');
+   
     return Contact.fromJson(json);
   }
 
@@ -186,17 +184,15 @@ class AttendanceLocalDataSource {
     
     // Convert database values to formats expected by Attendance.fromJson
     final json = attendanceData.toJson();
-    print('DEBUG createAttendance: json before conversion: $json');
     _convertAttendanceJson(json);
-    print('DEBUG createAttendance: json after conversion: $json');
+  
     
     try {
       final result = Attendance.fromJson(json);
-      print('DEBUG createAttendance: Attendance.fromJson succeeded');
+   
       return result;
-    } catch (e, stack) {
-      print('DEBUG createAttendance: ERROR in Attendance.fromJson: $e');
-      print('DEBUG createAttendance: Stack: $stack');
+    } catch (e ) {
+     
       rethrow;
     }
   }
@@ -254,7 +250,7 @@ class AttendanceLocalDataSource {
   /// Helper method to convert database values to Attendance.fromJson expected formats
   void _convertAttendanceJson(Map<String, dynamic> json) {
     // DEBUG: Log all keys before conversion
-    print('DEBUG _convertAttendanceJson: keys before = ${json.keys.toList()}');
+    
     
     // Map database keys to Attendance model expected keys
     // Database uses camelCase (contactId, recordedBy) but model expects snake_case (contact_id, recorded_by)
@@ -277,7 +273,7 @@ class AttendanceLocalDataSource {
       final epochMs = json['serviceDate'] as int;
       json['service_date'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
       json.remove('serviceDate');
-      print('DEBUG _convertAttendanceJson: converted serviceDate to service_date = ${json["service_date"]}');
+     
     }
     
     // Convert recordedAt from epoch milliseconds to ISO8601 string
@@ -286,15 +282,14 @@ class AttendanceLocalDataSource {
       final epochMs = json['recordedAt'] as int;
       json['recorded_at'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
       json.remove('recordedAt');
-      print('DEBUG _convertAttendanceJson: converted recordedAt to recorded_at = ${json["recorded_at"]}');
+   
     }
     
-    // DEBUG: Log all keys after conversion
-    print('DEBUG _convertAttendanceJson: keys after = ${json.keys.toList()}');
+  
     
     // Handle serverId - ensure it's not passed as null to non-nullable field
     if (json.containsKey('serverId') && json['serverId'] == null) {
-      print('DEBUG _convertAttendanceJson: serverId is null, removing key');
+     
       json.remove('serverId');
     }
   }
@@ -387,14 +382,14 @@ class AttendanceLocalDataSource {
     bool isMember = false,
     String? location,
   }) async {
-    print('DEBUG updateContactDetails: contactId=$contactId, name=$name, isMember=$isMember, location=$location');
+
     // Get existing contact
     final existingContact = await getContactById(contactId);
     if (existingContact == null) {
       throw ArgumentError('Contact not found: $contactId');
     }
 
-    print('DEBUG updateContactDetails: existing contact name=${existingContact.name}, metadata=${existingContact.metadata}');
+  
 
     // Parse existing metadata
     Map<String, dynamic> metadata = {};
@@ -432,11 +427,9 @@ class AttendanceLocalDataSource {
       metadata: metadataString,
       isSynced: false, // Mark as unsynced so it gets synced later
     );
-    print('DEBUG updateContactDetails: Database updated, fetching updated contact...');
 
     // Fetch and return updated contact
     final updatedContact = await getContactById(contactId);
-    print('DEBUG updateContactDetails: Final updated contact: name=${updatedContact?.name}, metadata=${updatedContact?.metadata}');
     return updatedContact!;
   }
 }

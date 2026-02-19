@@ -11,8 +11,8 @@ class ContactQRCode extends StatelessWidget {
   final double size;
 
   const ContactQRCode({
-    super.key,
     required this.contact,
+    super.key,
     this.size = 200,
   });
 

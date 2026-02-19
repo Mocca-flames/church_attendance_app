@@ -38,34 +38,16 @@ class AttendanceRemoteDataSource {
       };
       
       // Debug: Log the request details
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ RECORD ATTENDANCE REQUEST');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ contact_id: $contactId');
-      print('║ phone: $normalizedPhone');
-      print('║ service_type: ${serviceType.backendValue}');
-      print('║ service_date: ${serviceDate.toUtc().toIso8601String()}');
-      print('║ recorded_by: $recordedBy');
-      print('╚═══════════════════════════════════════════════════════════');
       
       final response = await _dioClient.dio.post(
         ApiConstants.attendanceRecord,
         data: requestData,
       );
 
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ RECORD ATTENDANCE RESPONSE');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Status: ${response.statusCode}');
-      print('║ Data: ${response.data}');
-      print('╚═══════════════════════════════════════════════════════════');
 
       // Debug: Log each field type before parsing
       final data = response.data as Map<String, dynamic>;
-      print('DEBUG REMOTE: Parsing response data...');
-      for (final entry in data.entries) {
-        print('DEBUG REMOTE: ${entry.key} = ${entry.value} (type: ${entry.value.runtimeType})');
-      }
+      
       
       // The server returns snake_case keys, but the generated Attendance model
       // expects snake_case keys (contact_id, service_type, service_date, recorded_at)
@@ -100,28 +82,16 @@ class AttendanceRemoteDataSource {
             convertedData[key] = value;
         }
       });
-      print('DEBUG REMOTE: Converted data: $convertedData');
       
       try {
         final result = Attendance.fromJson(convertedData);
-        print('DEBUG REMOTE: Attendance.fromJson succeeded');
         return result;
-      } catch (e, stack) {
-        print('DEBUG REMOTE: ERROR in Attendance.fromJson: $e');
-        print('DEBUG REMOTE: Stack: $stack');
+      } catch (e) {
         rethrow;
       }
     } on DioException catch (e) {
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ RECORD ATTENDANCE ERROR');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Type: ${e.type}');
-      print('║ Message: ${e.message}');
       if (e.response != null) {
-        print('║ Status: ${e.response?.statusCode}');
-        print('║ Data: ${e.response?.data}');
       }
-      print('╚═══════════════════════════════════════════════════════════');
       
       if (e.response?.statusCode == 400) {
         final message = e.response?.data['detail'] ?? 'Bad request';
@@ -162,39 +132,18 @@ class AttendanceRemoteDataSource {
       }
 
       // Debug: Log the request details
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ GET ATTENDANCE RECORDS REQUEST');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Endpoint: ${ApiConstants.attendances}');
-      print('║ Query Params: $queryParams');
-      print('╚═══════════════════════════════════════════════════════════');
 
       final response = await _dioClient.dio.get(
         ApiConstants.attendances,
         queryParameters: queryParams,
       );
 
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ GET ATTENDANCE RECORDS RESPONSE');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Status: ${response.statusCode}');
-      print('║ Data Length: ${(response.data as List).length}');
-      print('║ Data: ${response.data}');
-      print('╚═══════════════════════════════════════════════════════════');
 
       final List<dynamic> data = response.data;
       return data.map((json) => Attendance.fromJson(json)).toList();
     } on DioException catch (e) {
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ GET ATTENDANCE RECORDS ERROR');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Type: ${e.type}');
-      print('║ Message: ${e.message}');
       if (e.response != null) {
-        print('║ Status: ${e.response?.statusCode}');
-        print('║ Data: ${e.response?.data}');
       }
-      print('╚═══════════════════════════════════════════════════════════');
       
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.unknown) {
@@ -301,39 +250,17 @@ class AttendanceRemoteDataSource {
       };
 
       // Debug: Log the request details
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ CREATE CONTACT REQUEST');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Endpoint: ${ApiConstants.contacts}');
-      print('║ phone: $normalizedPhone');
-      print('║ name: $name');
-      print('║ tags: $tags');
-      print('╚═══════════════════════════════════════════════════════════');
 
       final response = await _dioClient.dio.post(
         ApiConstants.contacts,
         data: requestData,
       );
 
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ CREATE CONTACT RESPONSE');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Status: ${response.statusCode}');
-      print('║ Data: ${response.data}');
-      print('╚═══════════════════════════════════════════════════════════');
 
       return response.data;
     } on DioException catch (e) {
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ CREATE CONTACT ERROR');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Type: ${e.type}');
-      print('║ Message: ${e.message}');
       if (e.response != null) {
-        print('║ Status: ${e.response?.statusCode}');
-        print('║ Data: ${e.response?.data}');
       }
-      print('╚═══════════════════════════════════════════════════════════');
       
       if (e.response?.statusCode == 400) {
         final message = e.response?.data['detail'] ?? 'Bad request';
@@ -374,37 +301,17 @@ class AttendanceRemoteDataSource {
       if (optOutWhatsapp != null) requestData['opt_out_whatsapp'] = optOutWhatsapp;
 
       // Debug: Log the request details
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ UPDATE CONTACT REQUEST');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Endpoint: ${ApiConstants.contactById.replaceAll("{id}", contactId.toString())}');
-      print('║ Request Data: $requestData');
-      print('╚═══════════════════════════════════════════════════════════');
 
       final response = await _dioClient.dio.put(
         ApiConstants.contactById.replaceAll('{id}', contactId.toString()),
         data: requestData,
       );
 
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ UPDATE CONTACT RESPONSE');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Status: ${response.statusCode}');
-      print('║ Data: ${response.data}');
-      print('╚═══════════════════════════════════════════════════════════');
 
       return response.data;
     } on DioException catch (e) {
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ UPDATE CONTACT ERROR');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Type: ${e.type}');
-      print('║ Message: ${e.message}');
       if (e.response != null) {
-        print('║ Status: ${e.response?.statusCode}');
-        print('║ Data: ${e.response?.data}');
       }
-      print('╚═══════════════════════════════════════════════════════════');
       
       if (e.response?.statusCode == 400) {
         final message = e.response?.data['detail'] ?? 'Bad request';
@@ -430,37 +337,17 @@ class AttendanceRemoteDataSource {
       final requestData = {'tags': tags};
 
       // Debug: Log the request details
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ ADD TAGS TO CONTACT REQUEST');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Endpoint: ${ApiConstants.contactTagsAdd.replaceAll("{id}", contactId.toString())}');
-      print('║ Request Data: $requestData');
-      print('╚═══════════════════════════════════════════════════════════');
 
       final response = await _dioClient.dio.post(
         ApiConstants.contactTagsAdd.replaceAll('{id}', contactId.toString()),
         data: requestData,
       );
 
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ ADD TAGS TO CONTACT RESPONSE');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Status: ${response.statusCode}');
-      print('║ Data: ${response.data}');
-      print('╚═══════════════════════════════════════════════════════════');
 
       return response.data;
     } on DioException catch (e) {
-      print('╔═══════════════════════════════════════════════════════════');
-      print('║ ADD TAGS TO CONTACT ERROR');
-      print('╠═══════════════════════════════════════════════════════════');
-      print('║ Type: ${e.type}');
-      print('║ Message: ${e.message}');
       if (e.response != null) {
-        print('║ Status: ${e.response?.statusCode}');
-        print('║ Data: ${e.response?.data}');
       }
-      print('╚═══════════════════════════════════════════════════════════');
       
       if (e.response?.statusCode == 400) {
         final message = e.response?.data['detail'] ?? 'Bad request';

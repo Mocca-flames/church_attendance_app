@@ -17,8 +17,8 @@ class ContactCard extends StatelessWidget {
   final Widget? trailing;
 
   const ContactCard({
-    super.key,
     required this.contact,
+    super.key,
     this.onTap,
     this.trailing,
   });

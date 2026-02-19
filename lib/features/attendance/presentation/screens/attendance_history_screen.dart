@@ -48,7 +48,8 @@ class _AttendanceHistoryScreenState
         // Filter by date range in memory
         results = results
             .where((a) =>
-                a.serviceDate.isAfter(_dateFrom.subtract(const Duration(days: 1))) &&
+                a.serviceDate
+                    .isAfter(_dateFrom.subtract(const Duration(days: 1))) &&
                 a.serviceDate.isBefore(_dateTo.add(const Duration(days: 1))))
             .toList();
       } else {
@@ -103,38 +104,49 @@ class _AttendanceHistoryScreenState
   void _showServiceTypeFilter() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => SafeArea(
+      builder: (bottomSheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              title: const Text('All Services'),
-              leading: Radio<ServiceType?>(
-                value: null,
-                groupValue: _selectedServiceType,
-                onChanged: (value) {
-                  setState(() => _selectedServiceType = value);
-                  Navigator.pop(context);
-                  _loadAttendances();
-                },
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Filter by Service Type',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            ...ServiceType.values.map((type) => ListTile(
-                  leading: RadioGroup<ServiceType?>(
-                    
-                    groupValue: _selectedServiceType,
-                    onChanged: (value) {
-                      setState(() => _selectedServiceType = value);
-                      Navigator.pop(context);
-                      _loadAttendances();
-                    }, child: Text('data'), 
+            RadioGroup<ServiceType?>(
+              groupValue:
+                  _selectedServiceType, // Changed from 'value' to 'groupValue'
+              onChanged: (value) {
+                setState(() => _selectedServiceType = value);
+                Navigator.pop(bottomSheetContext);
+                _loadAttendances();
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const RadioListTile<ServiceType?>(
+                    value: null,
+                    title: Text('All Services'),
+                    // onChanged is handled by RadioGroup, but keep the parameter structure
                   ),
-                  title: Text(type.displayName),
-                  trailing: Text(
-                    '${_serviceTypeCounts[type.backendValue] ?? 0}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                )),
+                  ...ServiceType.values
+                      .map((type) => RadioListTile<ServiceType?>(
+                            value: type,
+                            title: Text(type.displayName),
+                            secondary: Text(
+                              '${_serviceTypeCounts[type.backendValue] ?? 0}',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          )),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -289,7 +301,7 @@ class _AttendanceHistoryScreenState
           ),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: serviceType.color.withValues(alpha:0.1),
+              backgroundColor: serviceType.color.withValues(alpha: 0.1),
               child: Icon(
                 serviceType.icon,
                 color: serviceType.color,
@@ -306,7 +318,7 @@ class _AttendanceHistoryScreenState
                 vertical: 4,
               ),
               decoration: BoxDecoration(
-                color: serviceType.color.withValues(alpha:0.1),
+                color: serviceType.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -349,7 +361,7 @@ class _SummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppDimens.paddingM),
       decoration: BoxDecoration(
-        color: color.withValues(alpha:0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
