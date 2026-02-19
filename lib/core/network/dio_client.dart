@@ -199,6 +199,16 @@ class DioClient {
   }
 
   // ============================================================
+  // Health Check
+  // ============================================================
+
+  /// GET /health
+  /// Checks if the server is healthy and reachable.
+  Future<Response> healthCheck() async {
+    return get(ApiConstants.health);
+  }
+
+  // ============================================================
   // Authentication Endpoints
   // ============================================================
 

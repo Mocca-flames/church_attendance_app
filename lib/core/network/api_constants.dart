@@ -4,6 +4,9 @@ class ApiConstants {
   // e.g., 'http://192.168.1.100:8000' for Android emulator to access localhost
   static const String baseUrl = 'https://8824-102-253-119-16.ngrok-free.app'; // Android emulator localhost
 
+  // Health Check
+  static const String health = '/health';
+
   // Auth Endpoints
   static const String login = '/auth/login';
   static const String register = '/auth/register';
@@ -12,6 +15,7 @@ class ApiConstants {
 
   // Contact Endpoints
   static const String contacts = '/contacts';
+  static const String contactsSearch = '/contacts?search=';
   static const String contactById = '/contacts/{id}';
   static const String contactAddList = '/contacts/add-list';
   static const String contactTags = '/contacts/{id}/tags';

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
 import 'package:drift/drift.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -102,7 +103,16 @@ class SyncManager {
 
   /// Sync individual item based on entity type and action
   Future<void> _syncItem(SyncQueueEntity item) async {
-    final data = jsonDecode(item.data);
+    Map<String, dynamic> data;
+    
+    try {
+      data = _parseJsonData(item.data);
+    } catch (e) {
+      // If parsing fails, the data is corrupted - delete the sync queue item
+      _logger.w('Corrupted sync queue item ${item.id}, deleting: $e');
+      await _db.deleteSyncQueueItem(item.id);
+      return;
+    }
 
     switch (item.entityType) {
       case 'contact':
@@ -120,6 +130,68 @@ class SyncManager {
     }
   }
 
+  /// Parse JSON data, handling common formatting issues
+  Map<String, dynamic> _parseJsonData(String dataStr) {
+    try {
+      // First try standard JSON parsing
+      return jsonDecode(dataStr) as Map<String, dynamic>;
+    } catch (e) {
+      // If that fails, try to fix common issues
+      try {
+        String fixed = dataStr;
+        
+        // First, add quotes around unquoted keys
+        // This handles data like {id: 7} → {"id": 7}
+        fixed = fixed.replaceAllMapped(
+          RegExp(r'(\w+):'),
+          (match) {
+            final key = match[1]!;
+            // Skip if it's a JSON keyword
+            if (key == 'true' || key == 'false' || key == 'null') {
+              return match[0]!;
+            }
+            return '"$key":';
+          },
+        );
+        
+        // Handle values that start with + (phone numbers)
+        fixed = fixed.replaceAllMapped(
+          RegExp(r':(\+[^,\s\}\]]+)([\s,\}])'),
+          (match) => ':"${match[1]}"${match[2]}'
+        );
+        
+        // Handle unquoted string values (like specialEvent -> "specialEvent")
+        fixed = fixed.replaceAllMapped(
+          RegExp(r':([a-zA-Z][a-zA-Z0-9_]*)([\s,\}])'),
+          (match) => ':"${match[1]}"${match[2]}'
+        );
+        
+        // Handle boolean values (true/false)
+        fixed = fixed.replaceAllMapped(
+          RegExp(r':(true|false)\b'),
+          (match) => ':${match[1]}'
+        );
+        
+        // Handle null values
+        fixed = fixed.replaceAllMapped(
+          RegExp(r':null\b'),
+          (match) => ':null'
+        );
+        
+        // Handle numbers
+        fixed = fixed.replaceAllMapped(
+          RegExp(r':(-?\d+\.?\d*)'),
+          (match) => ':${match[1]}'
+        );
+        
+        return jsonDecode(fixed) as Map<String, dynamic>;
+      } catch (e2) {
+        _logger.e('Unable to parse data: $dataStr', error: e2);
+        rethrow;
+      }
+    }
+  }
+
   // ==========================================================================
   // CONTACT SYNC
   // ==========================================================================
@@ -132,17 +204,91 @@ class SyncManager {
   ) async {
     switch (action) {
       case 'create':
-        final response = await _dioClient.post(
-          ApiConstants.contacts,
-          data: data,
-        );
-        final newServerId = response.data['id'] as int?;
-        if (newServerId != null) {
-          await _db.updateContactFields(
-            id: localId,
-            serverId: newServerId,
-            isSynced: true,
+        // Check if contact with same phone already exists
+        final phone = data['phone'] as String?;
+        if (phone != null) {
+          // Remove + prefix for search if present
+          final searchPhone = phone.startsWith('+') ? phone.substring(1) : phone;
+          
+          try {
+            // Search for existing contact by phone
+            final searchResponse = await _dioClient.get(
+              '${ApiConstants.contactsSearch}$searchPhone',
+            );
+            final existingContacts = searchResponse.data as List<dynamic>?;
+            
+            if (existingContacts != null && existingContacts.isNotEmpty) {
+              // Contact exists - update it instead
+              final existingContact = existingContacts.first;
+              final existingServerId = existingContact['id'] as int?;
+              
+              if (existingServerId != null) {
+                await _dioClient.put(
+                  ApiConstants.contactById.replaceAll('{id}', existingServerId.toString()),
+                  data: data,
+                );
+                // Update local contact with existing server ID
+                await _db.updateContactFields(
+                  id: localId,
+                  serverId: existingServerId,
+                  isSynced: true,
+                );
+                _logger.i('Updated existing contact $existingServerId with phone $phone');
+                return;
+              }
+            }
+          } catch (e) {
+            // If search fails, proceed to create new contact
+            _logger.w('Failed to search for existing contact: $e');
+          }
+        }
+        
+        // No existing contact found - create new one
+        try {
+          final response = await _dioClient.post(
+            ApiConstants.contacts,
+            data: data,
           );
+          final newServerId = response.data['id'] as int?;
+          if (newServerId != null) {
+            await _db.updateContactFields(
+              id: localId,
+              serverId: newServerId,
+              isSynced: true,
+            );
+          }
+        } on DioException catch (e) {
+          // If 400 error (contact exists), try to find and update
+          if (e.response?.statusCode == 400 && 
+              e.response?.data.toString().contains('already exists') != null) {
+            // Try one more time with search
+            if (phone != null) {
+              final searchPhone = phone.startsWith('+') ? phone.substring(1) : phone;
+              try {
+                final searchResponse = await _dioClient.get(
+                  '${ApiConstants.contactsSearch}$searchPhone',
+                );
+                final existingContacts = searchResponse.data as List<dynamic>?;
+                if (existingContacts != null && existingContacts.isNotEmpty) {
+                  final existingServerId = existingContacts.first['id'] as int?;
+                  if (existingServerId != null) {
+                    await _dioClient.put(
+                      ApiConstants.contactById.replaceAll('{id}', existingServerId.toString()),
+                      data: data,
+                    );
+                    await _db.updateContactFields(
+                      id: localId,
+                      serverId: existingServerId,
+                      isSynced: true,
+                    );
+                    _logger.i('Updated existing contact $existingServerId after 400 error');
+                    return;
+                  }
+                }
+              } catch (_) {}
+            }
+          }
+          rethrow;
         }
         break;
 

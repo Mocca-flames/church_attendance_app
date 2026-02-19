@@ -397,6 +397,10 @@ class AppDatabase extends _$AppDatabase {
   Future<int> deleteSyncQueueItem(int id) =>
       (delete(syncQueue)..where((t) => t.id.equals(id))).go();
 
+  /// Clear all items from the sync queue
+  Future<int> clearSyncQueue() =>
+      delete(syncQueue).go();
+
   Future<int> getPendingSyncCount() async {
     final items = await getPendingSyncItems();
     return items.length;

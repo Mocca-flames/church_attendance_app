@@ -23,7 +23,6 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     HomeScreen(),
     AttendanceScreen(),
     ContactsScreen(),
-    ScenariosScreen(),
     SettingsScreen(),
   ];
 
@@ -44,11 +43,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       activeIcon: Icon(Icons.card_membership),
       label: AppStrings.contacts,
     ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.checklist_outlined),
-      activeIcon: Icon(Icons.checklist),
-      label: AppStrings.scenarios,
-    ),
+    
     BottomNavigationBarItem(
       icon: Icon(Icons.settings_outlined),
       activeIcon: Icon(Icons.settings),
