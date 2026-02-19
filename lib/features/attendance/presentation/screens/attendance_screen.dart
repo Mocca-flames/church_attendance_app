@@ -84,10 +84,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
     if (result != null) {
       if (result.alreadyMarked) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Contact saved! Already marked for this service today.'),
-          backgroundColor: Colors.orange,
-        ));
+        // Already marked - scanner already shows the snackbar, do nothing here
       } else if (result.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error: ${result.error}'),
@@ -108,9 +105,14 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     super.dispose();
   }
 
+  String _getServiceTypeDisplayName(ServiceType serviceType) {
+    return serviceType.displayName;
+  }
+
   @override
   Widget build(BuildContext context) {
     final searchState = ref.watch(contactSearchProvider);
+    final currentServiceType = _currentServiceType;
 
     return Scaffold(
       appBar: AppBar(
@@ -127,6 +129,30 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       ),
       body: Column(
         children: [
+          // Service Type Banner
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.event,
+                  size: 18,
+                  color: Theme.of(context).primaryColor,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Recording for: ${_getServiceTypeDisplayName(currentServiceType)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: AppDimens.paddingM),
           _buildSearchField(),
           Expanded(child: _buildResultsList(searchState)),
@@ -174,6 +200,10 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   }
 
   Widget _buildResultsList(ContactSearchState searchState) {
+    // Get the current authenticated user's ID for recording attendance
+    final currentUser = ref.read(currentUserProvider);
+    final userId = currentUser?.id ?? 1;
+    
     if (searchState.isLoading) {
       return ListView.builder(
         itemCount: 5,
@@ -266,7 +296,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           key: ValueKey(contact.id), // stable key prevents widget reuse bugs
           contact: contact,
           serviceType: _currentServiceType,
-          // Card watches markedContactIdsProvider itself — no prop needed.
+          recordedBy: userId, // Use the authenticated user's ID
           onAttendanceMarked: _loadMarkedContacts,
         );
       },

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/sync/sync_manager.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
@@ -25,7 +26,67 @@ final syncManagerProvider = Provider<SyncManager>((ref) {
   return SyncManager(database, dioClient);
 });
 
-/// Provider for checking pending sync count.
+/// Provider for checking internet connectivity.
+/// Returns true if device has an active internet connection.
+final connectivityProvider = FutureProvider<bool>((ref) async {
+  final syncManager = ref.watch(syncManagerProvider);
+  return syncManager.hasInternetConnection();
+});
+
+/// StreamProvider for monitoring connectivity changes.
+/// This allows the app to react when the device goes online/offline.
+final connectivityStreamProvider = StreamProvider<List<ConnectivityResult>>((ref) {
+  return Connectivity().onConnectivityChanged;
+});
+
+/// Provider for checking if device is currently online.
+/// Uses the connectivity stream for real-time updates.
+final isOnlineProvider = NotifierProvider<IsOnlineNotifier, bool>(() {
+  return IsOnlineNotifier();
+});
+
+/// Notifier that tracks online/offline status and triggers sync when coming online.
+class IsOnlineNotifier extends Notifier<bool> {
+  StreamSubscription<List<ConnectivityResult>>? _subscription;
+
+  @override
+  bool build() {
+    _initConnectivity();
+    ref.onDispose(() {
+      _subscription?.cancel();
+    });
+    return false;
+  }
+
+  Future<void> _initConnectivity() async {
+    // Check initial connectivity
+    final connectivity = Connectivity();
+    final result = await connectivity.checkConnectivity();
+    _updateStatus(result);
+
+    // Listen for changes
+    _subscription = connectivity.onConnectivityChanged.listen(_updateStatus);
+  }
+
+  void _updateStatus(List<ConnectivityResult> results) {
+    final wasOnline = state;
+    state = !results.contains(ConnectivityResult.none);
+
+    // If we just came online, trigger sync
+    if (!wasOnline && state) {
+      _triggerAutoSync();
+    }
+  }
+
+  Future<void> _triggerAutoSync() async {
+    try {
+      // Sync pending items when coming online
+      await ref.read(syncStatusProvider.notifier).syncAll();
+    } catch (e) {
+      // Silently fail - will retry later
+    }
+  }
+}
 final pendingSyncCountProvider = FutureProvider<int>((ref) async {
   final syncManager = ref.watch(syncManagerProvider);
   return syncManager.getPendingSyncCount();

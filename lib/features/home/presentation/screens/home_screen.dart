@@ -36,7 +36,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _isInitialSyncDone = true;
     
     try {
-      // Check if we need full sync
+      // First, sync any pending offline items (attendance, contacts) to server
+      await ref.read(syncStatusProvider.notifier).syncAll();
+      
+      // Then pull fresh contacts from server
       final needsSync = await ref.read(contactsNeedSyncProvider.future);
       if (needsSync) {
         await ref.read(syncStatusProvider.notifier).pullContacts(forceFullSync: true);

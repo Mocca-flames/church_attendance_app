@@ -93,7 +93,7 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
       }
     } finally {
       // Wait before allowing next scan
-      await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(seconds: 1));
       if (mounted) {
         setState(() => _isProcessing = false);
       }
@@ -152,6 +152,9 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
   }
 
   void _showError(String message) {
+    // Haptic feedback for error
+    HapticFeedback.heavyImpact();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -169,6 +172,9 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
   }
 
   void _showWarning(String message) {
+    // Haptic feedback for warning
+    HapticFeedback.mediumImpact();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(

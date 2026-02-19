@@ -11,7 +11,7 @@ class ApiConstants {
   static const String refresh = '/auth/refresh';
 
   // Contact Endpoints
-  static const String contacts = '/contacts/';
+  static const String contacts = '/contacts';
   static const String contactById = '/contacts/{id}';
   static const String contactAddList = '/contacts/add-list';
   static const String contactTags = '/contacts/{id}/tags';

@@ -15,10 +15,13 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Contact {
   int get id;
+  @JsonKey(name: 'created_at')
   DateTime get createdAt;
   String get phone;
   ContactStatus get status;
+  @JsonKey(name: 'opt_out_sms')
   bool get optOutSms;
+  @JsonKey(name: 'opt_out_whatsapp')
   bool get optOutWhatsapp;
   @JsonKey(name: 'metadata_')
   String? get metadata;
@@ -80,11 +83,11 @@ abstract mixin class $ContactCopyWith<$Res> {
   @useResult
   $Res call(
       {int id,
-      DateTime createdAt,
+      @JsonKey(name: 'created_at') DateTime createdAt,
       String phone,
       ContactStatus status,
-      bool optOutSms,
-      bool optOutWhatsapp,
+      @JsonKey(name: 'opt_out_sms') bool optOutSms,
+      @JsonKey(name: 'opt_out_whatsapp') bool optOutWhatsapp,
       @JsonKey(name: 'metadata_') String? metadata,
       bool isSynced,
       bool isDeleted,
@@ -258,11 +261,11 @@ extension ContactPatterns on Contact {
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
             int id,
-            DateTime createdAt,
+            @JsonKey(name: 'created_at') DateTime createdAt,
             String phone,
             ContactStatus status,
-            bool optOutSms,
-            bool optOutWhatsapp,
+            @JsonKey(name: 'opt_out_sms') bool optOutSms,
+            @JsonKey(name: 'opt_out_whatsapp') bool optOutWhatsapp,
             @JsonKey(name: 'metadata_') String? metadata,
             bool isSynced,
             bool isDeleted,
@@ -308,11 +311,11 @@ extension ContactPatterns on Contact {
   TResult when<TResult extends Object?>(
     TResult Function(
             int id,
-            DateTime createdAt,
+            @JsonKey(name: 'created_at') DateTime createdAt,
             String phone,
             ContactStatus status,
-            bool optOutSms,
-            bool optOutWhatsapp,
+            @JsonKey(name: 'opt_out_sms') bool optOutSms,
+            @JsonKey(name: 'opt_out_whatsapp') bool optOutWhatsapp,
             @JsonKey(name: 'metadata_') String? metadata,
             bool isSynced,
             bool isDeleted,
@@ -354,11 +357,11 @@ extension ContactPatterns on Contact {
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
             int id,
-            DateTime createdAt,
+            @JsonKey(name: 'created_at') DateTime createdAt,
             String phone,
             ContactStatus status,
-            bool optOutSms,
-            bool optOutWhatsapp,
+            @JsonKey(name: 'opt_out_sms') bool optOutSms,
+            @JsonKey(name: 'opt_out_whatsapp') bool optOutWhatsapp,
             @JsonKey(name: 'metadata_') String? metadata,
             bool isSynced,
             bool isDeleted,
@@ -392,11 +395,11 @@ extension ContactPatterns on Contact {
 class _Contact extends Contact {
   const _Contact(
       {required this.id,
-      required this.createdAt,
+      @JsonKey(name: 'created_at') required this.createdAt,
       required this.phone,
       this.status = ContactStatus.active,
-      this.optOutSms = false,
-      this.optOutWhatsapp = false,
+      @JsonKey(name: 'opt_out_sms') this.optOutSms = false,
+      @JsonKey(name: 'opt_out_whatsapp') this.optOutWhatsapp = false,
       @JsonKey(name: 'metadata_') this.metadata,
       this.isSynced = false,
       this.isDeleted = false,
@@ -409,6 +412,7 @@ class _Contact extends Contact {
   @override
   final int id;
   @override
+  @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @override
   final String phone;
@@ -416,10 +420,10 @@ class _Contact extends Contact {
   @JsonKey()
   final ContactStatus status;
   @override
-  @JsonKey()
+  @JsonKey(name: 'opt_out_sms')
   final bool optOutSms;
   @override
-  @JsonKey()
+  @JsonKey(name: 'opt_out_whatsapp')
   final bool optOutWhatsapp;
   @override
   @JsonKey(name: 'metadata_')
@@ -494,11 +498,11 @@ abstract mixin class _$ContactCopyWith<$Res> implements $ContactCopyWith<$Res> {
   @useResult
   $Res call(
       {int id,
-      DateTime createdAt,
+      @JsonKey(name: 'created_at') DateTime createdAt,
       String phone,
       ContactStatus status,
-      bool optOutSms,
-      bool optOutWhatsapp,
+      @JsonKey(name: 'opt_out_sms') bool optOutSms,
+      @JsonKey(name: 'opt_out_whatsapp') bool optOutWhatsapp,
       @JsonKey(name: 'metadata_') String? metadata,
       bool isSynced,
       bool isDeleted,

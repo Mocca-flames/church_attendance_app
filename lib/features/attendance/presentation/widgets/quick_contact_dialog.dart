@@ -1,6 +1,7 @@
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 Future<CreateContactAttendanceResult?> showQuickContactSheet(
@@ -72,6 +73,10 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
     // Hide keyboard
     FocusScope.of(context).unfocus();
 
+    // Capture context-dependent objects BEFORE async gap
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
     setState(() => _isLoading = true);
 
     try {
@@ -88,41 +93,69 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
             : _locationController.text.trim(),
       );
 
-      if (mounted) {
-        if (result.alreadyMarked) {
-          // Contact saved but already marked for today
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Contact saved! Already marked for this service today.'),
-              behavior: SnackBarBehavior.floating,
-              backgroundColor: Colors.orange,
-            ),
-          );
-          Navigator.of(context).pop(result);
-        } else if (result.error != null) {
-          // Show error
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${result.error}'),
-              behavior: SnackBarBehavior.floating,
-              backgroundColor: Colors.red.shade600,
-            ),
-          );
-        } else {
-          // Success - contact saved and attendance recorded
-          Navigator.of(context).pop(result);
-        }
+      // Validate widget is still mounted before using captured references
+      if (!mounted) {
+        debugPrint('_QuickContactSheet: Widget unmounted after async, aborting UI update');
+        return;
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+
+      if (result.alreadyMarked) {
+        // Contact saved but already marked for today
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Contact saved! Already marked for this service today.'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.orange,
+          ),
+        );
+        await HapticFeedback.mediumImpact();
+        navigator.pop(result);
+      } else if (result.error != null) {
+        // Show error
+        scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('Error: ${result.error}'),
             behavior: SnackBarBehavior.floating,
             backgroundColor: Colors.red.shade600,
           ),
         );
+        await HapticFeedback.heavyImpact();
+      } else {
+        // Success - contact saved and attendance recorded
+        final contactName = _nameController.text.trim();
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Contact saved and attendance recorded for $contactName!'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.green,
+          ),
+        );
+        await HapticFeedback.mediumImpact();
+        navigator.pop(result);
       }
+    } catch (e) {
+      String friendlyMessage;
+      if (e.toString().contains('SocketException') || e.toString().contains('Connection')) {
+        friendlyMessage = 'No internet connection. Attendance saved locally.';
+      } else if (e.toString().contains('already marked')) {
+        friendlyMessage = 'Already marked for this service';
+      } else {
+        friendlyMessage = 'Something went wrong. Please try again.';
+      }
+      
+      // Validate widget is still mounted before using captured reference
+      if (!mounted) {
+        debugPrint('_QuickContactSheet: Widget unmounted in catch block, aborting UI update');
+        return;
+      }
+      
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(friendlyMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
+      await HapticFeedback.heavyImpact();
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

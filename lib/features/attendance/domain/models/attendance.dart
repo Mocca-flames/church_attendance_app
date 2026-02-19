@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
 
 part 'attendance.freezed.dart';
@@ -8,12 +9,12 @@ part 'attendance.g.dart';
 sealed class Attendance with _$Attendance {
   const factory Attendance({
     required int id,
-    required int contactId,
+    @JsonKey(name: 'contact_id') required int contactId,
     required String phone,
-    required ServiceType serviceType,
-    required DateTime serviceDate,
-    required int recordedBy,
-    required DateTime recordedAt,
+    @JsonKey(name: 'service_type') required ServiceType serviceType,
+    @JsonKey(name: 'service_date') required DateTime serviceDate,
+    @JsonKey(name: 'recorded_by') required int recordedBy,
+    @JsonKey(name: 'recorded_at') required DateTime recordedAt,
     @Default(false) bool isSynced,
     int? serverId,
   }) = _Attendance;

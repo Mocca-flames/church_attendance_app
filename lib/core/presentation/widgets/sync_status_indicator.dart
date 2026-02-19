@@ -5,7 +5,7 @@ import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 /// Widget that displays the current sync status.
 /// 
 /// Shows:
-/// - Cloud icon (done/offline) based on sync state
+/// - Cloud icon (done/offline) based on sync state AND connectivity
 /// - Last synced time in human-readable format
 /// - Pending sync count (if any items waiting to sync)
 /// - Optional tap to trigger manual sync
@@ -22,6 +22,7 @@ class SyncStatusIndicator extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final syncStatus = ref.watch(syncStatusProvider);
+    final isOnline = ref.watch(isOnlineProvider);
 
     return InkWell(
       onTap: onTap ?? () => _triggerSync(ref),
@@ -43,12 +44,16 @@ class SyncStatusIndicator extends ConsumerWidget {
               )
             else
               Icon(
-                syncStatus.lastSyncTime != null
-                    ? Icons.cloud_done
+                isOnline
+                    ? (syncStatus.lastSyncTime != null
+                        ? Icons.cloud_done
+                        : Icons.cloud_queue)
                     : Icons.cloud_off,
                 size: 16,
-                color: syncStatus.lastSyncTime != null
-                    ? Colors.green
+                color: isOnline
+                    ? (syncStatus.lastSyncTime != null
+                        ? Colors.green
+                        : Colors.blue)
                     : Colors.orange,
               ),
             const SizedBox(width: 4),
@@ -58,7 +63,9 @@ class SyncStatusIndicator extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Last synced: ${syncStatus.timeAgo}',
+                  isOnline
+                      ? 'Last synced: ${syncStatus.timeAgo}'
+                      : 'Offline - ${syncStatus.pendingCount} pending',
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.grey[600],
@@ -106,6 +113,7 @@ class SyncStatusIndicatorCompact extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final syncStatus = ref.watch(syncStatusProvider);
+    final isOnline = ref.watch(isOnlineProvider);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -121,12 +129,16 @@ class SyncStatusIndicatorCompact extends ConsumerWidget {
           )
         else
           Icon(
-            syncStatus.lastSyncTime != null
-                ? Icons.cloud_done
+            isOnline
+                ? (syncStatus.lastSyncTime != null
+                    ? Icons.cloud_done
+                    : Icons.cloud_queue)
                 : Icons.cloud_off,
             size: 14,
-            color: syncStatus.lastSyncTime != null
-                ? Colors.green
+            color: isOnline
+                ? (syncStatus.lastSyncTime != null
+                    ? Colors.green
+                    : Colors.blue)
                 : Colors.orange,
           ),
         if (syncStatus.pendingCount > 0) ...[

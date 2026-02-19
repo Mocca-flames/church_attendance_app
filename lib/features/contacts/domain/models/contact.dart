@@ -13,11 +13,11 @@ sealed class Contact with _$Contact {
 
   const factory Contact({
     required int id,
-    required DateTime createdAt,
+    @JsonKey(name: 'created_at') required DateTime createdAt,
     required String phone,
     @Default(ContactStatus.active) ContactStatus status,
-    @Default(false) bool optOutSms,
-    @Default(false) bool optOutWhatsapp,
+    @JsonKey(name: 'opt_out_sms') @Default(false) bool optOutSms,
+    @JsonKey(name: 'opt_out_whatsapp') @Default(false) bool optOutWhatsapp,
     @JsonKey(name: 'metadata_')
     String? metadata,
     @Default(false) bool isSynced,

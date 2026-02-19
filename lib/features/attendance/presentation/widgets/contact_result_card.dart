@@ -76,10 +76,9 @@ class ContactResultCard extends ConsumerWidget {
                     labelText: 'Name',
                     hintText: 'Enter contact name',
                   ),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty)
-                          ? 'Name is required'
-                          : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? 'Name is required'
+                      : null,
                 ),
                 const SizedBox(height: AppDimens.paddingM),
                 TextFormField(
@@ -108,14 +107,17 @@ class ContactResultCard extends ConsumerWidget {
               onPressed: () {
                 final Logger logger = Logger();
                 logger.d('=== FilledButton onPressed START ===');
-                logger.d('contact.id: ${contact.id} (type: ${contact.id.runtimeType})');
-                logger.d('contact.phone: ${contact.phone} (type: ${contact.phone.runtimeType})');
-                logger.d('contact.name: ${contact.name} (type: ${contact.name?.runtimeType})');
+                logger.d(
+                    'contact.id: ${contact.id} (type: ${contact.id.runtimeType})');
+                logger.d(
+                    'contact.phone: ${contact.phone} (type: ${contact.phone.runtimeType})');
+                logger.d(
+                    'contact.name: ${contact.name} (type: ${contact.name?.runtimeType})');
                 logger.d('serviceType: $serviceType');
                 logger.d('recordedBy: $recordedBy');
                 logger.d('isMember: $isMember');
                 logger.d('formKey.currentState: ${formKey.currentState}');
-                
+
                 if (formKey.currentState!.validate()) {
                   logger.d('Form validation passed, popping dialog with true');
                   Navigator.pop(context, true);
@@ -139,12 +141,12 @@ class ContactResultCard extends ConsumerWidget {
       final Logger logger = Logger();
       logger.d('=== _showUpdateDialog result START ===');
       logger.d('result: $result');
-      
+
       final name = nameController.text.trim();
       final location = locationController.text.trim().isEmpty
           ? null
           : locationController.text.trim();
-      
+
       logger.d('name: $name');
       logger.d('location: $location');
       logger.d('contact.phone: ${contact.phone}');
@@ -165,7 +167,7 @@ class ContactResultCard extends ConsumerWidget {
               isMember: isMember,
               location: location,
             );
-        
+
         logger.d('createContactAndRecordAttendance result: $updateResult');
 
         if (!context.mounted) {
@@ -173,13 +175,16 @@ class ContactResultCard extends ConsumerWidget {
           return;
         }
 
-        logger.d('About to update markedContactIdsProvider with contact.id: ${contact.id} (type: ${contact.id.runtimeType})');
-        logger.d('Current markedContactIdsProvider state: ${ref.read(markedContactIdsProvider)}');
-        
+        logger.d(
+            'About to update markedContactIdsProvider with contact.id: ${contact.id} (type: ${contact.id.runtimeType})');
+        logger.d(
+            'Current markedContactIdsProvider state: ${ref.read(markedContactIdsProvider)}');
+
         // Optimistically mark in provider so UI updates immediately.
         ref.read(markedContactIdsProvider.notifier).add(contact.id);
-        
-        logger.d('markedContactIdsProvider state after add: ${ref.read(markedContactIdsProvider)}');
+
+        logger.d(
+            'markedContactIdsProvider state after add: ${ref.read(markedContactIdsProvider)}');
 
         logger.d('=== _showUpdateDialog result END ===');
         if (updateResult.error != null) {
@@ -224,13 +229,16 @@ class ContactResultCard extends ConsumerWidget {
     final Logger logger = Logger();
     logger.d('=== _markAttendance START ===');
     logger.d('contact.id: ${contact.id} (type: ${contact.id.runtimeType})');
-    logger.d('contact.phone: ${contact.phone} (type: ${contact.phone.runtimeType})');
-    logger.d('contact.name: ${contact.name} (type: ${contact.name?.runtimeType})');
+    logger.d(
+        'contact.phone: ${contact.phone} (type: ${contact.phone.runtimeType})');
+    logger.d(
+        'contact.name: ${contact.name} (type: ${contact.name?.runtimeType})');
     logger.d('serviceType: $serviceType');
     logger.d('recordedBy: $recordedBy');
 
     // Read current marked set — if already marked, bail early.
-    final alreadyMarked = ref.read(markedContactIdsProvider).contains(contact.id);
+    final alreadyMarked =
+        ref.read(markedContactIdsProvider).contains(contact.id);
     logger.d('alreadyMarked: $alreadyMarked');
     if (alreadyMarked) {
       logger.d('=== _markAttendance END (already marked) ===');
@@ -309,11 +317,19 @@ class ContactResultCard extends ConsumerWidget {
     final isAlreadyMarked =
         ref.watch(markedContactIdsProvider).contains(contact.id);
 
-    return Opacity(
-      opacity: isAlreadyMarked ? 0.5 : 1.0,
+    return Container(
+      margin: const EdgeInsets.symmetric(
+          horizontal: AppDimens.paddingM, vertical: AppDimens.paddingS),
+      decoration: BoxDecoration(
+        color: isAlreadyMarked ? Colors.green.shade50 : null,
+        borderRadius: BorderRadius.circular(12),
+        border: isAlreadyMarked
+            ? Border.all(color: Colors.green.shade200, width: 1.5)
+            : null,
+      ),
       child: Card(
-        margin: const EdgeInsets.symmetric(
-            horizontal: AppDimens.paddingM, vertical: AppDimens.paddingS),
+        margin: EdgeInsets.zero,
+        color: isAlreadyMarked ? Colors.green.shade50 : null,
         child: ListTile(
           leading: CircleAvatar(
             backgroundColor: isAlreadyMarked
@@ -332,11 +348,10 @@ class ContactResultCard extends ConsumerWidget {
                 child: Text(
                   _displayName,
                   style: TextStyle(
-                    fontWeight:
-                        _isMember ? FontWeight.bold : FontWeight.normal,
-                    decoration: isAlreadyMarked
-                        ? TextDecoration.lineThrough
-                        : null,
+                    fontWeight: _isMember ? FontWeight.bold : FontWeight.normal,
+                    decoration:
+                        isAlreadyMarked ? TextDecoration.lineThrough : null,
+                    color: isAlreadyMarked ? Colors.grey.shade600 : null,
                   ),
                 ),
               ),
@@ -357,13 +372,14 @@ class ContactResultCard extends ConsumerWidget {
                         fontWeight: FontWeight.bold),
                   ),
                 ),
+              
             ],
           ),
           subtitle: Text(
             contact.phone,
             style: TextStyle(
-                decoration:
-                    isAlreadyMarked ? TextDecoration.lineThrough : null),
+                decoration: isAlreadyMarked ? TextDecoration.lineThrough : null,
+                color: isAlreadyMarked ? Colors.grey.shade500 : null),
           ),
           trailing: isAlreadyMarked
               ? const Icon(Icons.check_circle, color: Colors.green, size: 28)
@@ -394,16 +410,14 @@ class ContactResultCardSkeleton extends StatelessWidget {
           height: 16,
           width: 120,
           decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(4)),
+              color: Colors.grey[300], borderRadius: BorderRadius.circular(4)),
         ),
         subtitle: Container(
           height: 12,
           width: 80,
           margin: const EdgeInsets.only(top: 4),
           decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(4)),
+              color: Colors.grey[200], borderRadius: BorderRadius.circular(4)),
         ),
       ),
     );

@@ -16,8 +16,10 @@ T _$identity<T>(T value) => value;
 mixin _$User {
   String get email;
   UserRole get role;
+  @JsonKey(name: 'created_at')
   DateTime get createdAt;
   int get id;
+  @JsonKey(name: 'is_active')
   bool get isActive;
 
   /// Create a copy of User
@@ -61,7 +63,11 @@ abstract mixin class $UserCopyWith<$Res> {
       _$UserCopyWithImpl;
   @useResult
   $Res call(
-      {String email, UserRole role, DateTime createdAt, int id, bool isActive});
+      {String email,
+      UserRole role,
+      @JsonKey(name: 'created_at') DateTime createdAt,
+      int id,
+      @JsonKey(name: 'is_active') bool isActive});
 }
 
 /// @nodoc
@@ -198,8 +204,12 @@ extension UserPatterns on User {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(String email, UserRole role, DateTime createdAt, int id,
-            bool isActive)?
+    TResult Function(
+            String email,
+            UserRole role,
+            @JsonKey(name: 'created_at') DateTime createdAt,
+            int id,
+            @JsonKey(name: 'is_active') bool isActive)?
         $default, {
     required TResult orElse(),
   }) {
@@ -228,8 +238,12 @@ extension UserPatterns on User {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(String email, UserRole role, DateTime createdAt, int id,
-            bool isActive)
+    TResult Function(
+            String email,
+            UserRole role,
+            @JsonKey(name: 'created_at') DateTime createdAt,
+            int id,
+            @JsonKey(name: 'is_active') bool isActive)
         $default,
   ) {
     final _that = this;
@@ -254,8 +268,12 @@ extension UserPatterns on User {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(String email, UserRole role, DateTime createdAt, int id,
-            bool isActive)?
+    TResult? Function(
+            String email,
+            UserRole role,
+            @JsonKey(name: 'created_at') DateTime createdAt,
+            int id,
+            @JsonKey(name: 'is_active') bool isActive)?
         $default,
   ) {
     final _that = this;
@@ -275,9 +293,9 @@ class _User implements User {
   const _User(
       {required this.email,
       required this.role,
-      required this.createdAt,
+      @JsonKey(name: 'created_at') required this.createdAt,
       required this.id,
-      this.isActive = true});
+      @JsonKey(name: 'is_active') this.isActive = true});
   factory _User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 
   @override
@@ -285,11 +303,12 @@ class _User implements User {
   @override
   final UserRole role;
   @override
+  @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @override
   final int id;
   @override
-  @JsonKey()
+  @JsonKey(name: 'is_active')
   final bool isActive;
 
   /// Create a copy of User
@@ -339,7 +358,11 @@ abstract mixin class _$UserCopyWith<$Res> implements $UserCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String email, UserRole role, DateTime createdAt, int id, bool isActive});
+      {String email,
+      UserRole role,
+      @JsonKey(name: 'created_at') DateTime createdAt,
+      int id,
+      @JsonKey(name: 'is_active') bool isActive});
 }
 
 /// @nodoc

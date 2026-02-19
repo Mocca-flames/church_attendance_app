@@ -67,19 +67,35 @@ class AttendanceRemoteDataSource {
         print('DEBUG REMOTE: ${entry.key} = ${entry.value} (type: ${entry.value.runtimeType})');
       }
       
-      // Convert snake_case keys from server to camelCase expected by Attendance model
+      // The server returns snake_case keys, but the generated Attendance model
+      // expects snake_case keys (contact_id, service_type, service_date, recorded_at)
+      // Note: The server returns 'id' as the attendance's server ID. We need to:
+      // - Keep 'id' as-is for the Attendance model
+      // - Also map it to 'serverId' if needed
       final convertedData = <String, dynamic>{};
       data.forEach((key, value) {
         switch (key) {
-          case 'contact_id':
-            convertedData['contactId'] = value;
+          case 'id':
+            // Keep 'id' as-is AND also map to 'serverId' for sync purposes
+            convertedData['id'] = value;
+            convertedData['serverId'] = value;
+            break;
           case 'service_type':
             // Convert backend value to enum name
-            convertedData['serviceType'] = ServiceType.fromBackend(value as String).name;
+            convertedData['service_type'] = ServiceType.fromBackend(value as String).name;
+            break;
           case 'service_date':
-            convertedData['serviceDate'] = value;
+            // Ensure service_date is ISO8601 string
+            if (value is String) {
+              convertedData['service_date'] = value;
+            }
+            break;
           case 'recorded_at':
-            convertedData['recordedAt'] = value;
+            // Ensure recorded_at is ISO8601 string
+            if (value is String) {
+              convertedData['recorded_at'] = value;
+            }
+            break;
           default:
             convertedData[key] = value;
         }

@@ -15,11 +15,16 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Attendance {
   int get id;
+  @JsonKey(name: 'contact_id')
   int get contactId;
   String get phone;
+  @JsonKey(name: 'service_type')
   ServiceType get serviceType;
+  @JsonKey(name: 'service_date')
   DateTime get serviceDate;
+  @JsonKey(name: 'recorded_by')
   int get recordedBy;
+  @JsonKey(name: 'recorded_at')
   DateTime get recordedAt;
   bool get isSynced;
   int? get serverId;
@@ -76,12 +81,12 @@ abstract mixin class $AttendanceCopyWith<$Res> {
   @useResult
   $Res call(
       {int id,
-      int contactId,
+      @JsonKey(name: 'contact_id') int contactId,
       String phone,
-      ServiceType serviceType,
-      DateTime serviceDate,
-      int recordedBy,
-      DateTime recordedAt,
+      @JsonKey(name: 'service_type') ServiceType serviceType,
+      @JsonKey(name: 'service_date') DateTime serviceDate,
+      @JsonKey(name: 'recorded_by') int recordedBy,
+      @JsonKey(name: 'recorded_at') DateTime recordedAt,
       bool isSynced,
       int? serverId});
 }
@@ -242,12 +247,12 @@ extension AttendancePatterns on Attendance {
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
             int id,
-            int contactId,
+            @JsonKey(name: 'contact_id') int contactId,
             String phone,
-            ServiceType serviceType,
-            DateTime serviceDate,
-            int recordedBy,
-            DateTime recordedAt,
+            @JsonKey(name: 'service_type') ServiceType serviceType,
+            @JsonKey(name: 'service_date') DateTime serviceDate,
+            @JsonKey(name: 'recorded_by') int recordedBy,
+            @JsonKey(name: 'recorded_at') DateTime recordedAt,
             bool isSynced,
             int? serverId)?
         $default, {
@@ -288,12 +293,12 @@ extension AttendancePatterns on Attendance {
   TResult when<TResult extends Object?>(
     TResult Function(
             int id,
-            int contactId,
+            @JsonKey(name: 'contact_id') int contactId,
             String phone,
-            ServiceType serviceType,
-            DateTime serviceDate,
-            int recordedBy,
-            DateTime recordedAt,
+            @JsonKey(name: 'service_type') ServiceType serviceType,
+            @JsonKey(name: 'service_date') DateTime serviceDate,
+            @JsonKey(name: 'recorded_by') int recordedBy,
+            @JsonKey(name: 'recorded_at') DateTime recordedAt,
             bool isSynced,
             int? serverId)
         $default,
@@ -330,12 +335,12 @@ extension AttendancePatterns on Attendance {
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
             int id,
-            int contactId,
+            @JsonKey(name: 'contact_id') int contactId,
             String phone,
-            ServiceType serviceType,
-            DateTime serviceDate,
-            int recordedBy,
-            DateTime recordedAt,
+            @JsonKey(name: 'service_type') ServiceType serviceType,
+            @JsonKey(name: 'service_date') DateTime serviceDate,
+            @JsonKey(name: 'recorded_by') int recordedBy,
+            @JsonKey(name: 'recorded_at') DateTime recordedAt,
             bool isSynced,
             int? serverId)?
         $default,
@@ -364,12 +369,12 @@ extension AttendancePatterns on Attendance {
 class _Attendance implements Attendance {
   const _Attendance(
       {required this.id,
-      required this.contactId,
+      @JsonKey(name: 'contact_id') required this.contactId,
       required this.phone,
-      required this.serviceType,
-      required this.serviceDate,
-      required this.recordedBy,
-      required this.recordedAt,
+      @JsonKey(name: 'service_type') required this.serviceType,
+      @JsonKey(name: 'service_date') required this.serviceDate,
+      @JsonKey(name: 'recorded_by') required this.recordedBy,
+      @JsonKey(name: 'recorded_at') required this.recordedAt,
       this.isSynced = false,
       this.serverId});
   factory _Attendance.fromJson(Map<String, dynamic> json) =>
@@ -378,16 +383,21 @@ class _Attendance implements Attendance {
   @override
   final int id;
   @override
+  @JsonKey(name: 'contact_id')
   final int contactId;
   @override
   final String phone;
   @override
+  @JsonKey(name: 'service_type')
   final ServiceType serviceType;
   @override
+  @JsonKey(name: 'service_date')
   final DateTime serviceDate;
   @override
+  @JsonKey(name: 'recorded_by')
   final int recordedBy;
   @override
+  @JsonKey(name: 'recorded_at')
   final DateTime recordedAt;
   @override
   @JsonKey()
@@ -454,12 +464,12 @@ abstract mixin class _$AttendanceCopyWith<$Res>
   @useResult
   $Res call(
       {int id,
-      int contactId,
+      @JsonKey(name: 'contact_id') int contactId,
       String phone,
-      ServiceType serviceType,
-      DateTime serviceDate,
-      int recordedBy,
-      DateTime recordedAt,
+      @JsonKey(name: 'service_type') ServiceType serviceType,
+      @JsonKey(name: 'service_date') DateTime serviceDate,
+      @JsonKey(name: 'recorded_by') int recordedBy,
+      @JsonKey(name: 'recorded_at') DateTime recordedAt,
       bool isSynced,
       int? serverId});
 }

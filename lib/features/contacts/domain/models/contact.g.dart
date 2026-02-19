@@ -8,12 +8,12 @@ part of 'contact.dart';
 
 _Contact _$ContactFromJson(Map<String, dynamic> json) => _Contact(
       id: (json['id'] as num).toInt(),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String),
       phone: json['phone'] as String,
       status: $enumDecodeNullable(_$ContactStatusEnumMap, json['status']) ??
           ContactStatus.active,
-      optOutSms: json['optOutSms'] as bool? ?? false,
-      optOutWhatsapp: json['optOutWhatsapp'] as bool? ?? false,
+      optOutSms: json['opt_out_sms'] as bool? ?? false,
+      optOutWhatsapp: json['opt_out_whatsapp'] as bool? ?? false,
       metadata: json['metadata_'] as String?,
       isSynced: json['isSynced'] as bool? ?? false,
       isDeleted: json['isDeleted'] as bool? ?? false,
@@ -23,11 +23,11 @@ _Contact _$ContactFromJson(Map<String, dynamic> json) => _Contact(
 
 Map<String, dynamic> _$ContactToJson(_Contact instance) => <String, dynamic>{
       'id': instance.id,
-      'createdAt': instance.createdAt.toIso8601String(),
+      'created_at': instance.createdAt.toIso8601String(),
       'phone': instance.phone,
       'status': _$ContactStatusEnumMap[instance.status]!,
-      'optOutSms': instance.optOutSms,
-      'optOutWhatsapp': instance.optOutWhatsapp,
+      'opt_out_sms': instance.optOutSms,
+      'opt_out_whatsapp': instance.optOutWhatsapp,
       'metadata_': instance.metadata,
       'isSynced': instance.isSynced,
       'isDeleted': instance.isDeleted,

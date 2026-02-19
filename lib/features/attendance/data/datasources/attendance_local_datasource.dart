@@ -46,6 +46,11 @@ class AttendanceLocalDataSource {
       json['createdAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
       print('DEBUG LOCAL: converted createdAt to: ${json['createdAt']}');
     }
+    // Map createdAt to created_at for Contact model compatibility
+    // (DB uses createdAt but Contact.fromJson expects created_at)
+    if (json.containsKey('createdAt') && !json.containsKey('created_at')) {
+      json['created_at'] = json.remove('createdAt');
+    }
     print('DEBUG LOCAL: About to call Contact.fromJson...');
     try {
       final result = Contact.fromJson(json);
@@ -80,6 +85,11 @@ class AttendanceLocalDataSource {
       final epochMs = json['createdAt'] as int;
       json['createdAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
       print('DEBUG getContactById: converted createdAt to: ${json['createdAt']}');
+    }
+    // Map createdAt to created_at for Contact model compatibility
+    // (DB uses createdAt but Contact.fromJson expects created_at)
+    if (json.containsKey('createdAt') && !json.containsKey('created_at')) {
+      json['created_at'] = json.remove('createdAt');
     }
     print('DEBUG getContactById: calling Contact.fromJson...');
     return Contact.fromJson(json);
@@ -243,21 +253,49 @@ class AttendanceLocalDataSource {
   
   /// Helper method to convert database values to Attendance.fromJson expected formats
   void _convertAttendanceJson(Map<String, dynamic> json) {
+    // DEBUG: Log all keys before conversion
+    print('DEBUG _convertAttendanceJson: keys before = ${json.keys.toList()}');
+    
+    // Map database keys to Attendance model expected keys
+    // Database uses camelCase (contactId, recordedBy) but model expects snake_case (contact_id, recorded_by)
+    if (json.containsKey('contactId') && !json.containsKey('contact_id')) {
+      json['contact_id'] = json.remove('contactId');
+    }
+    if (json.containsKey('recordedBy') && !json.containsKey('recorded_by')) {
+      json['recorded_by'] = json.remove('recordedBy');
+    }
+    
     // Convert serviceType from backend value to enum name
+    // Store in service_type (with underscore) as expected by Attendance model
     if (json.containsKey('serviceType') && json['serviceType'] is String) {
-      json['serviceType'] = ServiceType.fromBackend(json['serviceType'] as String).name;
+      json['service_type'] = ServiceType.fromBackend(json['serviceType'] as String).name;
     }
     
     // Convert serviceDate from epoch milliseconds to ISO8601 string
+    // MUST rename key to service_date (snake_case) as expected by Attendance model
     if (json.containsKey('serviceDate') && json['serviceDate'] is int) {
       final epochMs = json['serviceDate'] as int;
-      json['serviceDate'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
+      json['service_date'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
+      json.remove('serviceDate');
+      print('DEBUG _convertAttendanceJson: converted serviceDate to service_date = ${json["service_date"]}');
     }
     
     // Convert recordedAt from epoch milliseconds to ISO8601 string
+    // MUST rename key to recorded_at (snake_case) as expected by Attendance model
     if (json.containsKey('recordedAt') && json['recordedAt'] is int) {
       final epochMs = json['recordedAt'] as int;
-      json['recordedAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
+      json['recorded_at'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
+      json.remove('recordedAt');
+      print('DEBUG _convertAttendanceJson: converted recordedAt to recorded_at = ${json["recorded_at"]}');
+    }
+    
+    // DEBUG: Log all keys after conversion
+    print('DEBUG _convertAttendanceJson: keys after = ${json.keys.toList()}');
+    
+    // Handle serverId - ensure it's not passed as null to non-nullable field
+    if (json.containsKey('serverId') && json['serverId'] == null) {
+      print('DEBUG _convertAttendanceJson: serverId is null, removing key');
+      json.remove('serverId');
     }
   }
 

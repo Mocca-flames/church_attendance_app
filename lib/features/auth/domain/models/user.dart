@@ -10,9 +10,9 @@ sealed class User with _$User {
   const factory User({
     required String email,
     required UserRole role,
-    required DateTime createdAt,
+    @JsonKey(name: 'created_at') required DateTime createdAt,
     required int id,
-    @Default(true) bool isActive,
+    @JsonKey(name: 'is_active') @Default(true) bool isActive,
   }) = _User;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);

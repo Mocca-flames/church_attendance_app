@@ -9,17 +9,17 @@ part of 'user.dart';
 _User _$UserFromJson(Map<String, dynamic> json) => _User(
       email: json['email'] as String,
       role: $enumDecode(_$UserRoleEnumMap, json['role']),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String),
       id: (json['id'] as num).toInt(),
-      isActive: json['isActive'] as bool? ?? true,
+      isActive: json['is_active'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
       'email': instance.email,
       'role': _$UserRoleEnumMap[instance.role]!,
-      'createdAt': instance.createdAt.toIso8601String(),
+      'created_at': instance.createdAt.toIso8601String(),
       'id': instance.id,
-      'isActive': instance.isActive,
+      'is_active': instance.isActive,
     };
 
 const _$UserRoleEnumMap = {
