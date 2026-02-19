@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,251 +9,415 @@ part of 'scenario.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-Scenario _$ScenarioFromJson(Map<String, dynamic> json) {
-  return _Scenario.fromJson(json);
-}
 
 /// @nodoc
 mixin _$Scenario {
-  int get id => throw _privateConstructorUsedError;
-  int? get serverId => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
-  String? get description => throw _privateConstructorUsedError;
-  List<String> get filterTags => throw _privateConstructorUsedError;
-  ScenarioStatus get status => throw _privateConstructorUsedError;
-  int get createdBy => throw _privateConstructorUsedError;
-  DateTime get createdAt => throw _privateConstructorUsedError;
-  DateTime? get completedAt => throw _privateConstructorUsedError;
-  bool get isSynced => throw _privateConstructorUsedError;
-  bool get isDeleted => throw _privateConstructorUsedError;
+  List<String> get filterTags;
+  String get name;
+  int get id;
+  int get createdBy;
+  DateTime get createdAt;
+  int? get serverId;
+  String? get description;
+  ScenarioStatus get status;
+  DateTime? get completedAt;
+  bool get isSynced;
+  bool get isDeleted;
 
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
-  $ScenarioCopyWith<Scenario> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ScenarioCopyWith<$Res> {
-  factory $ScenarioCopyWith(Scenario value, $Res Function(Scenario) then) =
-      _$ScenarioCopyWithImpl<$Res, Scenario>;
-  @useResult
-  $Res call(
-      {int id,
-      int? serverId,
-      String name,
-      String? description,
-      List<String> filterTags,
-      ScenarioStatus status,
-      int createdBy,
-      DateTime createdAt,
-      DateTime? completedAt,
-      bool isSynced,
-      bool isDeleted});
-}
-
-/// @nodoc
-class _$ScenarioCopyWithImpl<$Res, $Val extends Scenario>
-    implements $ScenarioCopyWith<$Res> {
-  _$ScenarioCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
+  /// Create a copy of Scenario
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
+  $ScenarioCopyWith<Scenario> get copyWith =>
+      _$ScenarioCopyWithImpl<Scenario>(this as Scenario, _$identity);
+
+  /// Serializes this Scenario to a JSON map.
+  Map<String, dynamic> toJson();
+
   @override
-  $Res call({
-    Object? id = null,
-    Object? serverId = freezed,
-    Object? name = null,
-    Object? description = freezed,
-    Object? filterTags = null,
-    Object? status = null,
-    Object? createdBy = null,
-    Object? createdAt = null,
-    Object? completedAt = freezed,
-    Object? isSynced = null,
-    Object? isDeleted = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      serverId: freezed == serverId
-          ? _value.serverId
-          : serverId // ignore: cast_nullable_to_non_nullable
-              as int?,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      description: freezed == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
-              as String?,
-      filterTags: null == filterTags
-          ? _value.filterTags
-          : filterTags // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      status: null == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as ScenarioStatus,
-      createdBy: null == createdBy
-          ? _value.createdBy
-          : createdBy // ignore: cast_nullable_to_non_nullable
-              as int,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      completedAt: freezed == completedAt
-          ? _value.completedAt
-          : completedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      isSynced: null == isSynced
-          ? _value.isSynced
-          : isSynced // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isDeleted: null == isDeleted
-          ? _value.isDeleted
-          : isDeleted // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ) as $Val);
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is Scenario &&
+            const DeepCollectionEquality()
+                .equals(other.filterTags, filterTags) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.createdBy, createdBy) ||
+                other.createdBy == createdBy) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            (identical(other.serverId, serverId) ||
+                other.serverId == serverId) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
+            (identical(other.status, status) || other.status == status) &&
+            (identical(other.completedAt, completedAt) ||
+                other.completedAt == completedAt) &&
+            (identical(other.isSynced, isSynced) ||
+                other.isSynced == isSynced) &&
+            (identical(other.isDeleted, isDeleted) ||
+                other.isDeleted == isDeleted));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(filterTags),
+      name,
+      id,
+      createdBy,
+      createdAt,
+      serverId,
+      description,
+      status,
+      completedAt,
+      isSynced,
+      isDeleted);
+
+  @override
+  String toString() {
+    return 'Scenario(filterTags: $filterTags, name: $name, id: $id, createdBy: $createdBy, createdAt: $createdAt, serverId: $serverId, description: $description, status: $status, completedAt: $completedAt, isSynced: $isSynced, isDeleted: $isDeleted)';
   }
 }
 
 /// @nodoc
-abstract class _$$ScenarioImplCopyWith<$Res>
-    implements $ScenarioCopyWith<$Res> {
-  factory _$$ScenarioImplCopyWith(
-          _$ScenarioImpl value, $Res Function(_$ScenarioImpl) then) =
-      __$$ScenarioImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $ScenarioCopyWith<$Res> {
+  factory $ScenarioCopyWith(Scenario value, $Res Function(Scenario) _then) =
+      _$ScenarioCopyWithImpl;
   @useResult
   $Res call(
-      {int id,
-      int? serverId,
+      {List<String> filterTags,
       String name,
-      String? description,
-      List<String> filterTags,
-      ScenarioStatus status,
+      int id,
       int createdBy,
       DateTime createdAt,
+      int? serverId,
+      String? description,
+      ScenarioStatus status,
       DateTime? completedAt,
       bool isSynced,
       bool isDeleted});
 }
 
 /// @nodoc
-class __$$ScenarioImplCopyWithImpl<$Res>
-    extends _$ScenarioCopyWithImpl<$Res, _$ScenarioImpl>
-    implements _$$ScenarioImplCopyWith<$Res> {
-  __$$ScenarioImplCopyWithImpl(
-      _$ScenarioImpl _value, $Res Function(_$ScenarioImpl) _then)
-      : super(_value, _then);
+class _$ScenarioCopyWithImpl<$Res> implements $ScenarioCopyWith<$Res> {
+  _$ScenarioCopyWithImpl(this._self, this._then);
 
+  final Scenario _self;
+  final $Res Function(Scenario) _then;
+
+  /// Create a copy of Scenario
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
-    Object? serverId = freezed,
-    Object? name = null,
-    Object? description = freezed,
     Object? filterTags = null,
-    Object? status = null,
+    Object? name = null,
+    Object? id = null,
     Object? createdBy = null,
     Object? createdAt = null,
+    Object? serverId = freezed,
+    Object? description = freezed,
+    Object? status = null,
     Object? completedAt = freezed,
     Object? isSynced = null,
     Object? isDeleted = null,
   }) {
-    return _then(_$ScenarioImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      serverId: freezed == serverId
-          ? _value.serverId
-          : serverId // ignore: cast_nullable_to_non_nullable
-              as int?,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      description: freezed == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
-              as String?,
+    return _then(_self.copyWith(
       filterTags: null == filterTags
-          ? _value._filterTags
+          ? _self.filterTags
           : filterTags // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      status: null == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as ScenarioStatus,
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
       createdBy: null == createdBy
-          ? _value.createdBy
+          ? _self.createdBy
           : createdBy // ignore: cast_nullable_to_non_nullable
               as int,
       createdAt: null == createdAt
-          ? _value.createdAt
+          ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      serverId: freezed == serverId
+          ? _self.serverId
+          : serverId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      description: freezed == description
+          ? _self.description
+          : description // ignore: cast_nullable_to_non_nullable
+              as String?,
+      status: null == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as ScenarioStatus,
       completedAt: freezed == completedAt
-          ? _value.completedAt
+          ? _self.completedAt
           : completedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       isSynced: null == isSynced
-          ? _value.isSynced
+          ? _self.isSynced
           : isSynced // ignore: cast_nullable_to_non_nullable
               as bool,
       isDeleted: null == isDeleted
-          ? _value.isDeleted
+          ? _self.isDeleted
           : isDeleted // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [Scenario].
+extension ScenarioPatterns on Scenario {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_Scenario value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _Scenario() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_Scenario value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Scenario():
+        return $default(_that);
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_Scenario value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Scenario() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            List<String> filterTags,
+            String name,
+            int id,
+            int createdBy,
+            DateTime createdAt,
+            int? serverId,
+            String? description,
+            ScenarioStatus status,
+            DateTime? completedAt,
+            bool isSynced,
+            bool isDeleted)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _Scenario() when $default != null:
+        return $default(
+            _that.filterTags,
+            _that.name,
+            _that.id,
+            _that.createdBy,
+            _that.createdAt,
+            _that.serverId,
+            _that.description,
+            _that.status,
+            _that.completedAt,
+            _that.isSynced,
+            _that.isDeleted);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            List<String> filterTags,
+            String name,
+            int id,
+            int createdBy,
+            DateTime createdAt,
+            int? serverId,
+            String? description,
+            ScenarioStatus status,
+            DateTime? completedAt,
+            bool isSynced,
+            bool isDeleted)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Scenario():
+        return $default(
+            _that.filterTags,
+            _that.name,
+            _that.id,
+            _that.createdBy,
+            _that.createdAt,
+            _that.serverId,
+            _that.description,
+            _that.status,
+            _that.completedAt,
+            _that.isSynced,
+            _that.isDeleted);
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            List<String> filterTags,
+            String name,
+            int id,
+            int createdBy,
+            DateTime createdAt,
+            int? serverId,
+            String? description,
+            ScenarioStatus status,
+            DateTime? completedAt,
+            bool isSynced,
+            bool isDeleted)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Scenario() when $default != null:
+        return $default(
+            _that.filterTags,
+            _that.name,
+            _that.id,
+            _that.createdBy,
+            _that.createdAt,
+            _that.serverId,
+            _that.description,
+            _that.status,
+            _that.completedAt,
+            _that.isSynced,
+            _that.isDeleted);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 @JsonSerializable()
-class _$ScenarioImpl extends _Scenario {
-  const _$ScenarioImpl(
-      {required this.id,
-      this.serverId,
+class _Scenario extends Scenario {
+  const _Scenario(
+      {required final List<String> filterTags,
       required this.name,
-      this.description,
-      required final List<String> filterTags,
-      this.status = ScenarioStatus.active,
+      required this.id,
       required this.createdBy,
       required this.createdAt,
+      this.serverId,
+      this.description,
+      this.status = ScenarioStatus.active,
       this.completedAt,
       this.isSynced = false,
       this.isDeleted = false})
       : _filterTags = filterTags,
         super._();
+  factory _Scenario.fromJson(Map<String, dynamic> json) =>
+      _$ScenarioFromJson(json);
 
-  factory _$ScenarioImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ScenarioImplFromJson(json);
-
-  @override
-  final int id;
-  @override
-  final int? serverId;
-  @override
-  final String name;
-  @override
-  final String? description;
   final List<String> _filterTags;
   @override
   List<String> get filterTags {
@@ -263,12 +427,20 @@ class _$ScenarioImpl extends _Scenario {
   }
 
   @override
-  @JsonKey()
-  final ScenarioStatus status;
+  final String name;
+  @override
+  final int id;
   @override
   final int createdBy;
   @override
   final DateTime createdAt;
+  @override
+  final int? serverId;
+  @override
+  final String? description;
+  @override
+  @JsonKey()
+  final ScenarioStatus status;
   @override
   final DateTime? completedAt;
   @override
@@ -278,29 +450,39 @@ class _$ScenarioImpl extends _Scenario {
   @JsonKey()
   final bool isDeleted;
 
+  /// Create a copy of Scenario
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'Scenario(id: $id, serverId: $serverId, name: $name, description: $description, filterTags: $filterTags, status: $status, createdBy: $createdBy, createdAt: $createdAt, completedAt: $completedAt, isSynced: $isSynced, isDeleted: $isDeleted)';
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$ScenarioCopyWith<_Scenario> get copyWith =>
+      __$ScenarioCopyWithImpl<_Scenario>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$ScenarioToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ScenarioImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.serverId, serverId) ||
-                other.serverId == serverId) &&
-            (identical(other.name, name) || other.name == name) &&
-            (identical(other.description, description) ||
-                other.description == description) &&
+            other is _Scenario &&
             const DeepCollectionEquality()
                 .equals(other._filterTags, _filterTags) &&
-            (identical(other.status, status) || other.status == status) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.id, id) || other.id == id) &&
             (identical(other.createdBy, createdBy) ||
                 other.createdBy == createdBy) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
+            (identical(other.serverId, serverId) ||
+                other.serverId == serverId) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
+            (identical(other.status, status) || other.status == status) &&
             (identical(other.completedAt, completedAt) ||
                 other.completedAt == completedAt) &&
             (identical(other.isSynced, isSynced) ||
@@ -309,309 +491,511 @@ class _$ScenarioImpl extends _Scenario {
                 other.isDeleted == isDeleted));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
-      id,
-      serverId,
-      name,
-      description,
       const DeepCollectionEquality().hash(_filterTags),
-      status,
+      name,
+      id,
       createdBy,
       createdAt,
+      serverId,
+      description,
+      status,
       completedAt,
       isSynced,
       isDeleted);
 
-  @JsonKey(ignore: true)
   @override
-  @pragma('vm:prefer-inline')
-  _$$ScenarioImplCopyWith<_$ScenarioImpl> get copyWith =>
-      __$$ScenarioImplCopyWithImpl<_$ScenarioImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ScenarioImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _Scenario extends Scenario {
-  const factory _Scenario(
-      {required final int id,
-      final int? serverId,
-      required final String name,
-      final String? description,
-      required final List<String> filterTags,
-      final ScenarioStatus status,
-      required final int createdBy,
-      required final DateTime createdAt,
-      final DateTime? completedAt,
-      final bool isSynced,
-      final bool isDeleted}) = _$ScenarioImpl;
-  const _Scenario._() : super._();
-
-  factory _Scenario.fromJson(Map<String, dynamic> json) =
-      _$ScenarioImpl.fromJson;
-
-  @override
-  int get id;
-  @override
-  int? get serverId;
-  @override
-  String get name;
-  @override
-  String? get description;
-  @override
-  List<String> get filterTags;
-  @override
-  ScenarioStatus get status;
-  @override
-  int get createdBy;
-  @override
-  DateTime get createdAt;
-  @override
-  DateTime? get completedAt;
-  @override
-  bool get isSynced;
-  @override
-  bool get isDeleted;
-  @override
-  @JsonKey(ignore: true)
-  _$$ScenarioImplCopyWith<_$ScenarioImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-ScenarioTask _$ScenarioTaskFromJson(Map<String, dynamic> json) {
-  return _ScenarioTask.fromJson(json);
-}
-
-/// @nodoc
-mixin _$ScenarioTask {
-  int get id => throw _privateConstructorUsedError;
-  int? get serverId => throw _privateConstructorUsedError;
-  int get scenarioId => throw _privateConstructorUsedError;
-  int get contactId => throw _privateConstructorUsedError;
-  String get phone => throw _privateConstructorUsedError;
-  String? get name => throw _privateConstructorUsedError;
-  bool get isCompleted => throw _privateConstructorUsedError;
-  int? get completedBy => throw _privateConstructorUsedError;
-  DateTime? get completedAt => throw _privateConstructorUsedError;
-  bool get isSynced => throw _privateConstructorUsedError;
-
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
-  $ScenarioTaskCopyWith<ScenarioTask> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ScenarioTaskCopyWith<$Res> {
-  factory $ScenarioTaskCopyWith(
-          ScenarioTask value, $Res Function(ScenarioTask) then) =
-      _$ScenarioTaskCopyWithImpl<$Res, ScenarioTask>;
-  @useResult
-  $Res call(
-      {int id,
-      int? serverId,
-      int scenarioId,
-      int contactId,
-      String phone,
-      String? name,
-      bool isCompleted,
-      int? completedBy,
-      DateTime? completedAt,
-      bool isSynced});
-}
-
-/// @nodoc
-class _$ScenarioTaskCopyWithImpl<$Res, $Val extends ScenarioTask>
-    implements $ScenarioTaskCopyWith<$Res> {
-  _$ScenarioTaskCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? serverId = freezed,
-    Object? scenarioId = null,
-    Object? contactId = null,
-    Object? phone = null,
-    Object? name = freezed,
-    Object? isCompleted = null,
-    Object? completedBy = freezed,
-    Object? completedAt = freezed,
-    Object? isSynced = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      serverId: freezed == serverId
-          ? _value.serverId
-          : serverId // ignore: cast_nullable_to_non_nullable
-              as int?,
-      scenarioId: null == scenarioId
-          ? _value.scenarioId
-          : scenarioId // ignore: cast_nullable_to_non_nullable
-              as int,
-      contactId: null == contactId
-          ? _value.contactId
-          : contactId // ignore: cast_nullable_to_non_nullable
-              as int,
-      phone: null == phone
-          ? _value.phone
-          : phone // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: freezed == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String?,
-      isCompleted: null == isCompleted
-          ? _value.isCompleted
-          : isCompleted // ignore: cast_nullable_to_non_nullable
-              as bool,
-      completedBy: freezed == completedBy
-          ? _value.completedBy
-          : completedBy // ignore: cast_nullable_to_non_nullable
-              as int?,
-      completedAt: freezed == completedAt
-          ? _value.completedAt
-          : completedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      isSynced: null == isSynced
-          ? _value.isSynced
-          : isSynced // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ) as $Val);
+  String toString() {
+    return 'Scenario(filterTags: $filterTags, name: $name, id: $id, createdBy: $createdBy, createdAt: $createdAt, serverId: $serverId, description: $description, status: $status, completedAt: $completedAt, isSynced: $isSynced, isDeleted: $isDeleted)';
   }
 }
 
 /// @nodoc
-abstract class _$$ScenarioTaskImplCopyWith<$Res>
-    implements $ScenarioTaskCopyWith<$Res> {
-  factory _$$ScenarioTaskImplCopyWith(
-          _$ScenarioTaskImpl value, $Res Function(_$ScenarioTaskImpl) then) =
-      __$$ScenarioTaskImplCopyWithImpl<$Res>;
+abstract mixin class _$ScenarioCopyWith<$Res>
+    implements $ScenarioCopyWith<$Res> {
+  factory _$ScenarioCopyWith(_Scenario value, $Res Function(_Scenario) _then) =
+      __$ScenarioCopyWithImpl;
   @override
   @useResult
   $Res call(
-      {int id,
+      {List<String> filterTags,
+      String name,
+      int id,
+      int createdBy,
+      DateTime createdAt,
       int? serverId,
-      int scenarioId,
-      int contactId,
-      String phone,
-      String? name,
-      bool isCompleted,
-      int? completedBy,
+      String? description,
+      ScenarioStatus status,
       DateTime? completedAt,
-      bool isSynced});
+      bool isSynced,
+      bool isDeleted});
 }
 
 /// @nodoc
-class __$$ScenarioTaskImplCopyWithImpl<$Res>
-    extends _$ScenarioTaskCopyWithImpl<$Res, _$ScenarioTaskImpl>
-    implements _$$ScenarioTaskImplCopyWith<$Res> {
-  __$$ScenarioTaskImplCopyWithImpl(
-      _$ScenarioTaskImpl _value, $Res Function(_$ScenarioTaskImpl) _then)
-      : super(_value, _then);
+class __$ScenarioCopyWithImpl<$Res> implements _$ScenarioCopyWith<$Res> {
+  __$ScenarioCopyWithImpl(this._self, this._then);
 
-  @pragma('vm:prefer-inline')
+  final _Scenario _self;
+  final $Res Function(_Scenario) _then;
+
+  /// Create a copy of Scenario
+  /// with the given fields replaced by the non-null parameter values.
   @override
+  @pragma('vm:prefer-inline')
   $Res call({
+    Object? filterTags = null,
+    Object? name = null,
     Object? id = null,
+    Object? createdBy = null,
+    Object? createdAt = null,
     Object? serverId = freezed,
-    Object? scenarioId = null,
-    Object? contactId = null,
-    Object? phone = null,
-    Object? name = freezed,
-    Object? isCompleted = null,
-    Object? completedBy = freezed,
+    Object? description = freezed,
+    Object? status = null,
     Object? completedAt = freezed,
     Object? isSynced = null,
+    Object? isDeleted = null,
   }) {
-    return _then(_$ScenarioTaskImpl(
+    return _then(_Scenario(
+      filterTags: null == filterTags
+          ? _self._filterTags
+          : filterTags // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
       id: null == id
-          ? _value.id
+          ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
+      createdBy: null == createdBy
+          ? _self.createdBy
+          : createdBy // ignore: cast_nullable_to_non_nullable
+              as int,
+      createdAt: null == createdAt
+          ? _self.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
       serverId: freezed == serverId
-          ? _value.serverId
+          ? _self.serverId
           : serverId // ignore: cast_nullable_to_non_nullable
               as int?,
-      scenarioId: null == scenarioId
-          ? _value.scenarioId
-          : scenarioId // ignore: cast_nullable_to_non_nullable
-              as int,
-      contactId: null == contactId
-          ? _value.contactId
-          : contactId // ignore: cast_nullable_to_non_nullable
-              as int,
-      phone: null == phone
-          ? _value.phone
-          : phone // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: freezed == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
+      description: freezed == description
+          ? _self.description
+          : description // ignore: cast_nullable_to_non_nullable
               as String?,
-      isCompleted: null == isCompleted
-          ? _value.isCompleted
-          : isCompleted // ignore: cast_nullable_to_non_nullable
-              as bool,
-      completedBy: freezed == completedBy
-          ? _value.completedBy
-          : completedBy // ignore: cast_nullable_to_non_nullable
-              as int?,
+      status: null == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as ScenarioStatus,
       completedAt: freezed == completedAt
-          ? _value.completedAt
+          ? _self.completedAt
           : completedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       isSynced: null == isSynced
-          ? _value.isSynced
+          ? _self.isSynced
           : isSynced // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isDeleted: null == isDeleted
+          ? _self.isDeleted
+          : isDeleted // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }
 }
 
 /// @nodoc
+mixin _$ScenarioTask {
+  int get id;
+  int get scenarioId;
+  int get contactId;
+  String get phone;
+  int? get serverId;
+  String? get name;
+  bool get isCompleted;
+  int? get completedBy;
+  DateTime? get completedAt;
+  bool get isSynced;
+
+  /// Create a copy of ScenarioTask
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $ScenarioTaskCopyWith<ScenarioTask> get copyWith =>
+      _$ScenarioTaskCopyWithImpl<ScenarioTask>(
+          this as ScenarioTask, _$identity);
+
+  /// Serializes this ScenarioTask to a JSON map.
+  Map<String, dynamic> toJson();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is ScenarioTask &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.scenarioId, scenarioId) ||
+                other.scenarioId == scenarioId) &&
+            (identical(other.contactId, contactId) ||
+                other.contactId == contactId) &&
+            (identical(other.phone, phone) || other.phone == phone) &&
+            (identical(other.serverId, serverId) ||
+                other.serverId == serverId) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.isCompleted, isCompleted) ||
+                other.isCompleted == isCompleted) &&
+            (identical(other.completedBy, completedBy) ||
+                other.completedBy == completedBy) &&
+            (identical(other.completedAt, completedAt) ||
+                other.completedAt == completedAt) &&
+            (identical(other.isSynced, isSynced) ||
+                other.isSynced == isSynced));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, scenarioId, contactId, phone,
+      serverId, name, isCompleted, completedBy, completedAt, isSynced);
+
+  @override
+  String toString() {
+    return 'ScenarioTask(id: $id, scenarioId: $scenarioId, contactId: $contactId, phone: $phone, serverId: $serverId, name: $name, isCompleted: $isCompleted, completedBy: $completedBy, completedAt: $completedAt, isSynced: $isSynced)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $ScenarioTaskCopyWith<$Res> {
+  factory $ScenarioTaskCopyWith(
+          ScenarioTask value, $Res Function(ScenarioTask) _then) =
+      _$ScenarioTaskCopyWithImpl;
+  @useResult
+  $Res call(
+      {int id,
+      int scenarioId,
+      int contactId,
+      String phone,
+      int? serverId,
+      String? name,
+      bool isCompleted,
+      int? completedBy,
+      DateTime? completedAt,
+      bool isSynced});
+}
+
+/// @nodoc
+class _$ScenarioTaskCopyWithImpl<$Res> implements $ScenarioTaskCopyWith<$Res> {
+  _$ScenarioTaskCopyWithImpl(this._self, this._then);
+
+  final ScenarioTask _self;
+  final $Res Function(ScenarioTask) _then;
+
+  /// Create a copy of ScenarioTask
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? scenarioId = null,
+    Object? contactId = null,
+    Object? phone = null,
+    Object? serverId = freezed,
+    Object? name = freezed,
+    Object? isCompleted = null,
+    Object? completedBy = freezed,
+    Object? completedAt = freezed,
+    Object? isSynced = null,
+  }) {
+    return _then(_self.copyWith(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      scenarioId: null == scenarioId
+          ? _self.scenarioId
+          : scenarioId // ignore: cast_nullable_to_non_nullable
+              as int,
+      contactId: null == contactId
+          ? _self.contactId
+          : contactId // ignore: cast_nullable_to_non_nullable
+              as int,
+      phone: null == phone
+          ? _self.phone
+          : phone // ignore: cast_nullable_to_non_nullable
+              as String,
+      serverId: freezed == serverId
+          ? _self.serverId
+          : serverId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      name: freezed == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isCompleted: null == isCompleted
+          ? _self.isCompleted
+          : isCompleted // ignore: cast_nullable_to_non_nullable
+              as bool,
+      completedBy: freezed == completedBy
+          ? _self.completedBy
+          : completedBy // ignore: cast_nullable_to_non_nullable
+              as int?,
+      completedAt: freezed == completedAt
+          ? _self.completedAt
+          : completedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      isSynced: null == isSynced
+          ? _self.isSynced
+          : isSynced // ignore: cast_nullable_to_non_nullable
+              as bool,
+    ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [ScenarioTask].
+extension ScenarioTaskPatterns on ScenarioTask {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_ScenarioTask value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioTask() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_ScenarioTask value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioTask():
+        return $default(_that);
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_ScenarioTask value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioTask() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            int id,
+            int scenarioId,
+            int contactId,
+            String phone,
+            int? serverId,
+            String? name,
+            bool isCompleted,
+            int? completedBy,
+            DateTime? completedAt,
+            bool isSynced)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioTask() when $default != null:
+        return $default(
+            _that.id,
+            _that.scenarioId,
+            _that.contactId,
+            _that.phone,
+            _that.serverId,
+            _that.name,
+            _that.isCompleted,
+            _that.completedBy,
+            _that.completedAt,
+            _that.isSynced);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            int id,
+            int scenarioId,
+            int contactId,
+            String phone,
+            int? serverId,
+            String? name,
+            bool isCompleted,
+            int? completedBy,
+            DateTime? completedAt,
+            bool isSynced)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioTask():
+        return $default(
+            _that.id,
+            _that.scenarioId,
+            _that.contactId,
+            _that.phone,
+            _that.serverId,
+            _that.name,
+            _that.isCompleted,
+            _that.completedBy,
+            _that.completedAt,
+            _that.isSynced);
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            int id,
+            int scenarioId,
+            int contactId,
+            String phone,
+            int? serverId,
+            String? name,
+            bool isCompleted,
+            int? completedBy,
+            DateTime? completedAt,
+            bool isSynced)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioTask() when $default != null:
+        return $default(
+            _that.id,
+            _that.scenarioId,
+            _that.contactId,
+            _that.phone,
+            _that.serverId,
+            _that.name,
+            _that.isCompleted,
+            _that.completedBy,
+            _that.completedAt,
+            _that.isSynced);
+      case _:
+        return null;
+    }
+  }
+}
+
+/// @nodoc
 @JsonSerializable()
-class _$ScenarioTaskImpl implements _ScenarioTask {
-  const _$ScenarioTaskImpl(
+class _ScenarioTask implements ScenarioTask {
+  const _ScenarioTask(
       {required this.id,
-      this.serverId,
       required this.scenarioId,
       required this.contactId,
       required this.phone,
+      this.serverId,
       this.name,
       this.isCompleted = false,
       this.completedBy,
       this.completedAt,
       this.isSynced = false});
-
-  factory _$ScenarioTaskImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ScenarioTaskImplFromJson(json);
+  factory _ScenarioTask.fromJson(Map<String, dynamic> json) =>
+      _$ScenarioTaskFromJson(json);
 
   @override
   final int id;
-  @override
-  final int? serverId;
   @override
   final int scenarioId;
   @override
   final int contactId;
   @override
   final String phone;
+  @override
+  final int? serverId;
   @override
   final String? name;
   @override
@@ -625,24 +1009,34 @@ class _$ScenarioTaskImpl implements _ScenarioTask {
   @JsonKey()
   final bool isSynced;
 
+  /// Create a copy of ScenarioTask
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'ScenarioTask(id: $id, serverId: $serverId, scenarioId: $scenarioId, contactId: $contactId, phone: $phone, name: $name, isCompleted: $isCompleted, completedBy: $completedBy, completedAt: $completedAt, isSynced: $isSynced)';
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$ScenarioTaskCopyWith<_ScenarioTask> get copyWith =>
+      __$ScenarioTaskCopyWithImpl<_ScenarioTask>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$ScenarioTaskToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ScenarioTaskImpl &&
+            other is _ScenarioTask &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.serverId, serverId) ||
-                other.serverId == serverId) &&
             (identical(other.scenarioId, scenarioId) ||
                 other.scenarioId == scenarioId) &&
             (identical(other.contactId, contactId) ||
                 other.contactId == contactId) &&
             (identical(other.phone, phone) || other.phone == phone) &&
+            (identical(other.serverId, serverId) ||
+                other.serverId == serverId) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.isCompleted, isCompleted) ||
                 other.isCompleted == isCompleted) &&
@@ -654,170 +1048,347 @@ class _$ScenarioTaskImpl implements _ScenarioTask {
                 other.isSynced == isSynced));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, serverId, scenarioId,
-      contactId, phone, name, isCompleted, completedBy, completedAt, isSynced);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ScenarioTaskImplCopyWith<_$ScenarioTaskImpl> get copyWith =>
-      __$$ScenarioTaskImplCopyWithImpl<_$ScenarioTaskImpl>(this, _$identity);
+  int get hashCode => Object.hash(runtimeType, id, scenarioId, contactId, phone,
+      serverId, name, isCompleted, completedBy, completedAt, isSynced);
 
   @override
-  Map<String, dynamic> toJson() {
-    return _$$ScenarioTaskImplToJson(
-      this,
-    );
-  }
-}
-
-abstract class _ScenarioTask implements ScenarioTask {
-  const factory _ScenarioTask(
-      {required final int id,
-      final int? serverId,
-      required final int scenarioId,
-      required final int contactId,
-      required final String phone,
-      final String? name,
-      final bool isCompleted,
-      final int? completedBy,
-      final DateTime? completedAt,
-      final bool isSynced}) = _$ScenarioTaskImpl;
-
-  factory _ScenarioTask.fromJson(Map<String, dynamic> json) =
-      _$ScenarioTaskImpl.fromJson;
-
-  @override
-  int get id;
-  @override
-  int? get serverId;
-  @override
-  int get scenarioId;
-  @override
-  int get contactId;
-  @override
-  String get phone;
-  @override
-  String? get name;
-  @override
-  bool get isCompleted;
-  @override
-  int? get completedBy;
-  @override
-  DateTime? get completedAt;
-  @override
-  bool get isSynced;
-  @override
-  @JsonKey(ignore: true)
-  _$$ScenarioTaskImplCopyWith<_$ScenarioTaskImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-mixin _$ScenarioWithTasks {
-  Scenario get scenario => throw _privateConstructorUsedError;
-  List<ScenarioTask> get tasks => throw _privateConstructorUsedError;
-
-  @JsonKey(ignore: true)
-  $ScenarioWithTasksCopyWith<ScenarioWithTasks> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ScenarioWithTasksCopyWith<$Res> {
-  factory $ScenarioWithTasksCopyWith(
-          ScenarioWithTasks value, $Res Function(ScenarioWithTasks) then) =
-      _$ScenarioWithTasksCopyWithImpl<$Res, ScenarioWithTasks>;
-  @useResult
-  $Res call({Scenario scenario, List<ScenarioTask> tasks});
-
-  $ScenarioCopyWith<$Res> get scenario;
-}
-
-/// @nodoc
-class _$ScenarioWithTasksCopyWithImpl<$Res, $Val extends ScenarioWithTasks>
-    implements $ScenarioWithTasksCopyWith<$Res> {
-  _$ScenarioWithTasksCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? scenario = null,
-    Object? tasks = null,
-  }) {
-    return _then(_value.copyWith(
-      scenario: null == scenario
-          ? _value.scenario
-          : scenario // ignore: cast_nullable_to_non_nullable
-              as Scenario,
-      tasks: null == tasks
-          ? _value.tasks
-          : tasks // ignore: cast_nullable_to_non_nullable
-              as List<ScenarioTask>,
-    ) as $Val);
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $ScenarioCopyWith<$Res> get scenario {
-    return $ScenarioCopyWith<$Res>(_value.scenario, (value) {
-      return _then(_value.copyWith(scenario: value) as $Val);
-    });
+  String toString() {
+    return 'ScenarioTask(id: $id, scenarioId: $scenarioId, contactId: $contactId, phone: $phone, serverId: $serverId, name: $name, isCompleted: $isCompleted, completedBy: $completedBy, completedAt: $completedAt, isSynced: $isSynced)';
   }
 }
 
 /// @nodoc
-abstract class _$$ScenarioWithTasksImplCopyWith<$Res>
-    implements $ScenarioWithTasksCopyWith<$Res> {
-  factory _$$ScenarioWithTasksImplCopyWith(_$ScenarioWithTasksImpl value,
-          $Res Function(_$ScenarioWithTasksImpl) then) =
-      __$$ScenarioWithTasksImplCopyWithImpl<$Res>;
+abstract mixin class _$ScenarioTaskCopyWith<$Res>
+    implements $ScenarioTaskCopyWith<$Res> {
+  factory _$ScenarioTaskCopyWith(
+          _ScenarioTask value, $Res Function(_ScenarioTask) _then) =
+      __$ScenarioTaskCopyWithImpl;
   @override
   @useResult
-  $Res call({Scenario scenario, List<ScenarioTask> tasks});
-
-  @override
-  $ScenarioCopyWith<$Res> get scenario;
+  $Res call(
+      {int id,
+      int scenarioId,
+      int contactId,
+      String phone,
+      int? serverId,
+      String? name,
+      bool isCompleted,
+      int? completedBy,
+      DateTime? completedAt,
+      bool isSynced});
 }
 
 /// @nodoc
-class __$$ScenarioWithTasksImplCopyWithImpl<$Res>
-    extends _$ScenarioWithTasksCopyWithImpl<$Res, _$ScenarioWithTasksImpl>
-    implements _$$ScenarioWithTasksImplCopyWith<$Res> {
-  __$$ScenarioWithTasksImplCopyWithImpl(_$ScenarioWithTasksImpl _value,
-      $Res Function(_$ScenarioWithTasksImpl) _then)
-      : super(_value, _then);
+class __$ScenarioTaskCopyWithImpl<$Res>
+    implements _$ScenarioTaskCopyWith<$Res> {
+  __$ScenarioTaskCopyWithImpl(this._self, this._then);
 
-  @pragma('vm:prefer-inline')
+  final _ScenarioTask _self;
+  final $Res Function(_ScenarioTask) _then;
+
+  /// Create a copy of ScenarioTask
+  /// with the given fields replaced by the non-null parameter values.
   @override
+  @pragma('vm:prefer-inline')
   $Res call({
-    Object? scenario = null,
-    Object? tasks = null,
+    Object? id = null,
+    Object? scenarioId = null,
+    Object? contactId = null,
+    Object? phone = null,
+    Object? serverId = freezed,
+    Object? name = freezed,
+    Object? isCompleted = null,
+    Object? completedBy = freezed,
+    Object? completedAt = freezed,
+    Object? isSynced = null,
   }) {
-    return _then(_$ScenarioWithTasksImpl(
-      scenario: null == scenario
-          ? _value.scenario
-          : scenario // ignore: cast_nullable_to_non_nullable
-              as Scenario,
-      tasks: null == tasks
-          ? _value._tasks
-          : tasks // ignore: cast_nullable_to_non_nullable
-              as List<ScenarioTask>,
+    return _then(_ScenarioTask(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      scenarioId: null == scenarioId
+          ? _self.scenarioId
+          : scenarioId // ignore: cast_nullable_to_non_nullable
+              as int,
+      contactId: null == contactId
+          ? _self.contactId
+          : contactId // ignore: cast_nullable_to_non_nullable
+              as int,
+      phone: null == phone
+          ? _self.phone
+          : phone // ignore: cast_nullable_to_non_nullable
+              as String,
+      serverId: freezed == serverId
+          ? _self.serverId
+          : serverId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      name: freezed == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isCompleted: null == isCompleted
+          ? _self.isCompleted
+          : isCompleted // ignore: cast_nullable_to_non_nullable
+              as bool,
+      completedBy: freezed == completedBy
+          ? _self.completedBy
+          : completedBy // ignore: cast_nullable_to_non_nullable
+              as int?,
+      completedAt: freezed == completedAt
+          ? _self.completedAt
+          : completedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      isSynced: null == isSynced
+          ? _self.isSynced
+          : isSynced // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
 
 /// @nodoc
+mixin _$ScenarioWithTasks {
+  Scenario get scenario;
+  List<ScenarioTask> get tasks;
 
-class _$ScenarioWithTasksImpl extends _ScenarioWithTasks {
-  const _$ScenarioWithTasksImpl(
+  /// Create a copy of ScenarioWithTasks
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $ScenarioWithTasksCopyWith<ScenarioWithTasks> get copyWith =>
+      _$ScenarioWithTasksCopyWithImpl<ScenarioWithTasks>(
+          this as ScenarioWithTasks, _$identity);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is ScenarioWithTasks &&
+            (identical(other.scenario, scenario) ||
+                other.scenario == scenario) &&
+            const DeepCollectionEquality().equals(other.tasks, tasks));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, scenario, const DeepCollectionEquality().hash(tasks));
+
+  @override
+  String toString() {
+    return 'ScenarioWithTasks(scenario: $scenario, tasks: $tasks)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $ScenarioWithTasksCopyWith<$Res> {
+  factory $ScenarioWithTasksCopyWith(
+          ScenarioWithTasks value, $Res Function(ScenarioWithTasks) _then) =
+      _$ScenarioWithTasksCopyWithImpl;
+  @useResult
+  $Res call({Scenario scenario, List<ScenarioTask> tasks});
+
+  $ScenarioCopyWith<$Res> get scenario;
+}
+
+/// @nodoc
+class _$ScenarioWithTasksCopyWithImpl<$Res>
+    implements $ScenarioWithTasksCopyWith<$Res> {
+  _$ScenarioWithTasksCopyWithImpl(this._self, this._then);
+
+  final ScenarioWithTasks _self;
+  final $Res Function(ScenarioWithTasks) _then;
+
+  /// Create a copy of ScenarioWithTasks
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? scenario = null,
+    Object? tasks = null,
+  }) {
+    return _then(_self.copyWith(
+      scenario: null == scenario
+          ? _self.scenario
+          : scenario // ignore: cast_nullable_to_non_nullable
+              as Scenario,
+      tasks: null == tasks
+          ? _self.tasks
+          : tasks // ignore: cast_nullable_to_non_nullable
+              as List<ScenarioTask>,
+    ));
+  }
+
+  /// Create a copy of ScenarioWithTasks
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ScenarioCopyWith<$Res> get scenario {
+    return $ScenarioCopyWith<$Res>(_self.scenario, (value) {
+      return _then(_self.copyWith(scenario: value));
+    });
+  }
+}
+
+/// Adds pattern-matching-related methods to [ScenarioWithTasks].
+extension ScenarioWithTasksPatterns on ScenarioWithTasks {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_ScenarioWithTasks value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioWithTasks() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_ScenarioWithTasks value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioWithTasks():
+        return $default(_that);
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_ScenarioWithTasks value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioWithTasks() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(Scenario scenario, List<ScenarioTask> tasks)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioWithTasks() when $default != null:
+        return $default(_that.scenario, _that.tasks);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(Scenario scenario, List<ScenarioTask> tasks) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioWithTasks():
+        return $default(_that.scenario, _that.tasks);
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(Scenario scenario, List<ScenarioTask> tasks)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ScenarioWithTasks() when $default != null:
+        return $default(_that.scenario, _that.tasks);
+      case _:
+        return null;
+    }
+  }
+}
+
+/// @nodoc
+
+class _ScenarioWithTasks extends ScenarioWithTasks {
+  const _ScenarioWithTasks(
       {required this.scenario, required final List<ScenarioTask> tasks})
       : _tasks = tasks,
         super._();
@@ -832,16 +1403,19 @@ class _$ScenarioWithTasksImpl extends _ScenarioWithTasks {
     return EqualUnmodifiableListView(_tasks);
   }
 
+  /// Create a copy of ScenarioWithTasks
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'ScenarioWithTasks(scenario: $scenario, tasks: $tasks)';
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$ScenarioWithTasksCopyWith<_ScenarioWithTasks> get copyWith =>
+      __$ScenarioWithTasksCopyWithImpl<_ScenarioWithTasks>(this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ScenarioWithTasksImpl &&
+            other is _ScenarioWithTasks &&
             (identical(other.scenario, scenario) ||
                 other.scenario == scenario) &&
             const DeepCollectionEquality().equals(other._tasks, _tasks));
@@ -851,26 +1425,63 @@ class _$ScenarioWithTasksImpl extends _ScenarioWithTasks {
   int get hashCode => Object.hash(
       runtimeType, scenario, const DeepCollectionEquality().hash(_tasks));
 
-  @JsonKey(ignore: true)
+  @override
+  String toString() {
+    return 'ScenarioWithTasks(scenario: $scenario, tasks: $tasks)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$ScenarioWithTasksCopyWith<$Res>
+    implements $ScenarioWithTasksCopyWith<$Res> {
+  factory _$ScenarioWithTasksCopyWith(
+          _ScenarioWithTasks value, $Res Function(_ScenarioWithTasks) _then) =
+      __$ScenarioWithTasksCopyWithImpl;
+  @override
+  @useResult
+  $Res call({Scenario scenario, List<ScenarioTask> tasks});
+
+  @override
+  $ScenarioCopyWith<$Res> get scenario;
+}
+
+/// @nodoc
+class __$ScenarioWithTasksCopyWithImpl<$Res>
+    implements _$ScenarioWithTasksCopyWith<$Res> {
+  __$ScenarioWithTasksCopyWithImpl(this._self, this._then);
+
+  final _ScenarioWithTasks _self;
+  final $Res Function(_ScenarioWithTasks) _then;
+
+  /// Create a copy of ScenarioWithTasks
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  _$$ScenarioWithTasksImplCopyWith<_$ScenarioWithTasksImpl> get copyWith =>
-      __$$ScenarioWithTasksImplCopyWithImpl<_$ScenarioWithTasksImpl>(
-          this, _$identity);
+  $Res call({
+    Object? scenario = null,
+    Object? tasks = null,
+  }) {
+    return _then(_ScenarioWithTasks(
+      scenario: null == scenario
+          ? _self.scenario
+          : scenario // ignore: cast_nullable_to_non_nullable
+              as Scenario,
+      tasks: null == tasks
+          ? _self._tasks
+          : tasks // ignore: cast_nullable_to_non_nullable
+              as List<ScenarioTask>,
+    ));
+  }
+
+  /// Create a copy of ScenarioWithTasks
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ScenarioCopyWith<$Res> get scenario {
+    return $ScenarioCopyWith<$Res>(_self.scenario, (value) {
+      return _then(_self.copyWith(scenario: value));
+    });
+  }
 }
 
-abstract class _ScenarioWithTasks extends ScenarioWithTasks {
-  const factory _ScenarioWithTasks(
-      {required final Scenario scenario,
-      required final List<ScenarioTask> tasks}) = _$ScenarioWithTasksImpl;
-  const _ScenarioWithTasks._() : super._();
-
-  @override
-  Scenario get scenario;
-  @override
-  List<ScenarioTask> get tasks;
-  @override
-  @JsonKey(ignore: true)
-  _$$ScenarioWithTasksImplCopyWith<_$ScenarioWithTasksImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+// dart format on

@@ -389,9 +389,9 @@ class SyncManager {
         serverId: Value(serverId),
         name: Value(json['name']),
         phone: Value(json['phone']),
-        status: Value(json['status'] ?? 'active'),
-        optOutSms: Value(json['opt_out_sms'] ?? false),
-        optOutWhatsapp: Value(json['opt_out_whatsapp'] ?? false),
+        status: Value(_convertToString(json['status'], 'active')),
+        optOutSms: Value(_convertToBool(json['opt_out_sms'])),
+        optOutWhatsapp: Value(_convertToBool(json['opt_out_whatsapp'])),
         metadata: Value(json['metadata_']),
         isSynced: const Value(true),
       );
@@ -433,6 +433,27 @@ class SyncManager {
         }
       }
     });
+  }
+
+  // ==========================================================================
+  // TYPE CONVERSION HELPERS
+  // ==========================================================================
+
+  /// Converts a value to String, handling int values from server API.
+  String _convertToString(dynamic value, String defaultValue) {
+    if (value == null) return defaultValue;
+    if (value is String) return value;
+    if (value is int) return value.toString();
+    return defaultValue;
+  }
+
+  /// Converts a value to bool, handling int values (0/1) from server API.
+  bool _convertToBool(dynamic value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    if (value is int) return value != 0;
+    if (value is String) return value.toLowerCase() == 'true';
+    return false;
   }
 }
 

@@ -180,9 +180,12 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     bool isMember = false,
     String? location,
   }) async {
+    print('DEBUG PROVIDER: createContactAndRecordAttendance called');
+    print('DEBUG PROVIDER: phone=$phone, name=$name, isMember=$isMember, location=$location');
     state = state.copyWith(isLoading: true, clearError: true);
     
     try {
+      print('DEBUG PROVIDER: Calling repository.createQuickContact...');
       // Create contact first (returns existing if found)
       final contact = await _repository.createQuickContact(
         phone: phone,
@@ -190,6 +193,7 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
         isMember: isMember,
         location: location,
       );
+      print('DEBUG PROVIDER: createQuickContact returned: id=${contact.id}, name=${contact.name}');
       
       // Check if attendance already exists for this contact today
       final alreadyMarked = await _repository.checkAttendanceExists(

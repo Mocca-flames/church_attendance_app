@@ -6,21 +6,20 @@ part of 'user.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
-      id: (json['id'] as num).toInt(),
+_User _$UserFromJson(Map<String, dynamic> json) => _User(
       email: json['email'] as String,
       role: $enumDecode(_$UserRoleEnumMap, json['role']),
-      isActive: json['isActive'] as bool? ?? true,
       createdAt: DateTime.parse(json['createdAt'] as String),
+      id: (json['id'] as num).toInt(),
+      isActive: json['isActive'] as bool? ?? true,
     );
 
-Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
+Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
       'email': instance.email,
       'role': _$UserRoleEnumMap[instance.role]!,
-      'isActive': instance.isActive,
       'createdAt': instance.createdAt.toIso8601String(),
+      'id': instance.id,
+      'isActive': instance.isActive,
     };
 
 const _$UserRoleEnumMap = {
@@ -30,8 +29,8 @@ const _$UserRoleEnumMap = {
   UserRole.servant: 'servant',
 };
 
-_$AuthResponseImpl _$$AuthResponseImplFromJson(Map<String, dynamic> json) =>
-    _$AuthResponseImpl(
+_AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) =>
+    _AuthResponse(
       accessToken: json['accessToken'] as String,
       tokenType: json['tokenType'] as String,
       refreshToken: json['refreshToken'] as String?,
@@ -40,7 +39,7 @@ _$AuthResponseImpl _$$AuthResponseImplFromJson(Map<String, dynamic> json) =>
           : User.fromJson(json['user'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$$AuthResponseImplToJson(_$AuthResponseImpl instance) =>
+Map<String, dynamic> _$AuthResponseToJson(_AuthResponse instance) =>
     <String, dynamic>{
       'accessToken': instance.accessToken,
       'tokenType': instance.tokenType,

@@ -6,35 +6,33 @@ part of 'contact.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$ContactImpl _$$ContactImplFromJson(Map<String, dynamic> json) =>
-    _$ContactImpl(
+_Contact _$ContactFromJson(Map<String, dynamic> json) => _Contact(
       id: (json['id'] as num).toInt(),
-      serverId: (json['serverId'] as num?)?.toInt(),
-      name: json['name'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
       phone: json['phone'] as String,
       status: $enumDecodeNullable(_$ContactStatusEnumMap, json['status']) ??
           ContactStatus.active,
       optOutSms: json['optOutSms'] as bool? ?? false,
       optOutWhatsapp: json['optOutWhatsapp'] as bool? ?? false,
-      metadata: json['metadata'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      metadata: json['metadata_'] as String?,
       isSynced: json['isSynced'] as bool? ?? false,
       isDeleted: json['isDeleted'] as bool? ?? false,
+      serverId: (json['serverId'] as num?)?.toInt(),
+      name: json['name'] as String?,
     );
 
-Map<String, dynamic> _$$ContactImplToJson(_$ContactImpl instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$ContactToJson(_Contact instance) => <String, dynamic>{
       'id': instance.id,
-      'serverId': instance.serverId,
-      'name': instance.name,
+      'createdAt': instance.createdAt.toIso8601String(),
       'phone': instance.phone,
       'status': _$ContactStatusEnumMap[instance.status]!,
       'optOutSms': instance.optOutSms,
       'optOutWhatsapp': instance.optOutWhatsapp,
-      'metadata': instance.metadata,
-      'createdAt': instance.createdAt.toIso8601String(),
+      'metadata_': instance.metadata,
       'isSynced': instance.isSynced,
       'isDeleted': instance.isDeleted,
+      'serverId': instance.serverId,
+      'name': instance.name,
     };
 
 const _$ContactStatusEnumMap = {

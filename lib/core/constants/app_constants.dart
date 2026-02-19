@@ -170,7 +170,7 @@ abstract final class PhoneUtils {
     if (phone == null || phone.isEmpty) return null;
     
     // Remove all whitespace and non-digit characters except +
-    String cleaned = phone.replaceAll(RegExp(r'\s+'), '');
+    final String cleaned = phone.replaceAll(RegExp(r'\s+'), '');
     
     // Handle +27 prefix
     if (cleaned.startsWith('+27')) {

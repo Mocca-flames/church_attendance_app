@@ -11,14 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../widgets/quick_contact_dialog.dart';
 
-/// Attendance screen with search-first approach for marking attendance.
-///
-/// Features:
-/// - Automatic service type based on day (Sunday/Tuesday/Special Event)
-/// - PRIMARY: Search contacts by name or phone (local DB - instant)
-/// - SECONDARY: QR code scanning via FAB
-/// - MEMBER badge for members
-/// - Already marked indicator (checkmark + grayed out)
 class AttendanceScreen extends ConsumerStatefulWidget {
   const AttendanceScreen({super.key});
 
@@ -29,22 +21,20 @@ class AttendanceScreen extends ConsumerStatefulWidget {
 class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  Set<int> _markedContactIds = {};
 
-  /// Get the current service type based on today's day of the week.
-  /// - Sunday → Sunday Service
-  /// - Tuesday → Tuesday Service
-  /// - Any other day → Special Event
   ServiceType get _currentServiceType => ServiceType.getServiceTypeByDay();
 
   @override
   void initState() {
     super.initState();
-    _loadMarkedContacts();
+    // Defer so ref is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadMarkedContacts());
     _searchFocusNode.addListener(() => setState(() {}));
   }
 
-  /// Load contacts that are already marked for today's service.
+  /// Queries the DB and writes results into [markedContactIdsProvider].
+  /// Every widget watching that provider rebuilds automatically — no manual
+  /// setState juggling needed.
   Future<void> _loadMarkedContacts() async {
     final database = ref.read(databaseProvider);
     final now = DateTime.now();
@@ -54,81 +44,61 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     final attendances =
         await database.getAttendancesByDateRange(dateOnly, nextDay);
 
+    if (!mounted) return;
+
     final markedIds = attendances
         .where((a) => a.serviceType == _currentServiceType.backendValue)
         .map((a) => a.contactId)
         .toSet();
 
-    setState(() => _markedContactIds = markedIds);
+    ref.read(markedContactIdsProvider.notifier).setAll(markedIds);
   }
 
   void _navigateToScanner() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => QRScannerScreen(
-          serviceType: _currentServiceType,
-        ),
-      ),
+          builder: (_) => QRScannerScreen(serviceType: _currentServiceType)),
     );
   }
 
   void _navigateToHistory() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const AttendanceHistoryScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const AttendanceHistoryScreen()),
     );
   }
 
   void _handleNewContact(String scannedPhone) async {
-    // Get current user ID from auth provider
     final currentUser = ref.read(currentUserProvider);
-    final userId = currentUser?.id ?? 1; // Fallback to 1 if not logged in
+    final userId = currentUser?.id ?? 1;
 
     final result = await showQuickContactSheet(
       context,
       phone: scannedPhone,
-      serviceType: _currentServiceType, // Use the current service type
-      recordedBy: userId, // Use the current user's ID
+      serviceType: _currentServiceType,
+      recordedBy: userId,
     );
+
+    if (!mounted) return;
 
     if (result != null) {
       if (result.alreadyMarked) {
-        // Contact saved but already marked for today
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Contact saved! Already marked for this service today.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Contact saved! Already marked for this service today.'),
+          backgroundColor: Colors.orange,
+        ));
       } else if (result.error != null) {
-        // Show error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${result.error}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error: ${result.error}'),
+          backgroundColor: Colors.red,
+        ));
       } else {
-        // Success - contact saved and attendance recorded
-        print('Attendance recorded');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Contact saved and attendance recorded!')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Contact saved and attendance recorded!')));
       }
-      // Refresh the marked contacts list
       _loadMarkedContacts();
-    } else {
-      // User cancelled the dialog
-      print('User dismissed the dialog without saving.');
     }
-  }
-
-  void _onAttendanceMarked() {
-    // Refresh the marked contacts list
-    _loadMarkedContacts();
   }
 
   @override
@@ -148,7 +118,6 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         actions: [
-          // History icon button
           IconButton(
             icon: const Icon(Icons.history),
             onPressed: _navigateToHistory,
@@ -158,17 +127,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       ),
       body: Column(
         children: [
-          // Search Field (PRIMARY)
           const SizedBox(height: AppDimens.paddingM),
           _buildSearchField(),
-
-          // Results List
-          Expanded(
-            child: _buildResultsList(searchState),
-          ),
+          Expanded(child: _buildResultsList(searchState)),
         ],
       ),
-      // QR Scanner FAB (SECONDARY)
       floatingActionButton: FloatingActionButton.extended(
         isExtended: !_searchFocusNode.hasFocus,
         onPressed: _navigateToScanner,
@@ -186,7 +149,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       child: TextField(
         controller: _searchController,
         focusNode: _searchFocusNode,
-        onTapOutside: (event) => _searchFocusNode.unfocus(),
+        onTapOutside: (_) => _searchFocusNode.unfocus(),
         decoration: InputDecoration(
           hintText: 'Search by name or phone...',
           prefixIcon: const Icon(Icons.search),
@@ -199,25 +162,22 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                   },
                 )
               : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
           fillColor: Colors.grey[50],
         ),
-        onChanged: (query) {
-          ref.read(contactSearchProvider.notifier).search(query);
-        },
+        onChanged: (query) =>
+            ref.read(contactSearchProvider.notifier).search(query),
         textInputAction: TextInputAction.search,
       ),
     );
   }
 
-  Widget _buildResultsList(dynamic searchState) {
+  Widget _buildResultsList(ContactSearchState searchState) {
     if (searchState.isLoading) {
       return ListView.builder(
         itemCount: 5,
-        itemBuilder: (context, index) => const ContactResultCardSkeleton(),
+        itemBuilder: (_, __) => const ContactResultCardSkeleton(),
       );
     }
 
@@ -228,23 +188,17 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           children: [
             const Icon(Icons.error_outline, size: 48, color: Colors.red),
             const SizedBox(height: AppDimens.paddingM),
-            Text(
-              'Error loading contacts',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Error loading contacts',
+                style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: AppDimens.paddingS),
-            Text(
-              searchState.error!,
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
+            Text(searchState.error!,
+                style: Theme.of(context).textTheme.bodySmall,
+                textAlign: TextAlign.center),
             const SizedBox(height: AppDimens.paddingM),
             ElevatedButton(
-              onPressed: () {
-                ref
-                    .read(contactSearchProvider.notifier)
-                    .search(searchState.query);
-              },
+              onPressed: () => ref
+                  .read(contactSearchProvider.notifier)
+                  .search(searchState.query),
               child: const Text('Retry'),
             ),
           ],
@@ -257,26 +211,20 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.search, size: 64, color: Colors.grey[400]),
             const SizedBox(height: AppDimens.paddingM),
-            Text(
-              'Search for a contact',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
+            Text('Search for a contact',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(color: Colors.grey[600])),
             const SizedBox(height: AppDimens.paddingS),
-            Text(
-              'Type a name or phone number to mark attendance',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[500],
-                  ),
-              textAlign: TextAlign.center,
-            ),
+            Text('Type a name or phone number to mark attendance',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: Colors.grey[500]),
+                textAlign: TextAlign.center),
           ],
         ),
       );
@@ -287,29 +235,23 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.person_off,
-              size: 64,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.person_off, size: 64, color: Colors.grey[400]),
             const SizedBox(height: AppDimens.paddingM),
-            Text(
-              'No contacts found',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
+            Text('No contacts found',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(color: Colors.grey[600])),
             const SizedBox(height: AppDimens.paddingS),
-            Text(
-              'Try a different search term',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[500],
-                  ),
+            Text('Try a different search term',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: Colors.grey[500])),
+            ElevatedButton(
+              onPressed: () => _handleNewContact(searchState.query),
+              child: const Text('New Contact'),
             ),
-            ElevatedButton(onPressed: () {
-                _handleNewContact(searchState.query);
-              },child: const Text('New Contact')),
-              
           ],
         ),
       );
@@ -320,13 +262,12 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       itemCount: searchState.results.length,
       itemBuilder: (context, index) {
         final contact = searchState.results[index];
-        final isAlreadyMarked = _markedContactIds.contains(contact.id);
-
         return ContactResultCard(
+          key: ValueKey(contact.id), // stable key prevents widget reuse bugs
           contact: contact,
           serviceType: _currentServiceType,
-          isAlreadyMarked: isAlreadyMarked,
-          onAttendanceMarked: _onAttendanceMarked,
+          // Card watches markedContactIdsProvider itself — no prop needed.
+          onAttendanceMarked: _loadMarkedContacts,
         );
       },
     );

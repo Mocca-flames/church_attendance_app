@@ -8,7 +8,7 @@ part 'contact.freezed.dart';
 part 'contact.g.dart';
 
 @freezed
-class Contact with _$Contact {
+sealed class Contact with _$Contact {
   const Contact._();
 
   const factory Contact({
@@ -18,6 +18,7 @@ class Contact with _$Contact {
     @Default(ContactStatus.active) ContactStatus status,
     @Default(false) bool optOutSms,
     @Default(false) bool optOutWhatsapp,
+    @JsonKey(name: 'metadata_')
     String? metadata,
     @Default(false) bool isSynced,
     @Default(false) bool isDeleted,

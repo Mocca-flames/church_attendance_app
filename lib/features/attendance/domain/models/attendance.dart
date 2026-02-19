@@ -23,7 +23,7 @@ sealed class Attendance with _$Attendance {
 }
 
 @freezed
-class AttendanceRecord with _$AttendanceRecord {
+sealed class AttendanceRecord with _$AttendanceRecord {
   const factory AttendanceRecord({
     required Attendance attendance,
     String? contactName,

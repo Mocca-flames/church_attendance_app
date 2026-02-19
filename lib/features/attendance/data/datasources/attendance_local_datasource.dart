@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
@@ -15,19 +17,72 @@ class AttendanceLocalDataSource {
   /// Gets a contact by phone number.
   /// Phone number is normalized to +27XXXXXXXXX format before search.
   Future<Contact?> getContactByPhone(String phone) async {
+    print('DEBUG LOCAL: getContactByPhone called with phone=$phone');
     final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(phone);
+    print('DEBUG LOCAL: normalizedPhone=$normalizedPhone');
     if (normalizedPhone == null) return null;
     
     final contactData = await _db.getContactByPhone(normalizedPhone);
-    if (contactData == null) return null;
-    return Contact.fromJson(contactData.toJson());
+    print('DEBUG LOCAL: contactData from DB: $contactData');
+    if (contactData == null) {
+      print('DEBUG LOCAL: contactData is null, returning null');
+      return null;
+    }
+    print('DEBUG LOCAL: Converting contactData to JSON...');
+    // Convert database entity to JSON with proper key mapping
+    // Database uses 'metadata' but Contact model expects 'metadata_'
+    final json = contactData.toJson();
+    print('DEBUG LOCAL: JSON: $json');
+    if (json.containsKey('metadata') && !json.containsKey('metadata_')) {
+      json['metadata_'] = json.remove('metadata');
+    }
+    // Convert status to string if it's an int (from legacy data or sync)
+    if (json.containsKey('status') && json['status'] is int) {
+      json['status'] = (json['status'] as int).toString();
+    }
+    // Convert createdAt from int (epoch ms) to ISO8601 string
+    if (json.containsKey('createdAt') && json['createdAt'] is int) {
+      final epochMs = json['createdAt'] as int;
+      json['createdAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
+      print('DEBUG LOCAL: converted createdAt to: ${json['createdAt']}');
+    }
+    print('DEBUG LOCAL: About to call Contact.fromJson...');
+    try {
+      final result = Contact.fromJson(json);
+      print('DEBUG LOCAL: Contact.fromJson succeeded: $result');
+      return result;
+    } catch (e, stack) {
+      print('DEBUG LOCAL: ERROR in Contact.fromJson: $e');
+      print('DEBUG LOCAL: Stack: $stack');
+      rethrow;
+    }
   }
 
   /// Gets a contact by ID.
   Future<Contact?> getContactById(int id) async {
+    print('DEBUG getContactById: called with id=$id');
     final contactData = await _db.getContactById(id);
+    print('DEBUG getContactById: contactData=$contactData');
     if (contactData == null) return null;
-    return Contact.fromJson(contactData.toJson());
+    // Convert database entity to JSON with proper key mapping
+    // Database uses 'metadata' but Contact model expects 'metadata_'
+    final json = contactData.toJson();
+    print('DEBUG getContactById: json=$json');
+    if (json.containsKey('metadata') && !json.containsKey('metadata_')) {
+      json['metadata_'] = json.remove('metadata');
+    }
+    // Convert status to string if it's an int (from legacy data or sync)
+    if (json.containsKey('status') && json['status'] is int) {
+      json['status'] = (json['status'] as int).toString();
+    }
+    // Convert createdAt from int (epoch ms) to ISO8601 string
+    if (json.containsKey('createdAt') && json['createdAt'] is int) {
+      final epochMs = json['createdAt'] as int;
+      json['createdAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
+      print('DEBUG getContactById: converted createdAt to: ${json['createdAt']}');
+    }
+    print('DEBUG getContactById: calling Contact.fromJson...');
+    return Contact.fromJson(json);
   }
 
   /// Creates a new contact.
@@ -42,16 +97,37 @@ class AttendanceLocalDataSource {
       throw ArgumentError('Invalid phone number format: $phone');
     }
     
+    // Convert metadata to JSON string if provided
+    String? metadataString;
+    if (metadata != null) {
+      metadataString = jsonEncode(metadata);
+    }
+
     final companion = ContactsCompanion(
       phone: drift.Value(normalizedPhone),
       name: drift.Value(name),
-      metadata: drift.Value(metadata?.toString()),
+      metadata: drift.Value(metadataString),
       createdAt: drift.Value(DateTime.now()),
     );
 
     final id = await _db.insertContact(companion);
     final contactData = await _db.getContactById(id);
-    return Contact.fromJson(contactData!.toJson());
+    // Convert database values to formats expected by Contact.fromJson
+    final json = contactData!.toJson();
+    // Database uses 'metadata' but Contact model expects 'metadata_'
+    if (json.containsKey('metadata') && !json.containsKey('metadata_')) {
+      json['metadata_'] = json.remove('metadata');
+    }
+    // Convert status to string if it's an int (for consistency)
+    if (json.containsKey('status') && json['status'] is int) {
+      json['status'] = (json['status'] as int).toString();
+    }
+    // Convert createdAt from int (epoch ms) to ISO8601 string
+    if (json.containsKey('createdAt') && json['createdAt'] is int) {
+      final epochMs = json['createdAt'] as int;
+      json['createdAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
+    }
+    return Contact.fromJson(json);
   }
 
   /// Checks if attendance already exists for a contact on a specific date and service.
@@ -98,7 +174,21 @@ class AttendanceLocalDataSource {
     final attendances = await _db.getAllAttendances();
     final attendanceData = attendances.firstWhere((a) => a.id == id);
     
-    return Attendance.fromJson(attendanceData.toJson());
+    // Convert database values to formats expected by Attendance.fromJson
+    final json = attendanceData.toJson();
+    print('DEBUG createAttendance: json before conversion: $json');
+    _convertAttendanceJson(json);
+    print('DEBUG createAttendance: json after conversion: $json');
+    
+    try {
+      final result = Attendance.fromJson(json);
+      print('DEBUG createAttendance: Attendance.fromJson succeeded');
+      return result;
+    } catch (e, stack) {
+      print('DEBUG createAttendance: ERROR in Attendance.fromJson: $e');
+      print('DEBUG createAttendance: Stack: $stack');
+      rethrow;
+    }
   }
 
   /// Gets attendance records with optional filters.
@@ -123,20 +213,52 @@ class AttendanceLocalDataSource {
       records = records.where((r) => r.serviceType == serviceType.backendValue).toList();
     }
 
-    return records.map((r) => Attendance.fromJson(r.toJson())).toList();
+    return records.map((r) {
+      final json = r.toJson();
+      _convertAttendanceJson(json);
+      return Attendance.fromJson(json);
+    }).toList();
   }
 
   /// Gets attendance records for a specific contact.
   Future<List<Attendance>> getContactAttendance(int contactId) async {
     final records = await _db.getAttendancesByContact(contactId);
-    return records.map((r) => Attendance.fromJson(r.toJson())).toList();
+    return records.map((r) {
+      final json = r.toJson();
+      _convertAttendanceJson(json);
+      return Attendance.fromJson(json);
+    }).toList();
   }
 
   /// Gets unsynced attendance records.
   Future<List<Attendance>> getUnsyncedAttendances() async {
     final allRecords = await _db.getAllAttendances();
     final unsynced = allRecords.where((r) => !r.isSynced).toList();
-    return unsynced.map((r) => Attendance.fromJson(r.toJson())).toList();
+    return unsynced.map((r) {
+      final json = r.toJson();
+      _convertAttendanceJson(json);
+      return Attendance.fromJson(json);
+    }).toList();
+  }
+  
+  /// Helper method to convert database values to Attendance.fromJson expected formats
+  void _convertAttendanceJson(Map<String, dynamic> json) {
+    // Convert serviceType from backend value to enum name
+    if (json.containsKey('serviceType') && json['serviceType'] is String) {
+      json['serviceType'] = ServiceType.fromBackend(json['serviceType'] as String).name;
+    }
+    
+    // Convert serviceDate from epoch milliseconds to ISO8601 string
+    if (json.containsKey('serviceDate') && json['serviceDate'] is int) {
+      final epochMs = json['serviceDate'] as int;
+      json['serviceDate'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
+    }
+    
+    // Convert recordedAt from epoch milliseconds to ISO8601 string
+    if (json.containsKey('recordedAt') && json['recordedAt'] is int) {
+      final epochMs = json['recordedAt'] as int;
+      json['recordedAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
+    }
   }
 
   /// Marks an attendance record as synced.
@@ -217,5 +339,66 @@ class AttendanceLocalDataSource {
         createdAt: drift.Value(DateTime.now()),
       ),
     );
+  }
+
+  /// Updates an existing contact with new name, tags, and location.
+  /// This is used when marking attendance for contacts where phone == name.
+  Future<Contact> updateContactDetails({
+    required int contactId,
+    String? name,
+    bool isMember = false,
+    String? location,
+  }) async {
+    print('DEBUG updateContactDetails: contactId=$contactId, name=$name, isMember=$isMember, location=$location');
+    // Get existing contact
+    final existingContact = await getContactById(contactId);
+    if (existingContact == null) {
+      throw ArgumentError('Contact not found: $contactId');
+    }
+
+    print('DEBUG updateContactDetails: existing contact name=${existingContact.name}, metadata=${existingContact.metadata}');
+
+    // Parse existing metadata
+    Map<String, dynamic> metadata = {};
+    if (existingContact.metadata != null && existingContact.metadata!.isNotEmpty) {
+      try {
+        metadata = jsonDecode(existingContact.metadata!) as Map<String, dynamic>;
+      } catch (e) {
+        // Invalid JSON, start fresh
+        metadata = {};
+      }
+    }
+
+    // Update tags - add 'member' if isMember is true
+    // Location is stored as a tag (e.g., 'kanana', 'church')
+    List<String> tags = [];
+    if (metadata.containsKey('tags') && metadata['tags'] is List) {
+      tags = List<String>.from(metadata['tags']);
+    }
+    if (isMember && !tags.contains('member')) {
+      tags.add('member');
+    }
+    // Add location as a tag if provided
+    if (location != null && location.isNotEmpty && !tags.contains(location)) {
+      tags.add(location);
+    }
+    metadata['tags'] = tags;
+
+    // Build metadata string
+    final metadataString = jsonEncode(metadata);
+
+    // Update contact in database
+    await _db.updateContactFields(
+      id: contactId,
+      name: name,
+      metadata: metadataString,
+      isSynced: false, // Mark as unsynced so it gets synced later
+    );
+    print('DEBUG updateContactDetails: Database updated, fetching updated contact...');
+
+    // Fetch and return updated contact
+    final updatedContact = await getContactById(contactId);
+    print('DEBUG updateContactDetails: Final updated contact: name=${updatedContact?.name}, metadata=${updatedContact?.metadata}');
+    return updatedContact!;
   }
 }

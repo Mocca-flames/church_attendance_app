@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,246 +9,407 @@ part of 'contact.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-Contact _$ContactFromJson(Map<String, dynamic> json) {
-  return _Contact.fromJson(json);
-}
 
 /// @nodoc
 mixin _$Contact {
-  int get id => throw _privateConstructorUsedError;
-  int? get serverId => throw _privateConstructorUsedError;
-  String? get name => throw _privateConstructorUsedError;
-  String get phone => throw _privateConstructorUsedError;
-  ContactStatus get status => throw _privateConstructorUsedError;
-  bool get optOutSms => throw _privateConstructorUsedError;
-  bool get optOutWhatsapp => throw _privateConstructorUsedError;
-  String? get metadata => throw _privateConstructorUsedError;
-  DateTime get createdAt => throw _privateConstructorUsedError;
-  bool get isSynced => throw _privateConstructorUsedError;
-  bool get isDeleted => throw _privateConstructorUsedError;
+  int get id;
+  DateTime get createdAt;
+  String get phone;
+  ContactStatus get status;
+  bool get optOutSms;
+  bool get optOutWhatsapp;
+  @JsonKey(name: 'metadata_')
+  String? get metadata;
+  bool get isSynced;
+  bool get isDeleted;
+  int? get serverId;
+  String? get name;
 
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
-  $ContactCopyWith<Contact> get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ContactCopyWith<$Res> {
-  factory $ContactCopyWith(Contact value, $Res Function(Contact) then) =
-      _$ContactCopyWithImpl<$Res, Contact>;
-  @useResult
-  $Res call(
-      {int id,
-      int? serverId,
-      String? name,
-      String phone,
-      ContactStatus status,
-      bool optOutSms,
-      bool optOutWhatsapp,
-      String? metadata,
-      DateTime createdAt,
-      bool isSynced,
-      bool isDeleted});
-}
-
-/// @nodoc
-class _$ContactCopyWithImpl<$Res, $Val extends Contact>
-    implements $ContactCopyWith<$Res> {
-  _$ContactCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
+  /// Create a copy of Contact
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
+  $ContactCopyWith<Contact> get copyWith =>
+      _$ContactCopyWithImpl<Contact>(this as Contact, _$identity);
+
+  /// Serializes this Contact to a JSON map.
+  Map<String, dynamic> toJson();
+
   @override
-  $Res call({
-    Object? id = null,
-    Object? serverId = freezed,
-    Object? name = freezed,
-    Object? phone = null,
-    Object? status = null,
-    Object? optOutSms = null,
-    Object? optOutWhatsapp = null,
-    Object? metadata = freezed,
-    Object? createdAt = null,
-    Object? isSynced = null,
-    Object? isDeleted = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      serverId: freezed == serverId
-          ? _value.serverId
-          : serverId // ignore: cast_nullable_to_non_nullable
-              as int?,
-      name: freezed == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String?,
-      phone: null == phone
-          ? _value.phone
-          : phone // ignore: cast_nullable_to_non_nullable
-              as String,
-      status: null == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as ContactStatus,
-      optOutSms: null == optOutSms
-          ? _value.optOutSms
-          : optOutSms // ignore: cast_nullable_to_non_nullable
-              as bool,
-      optOutWhatsapp: null == optOutWhatsapp
-          ? _value.optOutWhatsapp
-          : optOutWhatsapp // ignore: cast_nullable_to_non_nullable
-              as bool,
-      metadata: freezed == metadata
-          ? _value.metadata
-          : metadata // ignore: cast_nullable_to_non_nullable
-              as String?,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      isSynced: null == isSynced
-          ? _value.isSynced
-          : isSynced // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isDeleted: null == isDeleted
-          ? _value.isDeleted
-          : isDeleted // ignore: cast_nullable_to_non_nullable
-              as bool,
-    ) as $Val);
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is Contact &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
+            (identical(other.phone, phone) || other.phone == phone) &&
+            (identical(other.status, status) || other.status == status) &&
+            (identical(other.optOutSms, optOutSms) ||
+                other.optOutSms == optOutSms) &&
+            (identical(other.optOutWhatsapp, optOutWhatsapp) ||
+                other.optOutWhatsapp == optOutWhatsapp) &&
+            (identical(other.metadata, metadata) ||
+                other.metadata == metadata) &&
+            (identical(other.isSynced, isSynced) ||
+                other.isSynced == isSynced) &&
+            (identical(other.isDeleted, isDeleted) ||
+                other.isDeleted == isDeleted) &&
+            (identical(other.serverId, serverId) ||
+                other.serverId == serverId) &&
+            (identical(other.name, name) || other.name == name));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, createdAt, phone, status,
+      optOutSms, optOutWhatsapp, metadata, isSynced, isDeleted, serverId, name);
+
+  @override
+  String toString() {
+    return 'Contact(id: $id, createdAt: $createdAt, phone: $phone, status: $status, optOutSms: $optOutSms, optOutWhatsapp: $optOutWhatsapp, metadata: $metadata, isSynced: $isSynced, isDeleted: $isDeleted, serverId: $serverId, name: $name)';
   }
 }
 
 /// @nodoc
-abstract class _$$ContactImplCopyWith<$Res> implements $ContactCopyWith<$Res> {
-  factory _$$ContactImplCopyWith(
-          _$ContactImpl value, $Res Function(_$ContactImpl) then) =
-      __$$ContactImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $ContactCopyWith<$Res> {
+  factory $ContactCopyWith(Contact value, $Res Function(Contact) _then) =
+      _$ContactCopyWithImpl;
   @useResult
   $Res call(
       {int id,
-      int? serverId,
-      String? name,
+      DateTime createdAt,
       String phone,
       ContactStatus status,
       bool optOutSms,
       bool optOutWhatsapp,
-      String? metadata,
-      DateTime createdAt,
+      @JsonKey(name: 'metadata_') String? metadata,
       bool isSynced,
-      bool isDeleted});
+      bool isDeleted,
+      int? serverId,
+      String? name});
 }
 
 /// @nodoc
-class __$$ContactImplCopyWithImpl<$Res>
-    extends _$ContactCopyWithImpl<$Res, _$ContactImpl>
-    implements _$$ContactImplCopyWith<$Res> {
-  __$$ContactImplCopyWithImpl(
-      _$ContactImpl _value, $Res Function(_$ContactImpl) _then)
-      : super(_value, _then);
+class _$ContactCopyWithImpl<$Res> implements $ContactCopyWith<$Res> {
+  _$ContactCopyWithImpl(this._self, this._then);
 
+  final Contact _self;
+  final $Res Function(Contact) _then;
+
+  /// Create a copy of Contact
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
-    Object? serverId = freezed,
-    Object? name = freezed,
+    Object? createdAt = null,
     Object? phone = null,
     Object? status = null,
     Object? optOutSms = null,
     Object? optOutWhatsapp = null,
     Object? metadata = freezed,
-    Object? createdAt = null,
     Object? isSynced = null,
     Object? isDeleted = null,
+    Object? serverId = freezed,
+    Object? name = freezed,
   }) {
-    return _then(_$ContactImpl(
+    return _then(_self.copyWith(
       id: null == id
-          ? _value.id
+          ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
-      serverId: freezed == serverId
-          ? _value.serverId
-          : serverId // ignore: cast_nullable_to_non_nullable
-              as int?,
-      name: freezed == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String?,
+      createdAt: null == createdAt
+          ? _self.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
       phone: null == phone
-          ? _value.phone
+          ? _self.phone
           : phone // ignore: cast_nullable_to_non_nullable
               as String,
       status: null == status
-          ? _value.status
+          ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
               as ContactStatus,
       optOutSms: null == optOutSms
-          ? _value.optOutSms
+          ? _self.optOutSms
           : optOutSms // ignore: cast_nullable_to_non_nullable
               as bool,
       optOutWhatsapp: null == optOutWhatsapp
-          ? _value.optOutWhatsapp
+          ? _self.optOutWhatsapp
           : optOutWhatsapp // ignore: cast_nullable_to_non_nullable
               as bool,
       metadata: freezed == metadata
-          ? _value.metadata
+          ? _self.metadata
           : metadata // ignore: cast_nullable_to_non_nullable
               as String?,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime,
       isSynced: null == isSynced
-          ? _value.isSynced
+          ? _self.isSynced
           : isSynced // ignore: cast_nullable_to_non_nullable
               as bool,
       isDeleted: null == isDeleted
-          ? _value.isDeleted
+          ? _self.isDeleted
           : isDeleted // ignore: cast_nullable_to_non_nullable
               as bool,
+      serverId: freezed == serverId
+          ? _self.serverId
+          : serverId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      name: freezed == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [Contact].
+extension ContactPatterns on Contact {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_Contact value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _Contact() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_Contact value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Contact():
+        return $default(_that);
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_Contact value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Contact() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            int id,
+            DateTime createdAt,
+            String phone,
+            ContactStatus status,
+            bool optOutSms,
+            bool optOutWhatsapp,
+            @JsonKey(name: 'metadata_') String? metadata,
+            bool isSynced,
+            bool isDeleted,
+            int? serverId,
+            String? name)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _Contact() when $default != null:
+        return $default(
+            _that.id,
+            _that.createdAt,
+            _that.phone,
+            _that.status,
+            _that.optOutSms,
+            _that.optOutWhatsapp,
+            _that.metadata,
+            _that.isSynced,
+            _that.isDeleted,
+            _that.serverId,
+            _that.name);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            int id,
+            DateTime createdAt,
+            String phone,
+            ContactStatus status,
+            bool optOutSms,
+            bool optOutWhatsapp,
+            @JsonKey(name: 'metadata_') String? metadata,
+            bool isSynced,
+            bool isDeleted,
+            int? serverId,
+            String? name)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Contact():
+        return $default(
+            _that.id,
+            _that.createdAt,
+            _that.phone,
+            _that.status,
+            _that.optOutSms,
+            _that.optOutWhatsapp,
+            _that.metadata,
+            _that.isSynced,
+            _that.isDeleted,
+            _that.serverId,
+            _that.name);
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            int id,
+            DateTime createdAt,
+            String phone,
+            ContactStatus status,
+            bool optOutSms,
+            bool optOutWhatsapp,
+            @JsonKey(name: 'metadata_') String? metadata,
+            bool isSynced,
+            bool isDeleted,
+            int? serverId,
+            String? name)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Contact() when $default != null:
+        return $default(
+            _that.id,
+            _that.createdAt,
+            _that.phone,
+            _that.status,
+            _that.optOutSms,
+            _that.optOutWhatsapp,
+            _that.metadata,
+            _that.isSynced,
+            _that.isDeleted,
+            _that.serverId,
+            _that.name);
+      case _:
+        return null;
+    }
   }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$ContactImpl extends _Contact {
-  const _$ContactImpl(
+class _Contact extends Contact {
+  const _Contact(
       {required this.id,
-      this.serverId,
-      this.name,
+      required this.createdAt,
       required this.phone,
       this.status = ContactStatus.active,
       this.optOutSms = false,
       this.optOutWhatsapp = false,
-      this.metadata,
-      required this.createdAt,
+      @JsonKey(name: 'metadata_') this.metadata,
       this.isSynced = false,
-      this.isDeleted = false})
+      this.isDeleted = false,
+      this.serverId,
+      this.name})
       : super._();
-
-  factory _$ContactImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ContactImplFromJson(json);
+  factory _Contact.fromJson(Map<String, dynamic> json) =>
+      _$ContactFromJson(json);
 
   @override
   final int id;
   @override
-  final int? serverId;
-  @override
-  final String? name;
+  final DateTime createdAt;
   @override
   final String phone;
   @override
@@ -261,30 +422,42 @@ class _$ContactImpl extends _Contact {
   @JsonKey()
   final bool optOutWhatsapp;
   @override
+  @JsonKey(name: 'metadata_')
   final String? metadata;
-  @override
-  final DateTime createdAt;
   @override
   @JsonKey()
   final bool isSynced;
   @override
   @JsonKey()
   final bool isDeleted;
+  @override
+  final int? serverId;
+  @override
+  final String? name;
+
+  /// Create a copy of Contact
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$ContactCopyWith<_Contact> get copyWith =>
+      __$ContactCopyWithImpl<_Contact>(this, _$identity);
 
   @override
-  String toString() {
-    return 'Contact(id: $id, serverId: $serverId, name: $name, phone: $phone, status: $status, optOutSms: $optOutSms, optOutWhatsapp: $optOutWhatsapp, metadata: $metadata, createdAt: $createdAt, isSynced: $isSynced, isDeleted: $isDeleted)';
+  Map<String, dynamic> toJson() {
+    return _$ContactToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ContactImpl &&
+            other is _Contact &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.serverId, serverId) ||
-                other.serverId == serverId) &&
-            (identical(other.name, name) || other.name == name) &&
+            (identical(other.createdAt, createdAt) ||
+                other.createdAt == createdAt) &&
             (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.optOutSms, optOutSms) ||
@@ -293,85 +466,117 @@ class _$ContactImpl extends _Contact {
                 other.optOutWhatsapp == optOutWhatsapp) &&
             (identical(other.metadata, metadata) ||
                 other.metadata == metadata) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
             (identical(other.isSynced, isSynced) ||
                 other.isSynced == isSynced) &&
             (identical(other.isDeleted, isDeleted) ||
-                other.isDeleted == isDeleted));
+                other.isDeleted == isDeleted) &&
+            (identical(other.serverId, serverId) ||
+                other.serverId == serverId) &&
+            (identical(other.name, name) || other.name == name));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      serverId,
-      name,
-      phone,
-      status,
-      optOutSms,
-      optOutWhatsapp,
-      metadata,
-      createdAt,
-      isSynced,
-      isDeleted);
+  int get hashCode => Object.hash(runtimeType, id, createdAt, phone, status,
+      optOutSms, optOutWhatsapp, metadata, isSynced, isDeleted, serverId, name);
 
-  @JsonKey(ignore: true)
+  @override
+  String toString() {
+    return 'Contact(id: $id, createdAt: $createdAt, phone: $phone, status: $status, optOutSms: $optOutSms, optOutWhatsapp: $optOutWhatsapp, metadata: $metadata, isSynced: $isSynced, isDeleted: $isDeleted, serverId: $serverId, name: $name)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$ContactCopyWith<$Res> implements $ContactCopyWith<$Res> {
+  factory _$ContactCopyWith(_Contact value, $Res Function(_Contact) _then) =
+      __$ContactCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {int id,
+      DateTime createdAt,
+      String phone,
+      ContactStatus status,
+      bool optOutSms,
+      bool optOutWhatsapp,
+      @JsonKey(name: 'metadata_') String? metadata,
+      bool isSynced,
+      bool isDeleted,
+      int? serverId,
+      String? name});
+}
+
+/// @nodoc
+class __$ContactCopyWithImpl<$Res> implements _$ContactCopyWith<$Res> {
+  __$ContactCopyWithImpl(this._self, this._then);
+
+  final _Contact _self;
+  final $Res Function(_Contact) _then;
+
+  /// Create a copy of Contact
+  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  _$$ContactImplCopyWith<_$ContactImpl> get copyWith =>
-      __$$ContactImplCopyWithImpl<_$ContactImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ContactImplToJson(
-      this,
-    );
+  $Res call({
+    Object? id = null,
+    Object? createdAt = null,
+    Object? phone = null,
+    Object? status = null,
+    Object? optOutSms = null,
+    Object? optOutWhatsapp = null,
+    Object? metadata = freezed,
+    Object? isSynced = null,
+    Object? isDeleted = null,
+    Object? serverId = freezed,
+    Object? name = freezed,
+  }) {
+    return _then(_Contact(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      createdAt: null == createdAt
+          ? _self.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      phone: null == phone
+          ? _self.phone
+          : phone // ignore: cast_nullable_to_non_nullable
+              as String,
+      status: null == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as ContactStatus,
+      optOutSms: null == optOutSms
+          ? _self.optOutSms
+          : optOutSms // ignore: cast_nullable_to_non_nullable
+              as bool,
+      optOutWhatsapp: null == optOutWhatsapp
+          ? _self.optOutWhatsapp
+          : optOutWhatsapp // ignore: cast_nullable_to_non_nullable
+              as bool,
+      metadata: freezed == metadata
+          ? _self.metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isSynced: null == isSynced
+          ? _self.isSynced
+          : isSynced // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isDeleted: null == isDeleted
+          ? _self.isDeleted
+          : isDeleted // ignore: cast_nullable_to_non_nullable
+              as bool,
+      serverId: freezed == serverId
+          ? _self.serverId
+          : serverId // ignore: cast_nullable_to_non_nullable
+              as int?,
+      name: freezed == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
   }
 }
 
-abstract class _Contact extends Contact {
-  const factory _Contact(
-      {required final int id,
-      final int? serverId,
-      final String? name,
-      required final String phone,
-      final ContactStatus status,
-      final bool optOutSms,
-      final bool optOutWhatsapp,
-      final String? metadata,
-      required final DateTime createdAt,
-      final bool isSynced,
-      final bool isDeleted}) = _$ContactImpl;
-  const _Contact._() : super._();
-
-  factory _Contact.fromJson(Map<String, dynamic> json) = _$ContactImpl.fromJson;
-
-  @override
-  int get id;
-  @override
-  int? get serverId;
-  @override
-  String? get name;
-  @override
-  String get phone;
-  @override
-  ContactStatus get status;
-  @override
-  bool get optOutSms;
-  @override
-  bool get optOutWhatsapp;
-  @override
-  String? get metadata;
-  @override
-  DateTime get createdAt;
-  @override
-  bool get isSynced;
-  @override
-  bool get isDeleted;
-  @override
-  @JsonKey(ignore: true)
-  _$$ContactImplCopyWith<_$ContactImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
+// dart format on

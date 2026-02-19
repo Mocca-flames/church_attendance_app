@@ -6,7 +6,7 @@ part 'user.freezed.dart';
 part 'user.g.dart';
 
 @freezed
-class User with _$User {
+sealed class User with _$User {
   const factory User({
     required String email,
     required UserRole role,
@@ -19,7 +19,7 @@ class User with _$User {
 }
 
 @freezed
-class AuthResponse with _$AuthResponse {
+sealed class AuthResponse with _$AuthResponse {
   const factory AuthResponse({
     required String accessToken,
     required String tokenType,

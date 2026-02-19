@@ -6,7 +6,7 @@ part 'scenario.freezed.dart';
 part 'scenario.g.dart';
 
 @freezed
-class Scenario with _$Scenario {
+sealed class Scenario with _$Scenario {
   const Scenario._();
 
   const factory Scenario({
@@ -32,7 +32,7 @@ class Scenario with _$Scenario {
 }
 
 @freezed
-class ScenarioTask with _$ScenarioTask {
+sealed class ScenarioTask with _$ScenarioTask {
   const factory ScenarioTask({
     required int id,
     required int scenarioId,
@@ -52,7 +52,7 @@ class ScenarioTask with _$ScenarioTask {
 }
 
 @freezed
-class ScenarioWithTasks with _$ScenarioWithTasks {
+sealed class ScenarioWithTasks with _$ScenarioWithTasks {
   const ScenarioWithTasks._();
 
   const factory ScenarioWithTasks({

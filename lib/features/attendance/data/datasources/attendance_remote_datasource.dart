@@ -60,7 +60,41 @@ class AttendanceRemoteDataSource {
       print('║ Data: ${response.data}');
       print('╚═══════════════════════════════════════════════════════════');
 
-      return Attendance.fromJson(response.data);
+      // Debug: Log each field type before parsing
+      final data = response.data as Map<String, dynamic>;
+      print('DEBUG REMOTE: Parsing response data...');
+      for (final entry in data.entries) {
+        print('DEBUG REMOTE: ${entry.key} = ${entry.value} (type: ${entry.value.runtimeType})');
+      }
+      
+      // Convert snake_case keys from server to camelCase expected by Attendance model
+      final convertedData = <String, dynamic>{};
+      data.forEach((key, value) {
+        switch (key) {
+          case 'contact_id':
+            convertedData['contactId'] = value;
+          case 'service_type':
+            // Convert backend value to enum name
+            convertedData['serviceType'] = ServiceType.fromBackend(value as String).name;
+          case 'service_date':
+            convertedData['serviceDate'] = value;
+          case 'recorded_at':
+            convertedData['recordedAt'] = value;
+          default:
+            convertedData[key] = value;
+        }
+      });
+      print('DEBUG REMOTE: Converted data: $convertedData');
+      
+      try {
+        final result = Attendance.fromJson(convertedData);
+        print('DEBUG REMOTE: Attendance.fromJson succeeded');
+        return result;
+      } catch (e, stack) {
+        print('DEBUG REMOTE: ERROR in Attendance.fromJson: $e');
+        print('DEBUG REMOTE: Stack: $stack');
+        rethrow;
+      }
     } on DioException catch (e) {
       print('╔═══════════════════════════════════════════════════════════');
       print('║ RECORD ATTENDANCE ERROR');
@@ -276,6 +310,133 @@ class AttendanceRemoteDataSource {
     } on DioException catch (e) {
       print('╔═══════════════════════════════════════════════════════════');
       print('║ CREATE CONTACT ERROR');
+      print('╠═══════════════════════════════════════════════════════════');
+      print('║ Type: ${e.type}');
+      print('║ Message: ${e.message}');
+      if (e.response != null) {
+        print('║ Status: ${e.response?.statusCode}');
+        print('║ Data: ${e.response?.data}');
+      }
+      print('╚═══════════════════════════════════════════════════════════');
+      
+      if (e.response?.statusCode == 400) {
+        final message = e.response?.data['detail'] ?? 'Bad request';
+        throw AttendanceRemoteException(message);
+      }
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.unknown) {
+        throw const AttendanceRemoteException(
+          'Network error',
+          isNetworkError: true,
+        );
+      }
+      rethrow;
+    }
+  }
+
+  /// Updates a contact on the server.
+  Future<Map<String, dynamic>> updateContact({
+    required int contactId,
+    String? name,
+    String? phone,
+    String? status,
+    bool? optOutSms,
+    bool? optOutWhatsapp,
+  }) async {
+    try {
+      final requestData = <String, dynamic>{};
+      
+      if (name != null) requestData['name'] = name;
+      if (phone != null) {
+        final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(phone);
+        if (normalizedPhone != null) {
+          requestData['phone'] = normalizedPhone;
+        }
+      }
+      if (status != null) requestData['status'] = status;
+      if (optOutSms != null) requestData['opt_out_sms'] = optOutSms;
+      if (optOutWhatsapp != null) requestData['opt_out_whatsapp'] = optOutWhatsapp;
+
+      // Debug: Log the request details
+      print('╔═══════════════════════════════════════════════════════════');
+      print('║ UPDATE CONTACT REQUEST');
+      print('╠═══════════════════════════════════════════════════════════');
+      print('║ Endpoint: ${ApiConstants.contactById.replaceAll("{id}", contactId.toString())}');
+      print('║ Request Data: $requestData');
+      print('╚═══════════════════════════════════════════════════════════');
+
+      final response = await _dioClient.dio.put(
+        ApiConstants.contactById.replaceAll('{id}', contactId.toString()),
+        data: requestData,
+      );
+
+      print('╔═══════════════════════════════════════════════════════════');
+      print('║ UPDATE CONTACT RESPONSE');
+      print('╠═══════════════════════════════════════════════════════════');
+      print('║ Status: ${response.statusCode}');
+      print('║ Data: ${response.data}');
+      print('╚═══════════════════════════════════════════════════════════');
+
+      return response.data;
+    } on DioException catch (e) {
+      print('╔═══════════════════════════════════════════════════════════');
+      print('║ UPDATE CONTACT ERROR');
+      print('╠═══════════════════════════════════════════════════════════');
+      print('║ Type: ${e.type}');
+      print('║ Message: ${e.message}');
+      if (e.response != null) {
+        print('║ Status: ${e.response?.statusCode}');
+        print('║ Data: ${e.response?.data}');
+      }
+      print('╚═══════════════════════════════════════════════════════════');
+      
+      if (e.response?.statusCode == 400) {
+        final message = e.response?.data['detail'] ?? 'Bad request';
+        throw AttendanceRemoteException(message);
+      }
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.unknown) {
+        throw const AttendanceRemoteException(
+          'Network error',
+          isNetworkError: true,
+        );
+      }
+      rethrow;
+    }
+  }
+
+  /// Adds tags to a contact on the server.
+  Future<Map<String, dynamic>> addTagsToContact({
+    required int contactId,
+    required List<String> tags,
+  }) async {
+    try {
+      final requestData = {'tags': tags};
+
+      // Debug: Log the request details
+      print('╔═══════════════════════════════════════════════════════════');
+      print('║ ADD TAGS TO CONTACT REQUEST');
+      print('╠═══════════════════════════════════════════════════════════');
+      print('║ Endpoint: ${ApiConstants.contactTagsAdd.replaceAll("{id}", contactId.toString())}');
+      print('║ Request Data: $requestData');
+      print('╚═══════════════════════════════════════════════════════════');
+
+      final response = await _dioClient.dio.post(
+        ApiConstants.contactTagsAdd.replaceAll('{id}', contactId.toString()),
+        data: requestData,
+      );
+
+      print('╔═══════════════════════════════════════════════════════════');
+      print('║ ADD TAGS TO CONTACT RESPONSE');
+      print('╠═══════════════════════════════════════════════════════════');
+      print('║ Status: ${response.statusCode}');
+      print('║ Data: ${response.data}');
+      print('╚═══════════════════════════════════════════════════════════');
+
+      return response.data;
+    } on DioException catch (e) {
+      print('╔═══════════════════════════════════════════════════════════');
+      print('║ ADD TAGS TO CONTACT ERROR');
       print('╠═══════════════════════════════════════════════════════════');
       print('║ Type: ${e.type}');
       print('║ Message: ${e.message}');
