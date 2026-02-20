@@ -1,8 +1,10 @@
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_provider.dart';
+import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:church_attendance_app/main.dart';
 
 Future<CreateContactAttendanceResult?> showQuickContactSheet(
   BuildContext context, {
@@ -50,6 +52,8 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
   
   bool _isMember = false;
   bool _isLoading = false;
+  bool _showLocationField = true;
+  Contact? _existingContact;
 
   @override
   void initState() {
@@ -57,6 +61,39 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
     _nameController = TextEditingController();
     _phoneController = TextEditingController(text: widget.phone);
     _locationController = TextEditingController();
+    
+    // Check if contact exists and has location
+    _checkExistingContact();
+  }
+
+  Future<void> _checkExistingContact() async {
+    final database = ref.read(databaseProvider);
+    final contactData = await database.getContactByPhone(widget.phone);
+    
+    if (contactData != null && mounted) {
+      // Convert to JSON and parse as Contact
+      final json = contactData.toJson();
+      if (json.containsKey('metadata') && !json.containsKey('metadata_')) {
+        json['metadata_'] = json.remove('metadata');
+      }
+      if (json.containsKey('createdAt') && !json.containsKey('created_at')) {
+        json['created_at'] = json.remove('createdAt');
+      }
+      
+      try {
+        final contact = Contact.fromJson(json);
+        setState(() {
+          _existingContact = contact;
+          // Hide location field if contact already has a location
+          _showLocationField = !contact.hasLocation;
+        });
+      } catch (e) {
+        // If parsing fails, show location field
+        setState(() {
+          _showLocationField = true;
+        });
+      }
+    }
   }
 
   @override
@@ -235,15 +272,44 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Location Field
-              _ModernTextField(
-                controller: _locationController,
-                label: 'Location (Optional)',
-                icon: Icons.location_on_outlined,
-                textCapitalization: TextCapitalization.words,
-                isLast: true,
-              ),
-              const SizedBox(height: 20),
+              // Location Field - only show if contact doesn't have location
+              if (_showLocationField) ...[
+                _ModernTextField(
+                  controller: _locationController,
+                  label: 'Location (Optional)',
+                  icon: Icons.location_on_outlined,
+                  textCapitalization: TextCapitalization.words,
+                  isLast: true,
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Show info if contact has existing location
+              if (_existingContact?.hasLocation == true)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.location_on, color: Colors.green.shade700, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Location: ${_existingContact!.location}',
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
               // Modern Checkbox (Selectable Card)
               _ModernMembershipSelector(

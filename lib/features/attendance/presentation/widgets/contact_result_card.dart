@@ -6,6 +6,7 @@ import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_provider.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/contact_search_provider.dart';
+import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,6 +45,26 @@ class ContactResultCard extends ConsumerWidget {
   bool get _isMember => _hasTag('member');
   String get _displayName => contact.name ?? contact.phone;
 
+  /// Check if contact has a valid location in metadata
+  bool get _hasLocation {
+    for (final tag in _tags) {
+      if (tag != 'member' && ContactLocations.isValidLocation(tag)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Get the location from metadata if exists
+  String? get _location {
+    for (final tag in _tags) {
+      if (tag != 'member' && ContactLocations.isValidLocation(tag)) {
+        return tag;
+      }
+    }
+    return null;
+  }
+
   bool get _needsUpdate {
     try {
       final name = contact.name;
@@ -81,14 +102,43 @@ class ContactResultCard extends ConsumerWidget {
                       : null,
                 ),
                 const SizedBox(height: AppDimens.paddingM),
-                TextFormField(
-                  controller: locationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Location (optional)',
-                    hintText: 'Enter location',
+                
+                // Location field - only show if contact doesn't have location
+                if (!_hasLocation) ...[
+                  TextFormField(
+                    controller: locationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Location (optional)',
+                      hintText: 'Enter location',
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppDimens.paddingM),
+                  const SizedBox(height: AppDimens.paddingM),
+                ] else
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.location_on, color: Colors.green.shade700, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Location: $_location',
+                            style: TextStyle(
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                
                 SwitchListTile(
                   title: const Text('Mark as Member'),
                   value: isMember,

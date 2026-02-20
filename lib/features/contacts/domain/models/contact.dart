@@ -7,6 +7,22 @@ import '../../../../core/enums/contact_status.dart';
 part 'contact.freezed.dart';
 part 'contact.g.dart';
 
+/// Hardcoded valid locations for church members
+class ContactLocations {
+  static const List<String> validLocations = [
+    'kanana',
+    'majaneng',
+    'mashemong',
+    'soshanguve',
+    'kekana',
+  ];
+
+  /// Check if a tag is a valid location
+  static bool isValidLocation(String tag) {
+    return validLocations.contains(tag.toLowerCase());
+  }
+}
+
 @freezed
 sealed class Contact with _$Contact {
   const Contact._();
@@ -52,6 +68,20 @@ sealed class Contact with _$Contact {
   bool get isEligibleForQRCode {
     return name != null && name != phone && hasTag('member');
   }
+
+  /// Extract location from metadata tags (excludes 'member' tag)
+  /// Returns the location string if found, otherwise null
+  String? get location {
+    for (final tag in tags) {
+      if (tag != 'member' && ContactLocations.isValidLocation(tag)) {
+        return tag;
+      }
+    }
+    return null;
+  }
+
+  /// Check if contact has a valid location in metadata
+  bool get hasLocation => location != null;
 
   /// Get display name (use name if available, otherwise phone)
   String get displayName => name ?? phone;

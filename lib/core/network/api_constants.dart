@@ -2,7 +2,7 @@ class ApiConstants {
   // Base URL - Update this with your actual backend URL
   // For development, you can use your computer's local IP address
   // e.g., 'http://192.168.1.100:8000' for Android emulator to access localhost
-  static const String baseUrl = 'https://8824-102-253-119-16.ngrok-free.app'; // Android emulator localhost
+  static const String baseUrl = 'https://9927-102-254-54-19.ngrok-free.app'; // Android emulator localhost
 
   // Health Check
   static const String health = '/health';
