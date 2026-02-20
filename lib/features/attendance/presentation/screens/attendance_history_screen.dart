@@ -25,7 +25,7 @@ class _AttendanceHistoryScreenState
   DateTime _dateTo = DateTime.now();
   ServiceType? _selectedServiceType;
   bool _isLoading = true;
-  List<AttendanceEntity> _attendances = [];
+  List<AttendanceWithContact> _attendances = [];
   Map<String, int> _serviceTypeCounts = {};
 
   @override
@@ -39,21 +39,21 @@ class _AttendanceHistoryScreenState
 
     try {
       final database = ref.read(databaseProvider);
-      List<AttendanceEntity> results;
+      List<AttendanceWithContact> results;
 
       if (_selectedServiceType != null) {
-        results = await database.getAttendancesByServiceType(
+        results = await database.getAttendancesWithContactsByServiceType(
           _selectedServiceType!.backendValue,
         );
         // Filter by date range in memory
         results = results
             .where((a) =>
-                a.serviceDate
+                a.attendance.serviceDate
                     .isAfter(_dateFrom.subtract(const Duration(days: 1))) &&
-                a.serviceDate.isBefore(_dateTo.add(const Duration(days: 1))))
+                a.attendance.serviceDate.isBefore(_dateTo.add(const Duration(days: 1))))
             .toList();
       } else {
-        results = await database.getAttendancesByDateRange(
+        results = await database.getAttendancesWithContactsByDateRange(
           _dateFrom,
           _dateTo.add(const Duration(days: 1)),
         );
@@ -62,8 +62,8 @@ class _AttendanceHistoryScreenState
       // Calculate service type counts
       final counts = <String, int>{};
       for (final attendance in results) {
-        counts[attendance.serviceType] =
-            (counts[attendance.serviceType] ?? 0) + 1;
+        counts[attendance.attendance.serviceType] =
+            (counts[attendance.attendance.serviceType] ?? 0) + 1;
       }
 
       setState(() {
@@ -292,7 +292,7 @@ class _AttendanceHistoryScreenState
       itemCount: _attendances.length,
       itemBuilder: (context, index) {
         final attendance = _attendances[index];
-        final serviceType = ServiceType.fromBackend(attendance.serviceType);
+        final serviceType = ServiceType.fromBackend(attendance.attendance.serviceType);
 
         return Card(
           margin: const EdgeInsets.symmetric(
@@ -307,9 +307,9 @@ class _AttendanceHistoryScreenState
                 color: serviceType.color,
               ),
             ),
-            title: Text(attendance.phone),
+            title: Text(attendance.displayName),
             subtitle: Text(
-              _formatDateTime(attendance.serviceDate),
+              _formatDateTime(attendance.attendance.serviceDate),
               style: TextStyle(color: Colors.grey[600]),
             ),
             trailing: Container(

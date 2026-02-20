@@ -97,6 +97,20 @@ class SyncQueue extends Table {
 // DATABASE CLASS
 // ==============================================================================
 
+/// Helper class that combines attendance with contact name
+class AttendanceWithContact {
+  final AttendanceEntity attendance;
+  final String? contactName;
+
+  AttendanceWithContact({
+    required this.attendance,
+    this.contactName,
+  });
+
+  /// Returns the display name - contact name if available, otherwise phone
+  String get displayName => contactName ?? attendance.phone;
+}
+
 @DriftDatabase(tables: [
   Users,
   Contacts,
@@ -277,6 +291,66 @@ class AppDatabase extends _$AppDatabase {
           ..where((t) => t.serviceType.equals(serviceType))
           ..orderBy([(t) => OrderingTerm.desc(t.serviceDate)]))
         .get();
+  }
+
+  /// Gets attendances with contact name by joining with contacts table.
+  Future<List<AttendanceWithContact>> getAttendancesWithContactsByDateRange(
+    DateTime from,
+    DateTime to,
+  ) async {
+    final query = select(attendances).join([
+      leftOuterJoin(contacts, contacts.id.equalsExp(attendances.contactId)),
+    ])
+      ..where(attendances.serviceDate.isBiggerOrEqualValue(from) &
+          attendances.serviceDate.isSmallerThanValue(to))
+      ..orderBy([OrderingTerm.desc(attendances.serviceDate)]);
+
+    final results = await query.get();
+    return results.map((row) {
+      final attendance = row.readTable(attendances);
+      final contact = row.readTableOrNull(contacts);
+      return AttendanceWithContact(
+        attendance: attendance,
+        contactName: contact?.name,
+      );
+    }).toList();
+  }
+
+  /// Gets all attendances with contact name.
+  Future<List<AttendanceWithContact>> getAllAttendancesWithContacts() async {
+    final query = select(attendances).join([
+      leftOuterJoin(contacts, contacts.id.equalsExp(attendances.contactId)),
+    ])..orderBy([OrderingTerm.desc(attendances.serviceDate)]);
+
+    final results = await query.get();
+    return results.map((row) {
+      final attendance = row.readTable(attendances);
+      final contact = row.readTableOrNull(contacts);
+      return AttendanceWithContact(
+        attendance: attendance,
+        contactName: contact?.name,
+      );
+    }).toList();
+  }
+
+  /// Gets attendances with contact name filtered by service type.
+  Future<List<AttendanceWithContact>> getAttendancesWithContactsByServiceType(
+      String serviceType) async {
+    final query = select(attendances).join([
+      leftOuterJoin(contacts, contacts.id.equalsExp(attendances.contactId)),
+    ])
+      ..where(attendances.serviceType.equals(serviceType))
+      ..orderBy([OrderingTerm.desc(attendances.serviceDate)]);
+
+    final results = await query.get();
+    return results.map((row) {
+      final attendance = row.readTable(attendances);
+      final contact = row.readTableOrNull(contacts);
+      return AttendanceWithContact(
+        attendance: attendance,
+        contactName: contact?.name,
+      );
+    }).toList();
   }
 
   Future<AttendanceEntity?> checkAttendanceExists(
