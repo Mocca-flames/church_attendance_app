@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../core/enums/contact_status.dart';
+import '../../../../core/enums/contact_tag.dart';
 
 part 'contact.freezed.dart';
 part 'contact.g.dart';
@@ -85,4 +87,61 @@ sealed class Contact with _$Contact {
 
   /// Get display name (use name if available, otherwise phone)
   String get displayName => name ?? phone;
+
+  /// Get all role tags for this contact
+  List<String> get roleTags {
+    return tags.where((tag) => ContactTag.fromValue(tag)?.isRoleTag == true).toList();
+  }
+
+  /// Get the primary role tag (first role tag)
+  String? get primaryRoleTag {
+    return roleTags.isNotEmpty ? roleTags.first : null;
+  }
+
+  /// Get ContactTag enum for primary role
+  ContactTag? get primaryRole {
+    if (primaryRoleTag == null) return null;
+    return ContactTag.fromValue(primaryRoleTag!);
+  }
+
+  /// Check if contact has a specific role
+  bool hasRole(String role) {
+    return roleTags.contains(role.toLowerCase());
+  }
+
+  /// Get icon for primary role
+  IconData get roleIcon {
+    return primaryRole?.icon ?? Icons.person;
+  }
+
+  /// Get color for primary role
+  Color get roleColor {
+    return primaryRole?.color ?? Colors.grey;
+  }
+
+  /// Get all location tags for this contact
+  List<String> get locationTags {
+    return tags.where((tag) => ContactTag.fromValue(tag)?.isLocationTag == true).toList();
+  }
+
+  /// Check if contact is a member
+  bool get isMember => hasTag('member');
+
+  /// Get tag color from tag string
+  static Color getTagColor(String tag) {
+    final contactTag = ContactTag.fromValue(tag);
+    return contactTag?.color ?? Colors.grey;
+  }
+
+  /// Get tag icon from tag string
+  static IconData getTagIcon(String tag) {
+    final contactTag = ContactTag.fromValue(tag);
+    return contactTag?.icon ?? Icons.label;
+  }
+
+  /// Get tag display name from tag string
+  static String getTagDisplayName(String tag) {
+    final contactTag = ContactTag.fromValue(tag);
+    return contactTag?.displayName ?? tag;
+  }
 }

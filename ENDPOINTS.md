@@ -499,6 +499,32 @@ Removes tags from multiple contacts.
 }
 ```
 
+
+### `POST /contacts/import-vcf-file`
+
+Imports contacts from a VCF file upload.
+
+
+**Request Body (form-data):**
+
+- `file`: The VCF file to import.
+
+**Response:**
+
+A summary of the import process.
+
+```json
+{
+  "success": true,
+  "imported_count": 50,
+  "failed_count": 2,
+  "errors": [
+    "Card for Jane Doe is missing a phone number.",
+    "Error processing phone number +27123456789 for 'John Doe': Contact with phone number +27123456789 already exists."
+  ]
+}
+```
+
 ---
 
 ### `GET /attendance/contacts/{contact_id}`

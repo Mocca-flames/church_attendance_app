@@ -4,13 +4,7 @@ import 'package:flutter/material.dart';
 
 /// Contact card with QR code button for eligible members.
 /// 
-/// Usage:
-/// ```dart
-/// ContactCard(
-///   contact: contact,
-///   onTap: () => navigateToDetail(contact),
-/// )
-/// ```
+/// Modernized with a flat design, borders, and refined spacing.
 class ContactCard extends StatelessWidget {
   final Contact contact;
   final VoidCallback? onTap;
@@ -31,104 +25,157 @@ class ContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Avatar
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: _getAvatarColor(),
-                child: Text(
-                  _getInitials(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+    // Using a Container with decoration instead of Card to remove elevation
+    // and implement the flat, bordered look.
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // Avatar with subtle border ring
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _getAvatarColor().withValues(alpha: 0.2),
+                      width: 2,
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 22,
+                    backgroundColor: _getAvatarColor().withValues(alpha: 0.1),
+                    child: Text(
+                      _getInitials(),
+                      style: TextStyle(
+                        color: _getAvatarColor(),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
+                const SizedBox(width: 16),
 
-              // Contact Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Name
-                    Text(
-                      contact.name ?? contact.phone,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                // Contact Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Name
+                      Text(
+                        contact.name ?? contact.phone,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
+                      const SizedBox(height: 4),
 
-                    // Phone
-                    Text(
-                      contact.phone,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
+                      // Phone
+                      Row(
+                        children: [
+                          Icon(Icons.phone_outlined, 
+                            size: 14, 
+                            color: Colors.grey[500]
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            contact.phone,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
 
-                    // Tags
-                    if (contact.tags.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Wrap(
-                          spacing: 4,
-                          runSpacing: 4,
-                          children: contact.tags.take(3).map((tag) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _getTagColor(tag).withValues(alpha:.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: _getTagColor(tag),
-                                  width: 1,
+                      // Tags
+                      if (contact.tags.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: contact.tags.take(3).map((tag) {
+                              final tagColor = _getTagColor(tag);
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 3,
                                 ),
-                              ),
-                              child: Text(
-                                tag,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: _getTagColor(tag),
-                                  fontWeight: FontWeight.w500,
+                                decoration: BoxDecoration(
+                                  color: tagColor.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: tagColor.withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
                                 ),
-                              ),
-                            );
-                          }).toList(),
+                                child: Text(
+                                  tag,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: tagColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                // QR Button or Trailing
+                if (trailing != null)
+                  trailing!
+                else if (contact.isEligibleForQRCode)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: InkWell(
+                      onTap: () => _showQRCode(context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        height: 44,
+                        width: 44,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.qr_code_2_rounded,
+                          color: Theme.of(context).primaryColor,
+                          size: 24,
                         ),
                       ),
-                  ],
-                ),
-              ),
-
-              // QR Button or Trailing
-              if (trailing != null)
-                trailing!
-              else if (contact.isEligibleForQRCode)
-                IconButton(
-                  icon: const Icon(Icons.qr_code),
-                  onPressed: () => _showQRCode(context),
-                  tooltip: 'Show QR Code',
-                  style: IconButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor.withValues(alpha:0.1),
-                    foregroundColor: Theme.of(context).primaryColor,
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

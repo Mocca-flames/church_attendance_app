@@ -44,6 +44,8 @@ dependencies:
   # Utils
   uuid: ^4.3.3
   logger: ^2.0.2
+  file_picker: ^8.0.0+1
+  vcf_dart: ^1.0.3
 
 dev_dependencies:
   flutter_test:

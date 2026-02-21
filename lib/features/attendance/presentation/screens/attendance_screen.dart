@@ -159,6 +159,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'attendance_fab', // Unique tag to prevent Hero conflict
         isExtended: !_searchFocusNode.hasFocus,
         onPressed: _navigateToScanner,
         icon: const Icon(Icons.qr_code_scanner),

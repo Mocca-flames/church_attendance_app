@@ -36,6 +36,9 @@ abstract class ContactRepository {
   /// Remove tags from a contact
   Future<Contact> removeTagsFromContact(int contactId, List<String> tags);
 
+  /// Import contacts from a VCF file
+  Future<Map<String, dynamic>> importVcfFile(String filePath);
+
   /// Sync contacts with server
   Future<void> syncContacts();
 }

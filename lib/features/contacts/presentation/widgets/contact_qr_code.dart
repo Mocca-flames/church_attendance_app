@@ -6,14 +6,17 @@ import 'package:qr_flutter/qr_flutter.dart';
 /// 
 /// The QR code contains the contact's phone number.
 /// Only shows for eligible contacts (members with real names).
+/// Includes role-based icon and color customization.
 class ContactQRCode extends StatelessWidget {
   final Contact contact;
   final double size;
+  final bool showRoleIcon;
 
   const ContactQRCode({
     required this.contact,
     super.key,
     this.size = 200,
+    this.showRoleIcon = true,
   });
 
   @override
@@ -26,34 +29,46 @@ class ContactQRCode extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // QR Code
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha:0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+        // QR Code with role badge
+        Stack(
+          alignment: Alignment.topRight,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha:0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: QrImageView(
-            data: contact.phone,
-            version: QrVersions.auto,
-            size: size,
-            backgroundColor: Colors.white,
-            eyeStyle: const QrEyeStyle(
-              eyeShape: QrEyeShape.square,
-              color: Colors.black,
+              child: QrImageView(
+                data: contact.phone,
+                version: QrVersions.auto,
+                size: size,
+                backgroundColor: Colors.white,
+                eyeStyle: QrEyeStyle(
+                  eyeShape: QrEyeShape.square,
+                  color: contact.roleColor,
+                ),
+                dataModuleStyle: QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.square,
+                  color: contact.roleColor,
+                ),
+              ),
             ),
-            dataModuleStyle: const QrDataModuleStyle(
-              dataModuleShape: QrDataModuleShape.square,
-              color: Colors.black,
-            ),
-          ),
+            // Role Badge
+            if (showRoleIcon && contact.primaryRoleTag != null)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: _buildRoleBadge(),
+              ),
+          ],
         ),
 
         const SizedBox(height: 16),
@@ -61,7 +76,9 @@ class ContactQRCode extends StatelessWidget {
         // Contact Name
         Text(
           contact.name ?? contact.phone,
-          style: Theme.of(context).textTheme.titleLarge,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
           textAlign: TextAlign.center,
         ),
 
@@ -76,33 +93,91 @@ class ContactQRCode extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
 
-        // Member Badge
-        if (contact.hasTag('member'))
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha:0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.green),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.verified, color: Colors.green, size: 16),
-                SizedBox(width: 4),
-                Text(
-                  'Member',
-                  style: TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+        // Role and Member Badges
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            // Role Badge
+            if (contact.primaryRoleTag != null)
+              _buildBadge(
+                icon: contact.roleIcon,
+                label: contact.primaryRole?.displayName ?? contact.primaryRoleTag!,
+                color: contact.roleColor,
+              ),
+            // Member Badge
+            if (contact.isMember)
+              _buildBadge(
+                icon: Icons.card_membership,
+                label: 'Member',
+                color: Colors.green,
+              ),
+            // Location Badge
+            if (contact.location != null)
+              _buildBadge(
+                icon: Icons.location_on,
+                label: contact.location!.substring(0, 1).toUpperCase() + 
+                       contact.location!.substring(1),
+                color: Colors.red,
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleBadge() {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: contact.roleColor,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha:0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Icon(
+        contact.roleIcon,
+        color: Colors.white,
+        size: 16,
+      ),
+    );
+  }
+
+  Widget _buildBadge({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha:0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 
