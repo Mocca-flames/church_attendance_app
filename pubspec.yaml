@@ -1,19 +1,65 @@
-name: attendance
-description: "A new Flutter project."
+name: church_attendance_app
+description: Church Attendance & Contact Management App - Offline First
 publish_to: 'none'
-version: 0.1.0+1
+version: 1.0.0+1
 
 environment:
-  sdk: ^3.11.0
+  sdk: '>=3.2.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
+  # State Management
+  flutter_riverpod: ^3.1.0          # latest stable riverpod 3.x  
+  riverpod_annotation: ^4.0.0       # updated annotation versions :contentReference[oaicite:0]{index=0}
+
+  # Code Generation
+  freezed_annotation: ^3.1.0        # newest freezed annotation :contentReference[oaicite:1]{index=1}
+  json_annotation: ^4.9.0            # 4.9.x is current major for json_annotation
+
+  # Database
+  drift: ^2.16.0                     # your current version already recent
+  sqlite3_flutter_libs: ^0.5.24  # latest, but note it’s effectively a no-op now (obsolete) :contentReference[oaicite:2]{index=2}
+  drift_flutter: ^0.2.8              # add drift_flutter helper if needed :contentReference[oaicite:3]{index=3}
+  path_provider: ^2.1.2
+  path: ^1.9.0
+
+  # Network
+  dio: ^5.4.1
+  connectivity_plus: ^7.0.0          # major update from 5.x :contentReference[oaicite:4]{index=4}
+
+  # QR Code
+  qr_flutter: any                    # no version listed in search; you can run `flutter pub outdated` for latest
+  mobile_scanner: ^7.1.4
+  share_plus: ^12.0.1               # updated share_plus :contentReference[oaicite:5]{index=5}
+
+  # UI
+  flutter_svg: ^2.0.10
+  intl: ^0.20.2
+
+  # Storage
+  shared_preferences: ^2.5.4        # latest shared_preferences :contentReference[oaicite:6]{index=6}
+
+  # Utils
+  uuid: ^4.3.3
+  logger: ^2.0.2
+  file_picker: ^8.0.0+1
+  vcf_dart: ^1.0.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+
+  # Code Generation
+  build_runner: ^2.4.8
+  riverpod_generator: ^4.0.0+1       # align with newer annotation version
+  freezed: ^3.1.0
+  json_serializable: ^6.7.1
+  drift_dev: ^2.16.0
+  custom_lint: ^0.8.1               # updated to support freezed_annotation ^3.1.0
+  riverpod_lint: ^3.1.0
 
 flutter:
   uses-material-design: true
