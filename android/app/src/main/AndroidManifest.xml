@@ -30,12 +30,15 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
             
-            <!-- VCF Share Intent Filter -->
+            <!-- VCF Share Intent Filter - Single Contact - Using singleTop for proper intent handling when app is already running -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/x-vcard" />
                 <data android:mimeType="text/vcard" />
+                <data android:mimeType="text/x-evcard" />
+                <data android:mimeType="application/vcard" />
+                <data android:mimeType="application/x-vcard" />
                 <data android:mimeType="text/plain" />
                 <data android:mimeType="application/octet-stream" />
             </intent-filter>
@@ -46,6 +49,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/x-vcard" />
                 <data android:mimeType="text/vcard" />
+                <data android:mimeType="text/x-evcard" />
+                <data android:mimeType="application/vcard" />
+                <data android:mimeType="application/x-vcard" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

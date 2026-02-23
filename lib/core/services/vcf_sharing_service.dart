@@ -1,18 +1,46 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
+/// Callback type for when a VCF is received via MethodChannel
+typedef VcfReceivedCallback = void Function(String path);
 
 /// Simple VCF parser for preview purposes.
 /// Parses VCF file to get contact count and basic info.
 class VcfSharingService {
   static const MethodChannel _channel = MethodChannel('com.attendance/shared_data');
   
+  /// Callback for when Android notifies Flutter of a received VCF
+  static VcfReceivedCallback? _onVcfReceived;
+  
+  /// Set callback for when VCF is received
+  static void setVcfReceivedCallback(VcfReceivedCallback callback) {
+    _onVcfReceived = callback;
+    // Set up method call handler for "onVcfReceived"
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == "onVcfReceived") {
+        final path = call.arguments as Map<dynamic, dynamic>?;
+        if (path != null && path["path"] != null) {
+          final vcfPath = path["path"] as String;
+          debugPrint('[VCF Service] onVcfReceived callback triggered with path: $vcfPath');
+          _onVcfReceived?.call(vcfPath);
+        }
+      }
+    });
+  }
+  
   /// Get the shared VCF file path if available.
   static Future<String?> getSharedVcfPath() async {
     try {
+      debugPrint('[VCF Service] Calling getSharedVcfPath...');
       final String? path = await _channel.invokeMethod('getSharedVcfPath');
+      debugPrint('[VCF Service] getSharedVcfPath returned: $path');
       return path;
     } on PlatformException catch (e) {
-      print('Error getting shared VCF path: ${e.message}');
+      debugPrint('[VCF Service] Error getting shared VCF path: ${e.message}');
+      return null;
+    } catch (e) {
+      debugPrint('[VCF Service] Unexpected error getting shared VCF path: $e');
       return null;
     }
   }
@@ -20,9 +48,11 @@ class VcfSharingService {
   /// Parse VCF file and return basic info for preview.
   static Future<VcfParseResult> parseVcfFile(String filePath) async {
     try {
+      debugPrint('[VCF Service] Parsing VCF file: $filePath');
       final file = File(filePath);
       
       if (!await file.exists()) {
+        debugPrint('[VCF Service] File not found: $filePath');
         return VcfParseResult(
           success: false,
           contactCount: 0,
@@ -85,6 +115,7 @@ class VcfSharingService {
         }
       }
 
+      debugPrint('[VCF Service] Parsed $contactCount contacts, names: $names');
       return VcfParseResult(
         success: contactCount > 0,
         contactCount: contactCount,
@@ -93,6 +124,7 @@ class VcfSharingService {
         error: errors.isNotEmpty ? errors.join('\n') : null,
       );
     } catch (e) {
+      debugPrint('[VCF Service] Parse exception: $e');
       return VcfParseResult(
         success: false,
         contactCount: 0,
@@ -105,12 +137,14 @@ class VcfSharingService {
   /// Clean up temporary VCF file
   static Future<void> cleanupTempFile(String filePath) async {
     try {
+      debugPrint('[VCF Service] Cleaning up temp file: $filePath');
       final file = File(filePath);
       if (await file.exists()) {
         await file.delete();
+        debugPrint('[VCF Service] Temp file deleted');
       }
     } catch (e) {
-      print('Error cleaning up temp file: $e');
+      debugPrint('[VCF Service] Error cleaning up temp file: $e');
     }
   }
 }

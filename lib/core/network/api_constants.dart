@@ -26,7 +26,7 @@ class ApiConstants {
   static const String tagStatistics = '/contacts/tags/statistics';
   static const String tagsBulkAdd = '/contacts/tags/bulk-add';
   static const String tagsBulkRemove = '/contacts/tags/bulk-remove';
-  static const String importVcfFile = '/contacts/import-vcf-file';
+  static const String importVcfFile = '/contacts/import';
 
   // Attendance Endpoints
   static const String attendances = '/attendance/records';

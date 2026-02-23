@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -13,43 +14,58 @@ import java.io.FileOutputStream
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.attendance/shared_data"
     private var sharedVcfPath: String? = null
+    private var methodChannel: MethodChannel? = null
+    private var pendingIntent: Intent? = null
+
+    companion object {
+        private const val TAG = "VCFShareIntent"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Handle intent if app was launched from share intent
+        Log.d(TAG, "onCreate called with intent: $intent")
+        // Process intent immediately in onCreate (Flutter calls configureFlutterEngine before onCreate)
         handleIntent(intent)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
-            .setMethodCallHandler { call, result ->
-                when (call.method) {
-                    "getSharedVcfPath" -> {
-                        val path = sharedVcfPath
-                        sharedVcfPath = null  // Clear after reading
-                        result.success(path)
-                    }
-                    else -> result.notImplemented()
-                }
-            }
+        Log.d(TAG, "configureFlutterEngine called")
         
-        // Handle intent if already ready
-        handleIntent(intent)
+        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        methodChannel?.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getSharedVcfPath" -> {
+                    val path = sharedVcfPath
+                    Log.d(TAG, "getSharedVcfPath called, returning: $path")
+                    sharedVcfPath = null  // Clear after reading
+                    result.success(path)
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        Log.d(TAG, "onNewIntent called with action: ${intent.action}, type: ${intent.type}")
         // When app is already running and user shares a file
         handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent?) {
-        if (intent == null) return
+        if (intent == null) {
+            Log.d(TAG, "handleIntent called with null intent")
+            return
+        }
+        
+        Log.d(TAG, "handleIntent called with action: ${intent.action}, type: ${intent.type}")
         
         if (Intent.ACTION_SEND == intent.action) {
             val type = intent.type
+            
+            Log.d(TAG, "Detected SEND action, MIME type: $type")
             
             // Check if it's a text-based MIME type (VCF files)
             if (type != null && (
@@ -64,13 +80,34 @@ class MainActivity : FlutterActivity() {
                     intent.getParcelableExtra(Intent.EXTRA_STREAM)
                 }
                 
+                Log.d(TAG, "URI from intent: $uri")
+                
                 uri?.let {
                     val path = copyUriToCache(it)
                     if (path != null) {
+                        Log.d(TAG, "Successfully copied VCF to: $path")
                         sharedVcfPath = path
+                        
+                        // Notify Flutter immediately that a VCF is available
+                        notifyFlutterVcfReceived(path)
+                    } else {
+                        Log.e(TAG, "Failed to copy VCF from URI: $uri")
                     }
                 }
+            } else {
+                Log.w(TAG, "MIME type not supported: $type")
             }
+        } else {
+            Log.w(TAG, "Unknown action: ${intent.action}")
+        }
+    }
+
+    private fun notifyFlutterVcfReceived(path: String) {
+        try {
+            methodChannel?.invokeMethod("onVcfReceived", mapOf("path" to path))
+            Log.d(TAG, "Notified Flutter about VCF at: $path")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to notify Flutter: ${e.message}")
         }
     }
 

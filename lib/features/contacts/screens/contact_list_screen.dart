@@ -266,6 +266,12 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
                   isDense: true,
+                  // Add search icon prefix
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Colors.white.withValues(alpha: 0.6),
+                    size: 20,
+                  ),
                 ),
                 onChanged: _onSearchChanged,
               )
@@ -290,12 +296,7 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
                 _searchFocusNode.requestFocus();
               },
             ),
-          if (_isSearchExpanded) ...[
-            if (_searchController.text.isNotEmpty)
-              IconButton(
-                icon: const Icon(Icons.clear, size: 20),
-                onPressed: _clearSearch,
-              ),
+          if (_isSearchExpanded)
             IconButton(
               icon: const Icon(Icons.close),
               onPressed: () {
@@ -306,7 +307,6 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
                 _clearSearch();
               },
             ),
-          ],
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             elevation: 2,

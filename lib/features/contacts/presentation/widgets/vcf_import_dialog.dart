@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/services/vcf_sharing_service.dart';
 
@@ -20,6 +21,13 @@ class VcfImportResultDialog extends StatelessWidget {
     final importedCount = result['imported_count'] as int? ?? 0;
     final failedCount = result['failed_count'] as int? ?? 0;
     final errors = (result['errors'] as List<dynamic>?)?.cast<String>() ?? [];
+
+    // Trigger haptic feedback based on result
+    if (success) {
+      HapticFeedback.heavyImpact();
+    } else {
+      HapticFeedback.vibrate();
+    }
 
     return AlertDialog(
       shape: RoundedRectangleBorder(
@@ -80,6 +88,7 @@ class VcfImportResultDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () {
+            HapticFeedback.mediumImpact();
             Navigator.of(context).pop();
             onDismiss?.call();
           },
@@ -303,14 +312,22 @@ class VcfShareConfirmDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: onCancel,
+          onPressed: () {
+            HapticFeedback.mediumImpact();
+            onCancel();
+          },
           style: TextButton.styleFrom(
             foregroundColor: Colors.grey[600],
           ),
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: parseResult.success ? onImport : null,
+          onPressed: parseResult.success
+              ? () {
+                  HapticFeedback.mediumImpact();
+                  onImport();
+                }
+              : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,

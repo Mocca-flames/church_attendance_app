@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:church_attendance_app/core/network/dio_client.dart';
 import 'package:church_attendance_app/features/contacts/data/datasources/contact_local_datasource.dart';
 import 'package:church_attendance_app/features/contacts/data/datasources/contact_remote_datasource.dart';
@@ -16,6 +17,7 @@ import 'package:church_attendance_app/features/contacts/domain/repositories/cont
 class ContactRepositoryImpl implements ContactRepository {
   final ContactLocalDataSource _localDataSource;
   final ContactRemoteDataSource _remoteDataSource;
+  // ignore: unused_field
   final DioClient _dioClient;
 
   ContactRepositoryImpl({
@@ -415,17 +417,15 @@ class ContactRepositoryImpl implements ContactRepository {
   }
 
   /// Check if device is online
+  /// Simplified check - just check for connectivity, don't require server health check
   Future<bool> _isOnline() async {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult.contains(ConnectivityResult.none)) {
-        return false;
-      }
-      
-      // Try to reach the server
-      final response = await _dioClient.dio.get('/health');
-      return response.statusCode == 200;
+      final isConnected = !connectivityResult.contains(ConnectivityResult.none);
+      debugPrint('[Contact Repository] Online check: $isConnected (connectivity: $connectivityResult)');
+      return isConnected;
     } catch (e) {
+      debugPrint('[Contact Repository] Online check failed: $e');
       return false;
     }
   }
