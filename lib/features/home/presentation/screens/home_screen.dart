@@ -5,10 +5,57 @@ import 'package:church_attendance_app/core/presentation/widgets/common_widgets.d
 import 'package:church_attendance_app/core/presentation/widgets/sync_status_indicator.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/contact_count_provider.dart';
+import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf_import_overlay.dart';
+import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf_import_status_card.dart';
 import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+
+/// Static debug log manager - stores last 100 log lines globally
+class DebugLogManager {
+  static final List<String> _logs = [];
+  static VoidCallback? _onLogAdded;
+  
+  static List<String> get logs => List.unmodifiable(_logs);
+  
+  static void addLog(String message) {
+    final timestamp = DateTime.now().toIso8601String().substring(11, 19);
+    final logLine = '[$timestamp] $message';
+    _logs.add(logLine);
+    // Keep only last 100 logs
+    if (_logs.length > 100) {
+      _logs.removeAt(0);
+    }
+    debugPrint('[DEBUG] $logLine');
+    _onLogAdded?.call();
+  }
+  
+  static void clear() {
+    _logs.clear();
+    _onLogAdded?.call();
+  }
+  
+  static void setListener(VoidCallback callback) {
+    _onLogAdded = callback;
+  }
+}
+
+/// Notifier to manage debug log trigger count - avoids circular reference (Riverpod 3.x)
+class DebugLogsTriggerNotifier extends Notifier<int> {
+  @override
+  int build() {
+    DebugLogManager.setListener(() {
+      state++;
+    });
+    return 0;
+  }
+}
+
+/// Provider that rebuilds when logs change - uses Notifier to avoid circularity
+final debugLogsTriggerProvider = NotifierProvider<DebugLogsTriggerNotifier, int>(() {
+  return DebugLogsTriggerNotifier();
+});
 
 /// Home screen - main dashboard after authentication.
 /// Shows user info and provides navigation to other features.
@@ -103,20 +150,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _buildOfflineDataCard(context, ref),
                 const SizedBox(height: AppDimens.paddingL),
 
-                // Quick actions
-                Text(
-                  AppStrings.quickActions,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
+                // Debug log viewer - shows VCF and other logs
+                _buildDebugLogViewer(context, ref),
               ],
             ),
           ),
           // Sync overlay - shown while syncing
+          // But VCF Import Overlay should take priority
           if (syncStatus.isSyncing)
             Container(
-              color: Colors.black54,
+              color: Colors.black38,  // More transparent so VCF overlay shows through
               child: Center(
                 child: Card(
                   margin: const EdgeInsets.all(AppDimens.paddingXL),
@@ -171,6 +214,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
+          // VCF Import Overlay - ALWAYS on top, even during sync
+          const VcfImportOverlay(),
+          // VCF Import Status Card - shows progress/results on home screen
+          const VcfImportStatusCard(),
         ],
       ),
     );
@@ -289,7 +336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Text('Loading...'),
                 ],
               ),
-              error: (_, __) => Text(
+              error: (_, _) => Text(
                 'Unable to load contact count',
                 style: TextStyle(color: Colors.red[300]),
               ),
@@ -299,4 +346,99 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
+
+  /// Build debug log viewer widget
+  Widget _buildDebugLogViewer(BuildContext context, WidgetRef ref) {
+    // Watch the trigger to rebuild when logs change
+    ref.watch(debugLogsTriggerProvider);
+    final logs = DebugLogManager.logs;
+    
+    return Card(
+      elevation: AppDimens.cardElevation,
+      color: const Color(0xFF1E1E1E),
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.paddingM),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.bug_report,
+                      size: 20,
+                      color: Colors.green[400],
+                    ),
+                    const SizedBox(width: AppDimens.paddingS),
+                    Text(
+                      'VCF Debug Logs',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: Colors.white54, size: 18),
+                  onPressed: () {
+                    DebugLogManager.clear();
+                  },
+                  tooltip: 'Clear logs',
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimens.paddingS),
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[800]!),
+              ),
+              child: logs.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No debug logs yet.\nShare a VCF file to see logs here.',
+                        style: TextStyle(color: Colors.white38),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(8),
+                      itemCount: logs.length,
+                      itemBuilder: (context, index) {
+                        final log = logs[index];
+                        Color textColor = Colors.green[300]!;
+                        if (log.contains('ERROR') || log.contains('error')) {
+                          textColor = Colors.red;
+                        } else if (log.contains('WARNING') || log.contains('warning')) {
+                          textColor = Colors.orange;
+                        } else if (log.contains('[VCF')) {
+                          textColor = Colors.cyan;
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 1),
+                          child: Text(
+                            log,
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: 10,
+                              fontFamily: 'monospace',
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/theme/app_theme.dart';
+import 'package:church_attendance_app/core/navigation/app_navigator.dart';
 import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf_share_intent_handler.dart';
 import 'package:church_attendance_app/features/splash/presentation/screens/splash_screen.dart';
 
@@ -38,6 +39,7 @@ class ChurchAttendanceApp extends StatelessWidget {
     // This prevents duplicate calls to getSharedVcfPath()
     return VcfShareIntentHandler(
       child: MaterialApp(
+        navigatorKey: navigatorKey,  // Use global navigator key
         title: 'Church Attendance',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,

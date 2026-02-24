@@ -211,7 +211,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     if (searchState.isLoading) {
       return ListView.builder(
         itemCount: 5,
-        itemBuilder: (_, __) => const ContactResultCardSkeleton(),
+        itemBuilder: (_, _) => const ContactResultCardSkeleton(),
       );
     }
 

@@ -24,6 +24,8 @@ class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate called with intent: $intent")
+        // Clean up old VCF files on app start
+        cleanupOldVcfFiles()
         // Process intent immediately in onCreate (Flutter calls configureFlutterEngine before onCreate)
         handleIntent(intent)
     }
@@ -111,20 +113,45 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun cleanupOldVcfFiles() {
+        try {
+            val vcfDir = File(filesDir, "shared_vcf")
+            if (vcfDir.exists()) {
+                val files = vcfDir.listFiles()
+                files?.forEach { file ->
+                    // Delete files older than 24 hours
+                    if (System.currentTimeMillis() - file.lastModified() > 24 * 60 * 60 * 1000) {
+                        file.delete()
+                        Log.d(TAG, "Deleted old VCF file: ${file.name}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error cleaning up old VCF files: ${e.message}")
+        }
+    }
+
     private fun copyUriToCache(uri: Uri): String? {
         return try {
             // Use ContentResolver to read the file from URI
             contentResolver.openInputStream(uri)?.use { input ->
-                // Create a temporary file in app's cache directory
-                val tempFile = File(cacheDir, "shared_vcf_${System.currentTimeMillis()}.vcf")
+                // Create a file in app's files directory (more persistent than cache)
+                // Use filesDir instead of cacheDir to prevent Android from cleaning it up
+                val vcfDir = File(filesDir, "shared_vcf")
+                if (!vcfDir.exists()) {
+                    vcfDir.mkdirs()
+                }
+                val tempFile = File(vcfDir, "shared_vcf_${System.currentTimeMillis()}.vcf")
                 FileOutputStream(tempFile).use { output ->
                     input.copyTo(output)
                 }
+                Log.d(TAG, "VCF copied to files dir: ${tempFile.absolutePath}")
                 return tempFile.absolutePath
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            null
+            Log.e(TAG, "Error copying VCF: ${e.message}")
+            return null
         }
     }
 }

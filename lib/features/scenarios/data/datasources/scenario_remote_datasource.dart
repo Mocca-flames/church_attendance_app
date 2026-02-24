@@ -50,7 +50,7 @@ class ScenarioRemoteDataSource {
         'name': name,
         'filter_tags': filterTags,
         'created_by': createdBy,
-        if (description != null) 'description': description,
+        'description': ?description,
       };
       
       final response = await _dioClient.dio.post(

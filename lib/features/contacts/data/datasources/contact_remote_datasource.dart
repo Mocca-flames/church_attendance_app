@@ -70,7 +70,7 @@ class ContactRemoteDataSource {
       
       final requestData = {
         'phone': normalizedPhone,
-        if (name != null) 'name': name,
+        'name': ?name,
         if (tags != null && tags.isNotEmpty) 'tags': tags,
       };
       

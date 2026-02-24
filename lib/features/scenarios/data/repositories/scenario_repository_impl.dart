@@ -49,6 +49,14 @@ class ScenarioRepositoryImpl implements ScenarioRepository {
     required int createdBy,
     String? description,
   }) async {
+    // Validate input
+    if (name.trim().isEmpty) {
+      throw ArgumentError('Scenario name cannot be empty');
+    }
+    if (createdBy <= 0) {
+      throw ArgumentError('Invalid user ID for createdBy');
+    }
+    
     // Create locally first
     final createdScenario = await _localDataSource.createScenario(
       name: name,
@@ -75,6 +83,7 @@ class ScenarioRepositoryImpl implements ScenarioRepository {
 
         return (await _localDataSource.getScenarioById(createdScenario.id))!;
       } catch (e) {
+        debugPrint('[ScenarioRepository] Failed to sync scenario to server: $e');
         // Add to sync queue for later retry
         await _localDataSource.addToSyncQueue(
           scenarioId: createdScenario.id,
@@ -106,6 +115,17 @@ class ScenarioRepositoryImpl implements ScenarioRepository {
 
   @override
   Future<Scenario> updateScenario(Scenario scenario) async {
+    // Validate input
+    if (scenario.id == 0) {
+      throw ArgumentError('Invalid scenario ID');
+    }
+    if (scenario.name.trim().isEmpty) {
+      throw ArgumentError('Scenario name cannot be empty');
+    }
+    if (scenario.createdBy <= 0) {
+      throw ArgumentError('Invalid user ID');
+    }
+    
     // Update locally
     final updatedScenario = await _localDataSource.updateScenario(scenario);
 
@@ -237,11 +257,29 @@ class ScenarioRepositoryImpl implements ScenarioRepository {
           
           // Mark as synced
           await _localDataSource.markTaskAsSynced(taskId, completedTask.serverId!);
+        } else {
+          // No serverId - add to sync queue for later sync
+          await _localDataSource.addTaskToSyncQueue(
+            taskId: taskId,
+            action: 'complete',
+            data: {'completedBy': completedBy},
+          );
         }
       } catch (e) {
-        // Task is still marked as completed locally
-        // Sync will handle it later
+        // Add to sync queue for later retry when online
+        await _localDataSource.addTaskToSyncQueue(
+          taskId: taskId,
+          action: 'complete',
+          data: {'completedBy': completedBy, 'error': e.toString()},
+        );
       }
+    } else {
+      // Offline - add to sync queue
+      await _localDataSource.addTaskToSyncQueue(
+        taskId: taskId,
+        action: 'complete',
+        data: {'completedBy': completedBy},
+      );
     }
 
     return completedTask;
@@ -259,16 +297,25 @@ class ScenarioRepositoryImpl implements ScenarioRepository {
 
   @override
   Future<void> syncScenarios() async {
-    if (!await _isOnline()) return;
+    if (!await _isOnline()) {
+      debugPrint('[ScenarioRepository] syncScenarios: offline, skipping sync');
+      return;
+    }
 
     // Pull scenarios from server and merge with local
     try {
+      debugPrint('[ScenarioRepository] syncScenarios: starting sync');
       final serverScenarios = await _remoteDataSource.getScenarios();
+      debugPrint('[ScenarioRepository] syncScenarios: got ${serverScenarios.length} scenarios from server');
+      
       final localScenarios = await _localDataSource.getAllScenarios();
+      debugPrint('[ScenarioRepository] syncScenarios: got ${localScenarios.length} scenarios from local');
       
       // Merge server scenarios with local scenarios
       await _mergeScenarios(serverScenarios, localScenarios);
+      debugPrint('[ScenarioRepository] syncScenarios: merge completed');
     } catch (e) {
+      debugPrint('[ScenarioRepository] syncScenarios: error during sync: $e');
       // Sync failed - continue with local data
     }
   }

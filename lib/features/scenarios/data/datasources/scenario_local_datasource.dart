@@ -10,32 +10,78 @@ import 'package:drift/drift.dart' as drift;
 /// Handles all local database operations using Drift.
 class ScenarioLocalDataSource {
   final AppDatabase _db;
+  static bool _cleanupDone = false;
 
   ScenarioLocalDataSource(this._db);
 
   /// Converts database entity to Scenario model with proper key mapping
   Scenario? _mapEntityToScenario(ScenarioEntity entity) {
-    final json = entity.toJson();
+    // Build JSON map manually to ensure proper type conversion
+    final Map<String, dynamic> json = {
+      'id': entity.id,
+      'serverId': entity.serverId,
+      'name': entity.name,
+      'description': entity.description,
+      'filterTags': entity.filterTags, // Keep as string for now, convert below
+      'status': entity.status, // This is a String from the database
+      'createdBy': entity.createdBy,
+      'createdAt': entity.createdAt.toIso8601String(),
+      'completedAt': entity.completedAt?.toIso8601String(),
+      'isSynced': entity.isSynced,
+      'isDeleted': entity.isDeleted,
+    };
 
-    // Convert status to ScenarioStatus enum if it's a string
-    if (json.containsKey('status') && json['status'] is String) {
-      json['status'] = ScenarioStatus.fromBackend(json['status'] as String);
-    }
-    // Convert createdAt from int (epoch ms) to ISO8601 string
-    if (json.containsKey('createdAt') && json['createdAt'] is int) {
-      final epochMs = json['createdAt'] as int;
-      json['createdAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
-    }
-    // Convert completedAt from int (epoch ms) to ISO8601 string
-    if (json.containsKey('completedAt') && json['completedAt'] is int) {
-      final epochMs = json['completedAt'] as int;
-      json['completedAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
+    // Convert status to ScenarioStatus enum - handle both 'active' and 'ScenarioStatus.active' formats
+    // NOTE: Keep as string for Freezed compatibility - Freezed expects a string in the JSON
+    if (json.containsKey('status')) {
+      final statusValue = json['status'];
+      debugPrint('[ScenarioLocalDataSource:34] Parsing status: type=${statusValue.runtimeType}, value=$statusValue');
+      
+      if (statusValue is String) {
+        // Handle various formats: 'active', 'completed', 'ScenarioStatus.active', etc.
+        String backendValue = statusValue;
+        
+        // Extract the enum value name from various formats:
+        // - 'active' -> 'active'
+        // - 'ScenarioStatus.active' -> 'active'
+        // - 'ScenarioStatus.completed' -> 'completed'
+        if (statusValue.contains('.')) {
+          // Format: 'ScenarioStatus.active' or similar -> extract 'active'
+          backendValue = statusValue.split('.').last;
+        } else if (statusValue.startsWith('ScenarioStatus.')) {
+          // Format: 'ScenarioStatus.active' (no dot in split result)
+          backendValue = statusValue.replaceFirst('ScenarioStatus.', '');
+        }
+        
+        debugPrint('[ScenarioLocalDataSource:47] Extracted backendValue: $backendValue');
+        // Keep as string for Freezed - it will handle the conversion
+        json['status'] = backendValue;
+        debugPrint('[ScenarioLocalDataSource:49] Status as string: ${json['status']}');
+      } else if (statusValue is ScenarioStatus) {
+        // Already a ScenarioStatus enum, convert to string for Freezed
+        debugPrint('[ScenarioLocalDataSource:52] Status is ScenarioStatus enum, converting to string');
+        json['status'] = statusValue.backendValue;
+      } else {
+        // Unknown type, try to parse anyway
+        debugPrint('[ScenarioLocalDataSource:55] WARNING: Unknown status type: ${statusValue.runtimeType}');
+        try {
+          String statusStr = statusValue.toString();
+          if (statusStr.contains('.')) {
+            statusStr = statusStr.split('.').last;
+          }
+          json['status'] = statusStr;
+        } catch (e) {
+          debugPrint('[ScenarioLocalDataSource:58] ERROR: Failed to parse status: $e');
+          json['status'] = 'active';
+        }
+      }
     }
     // Map filterTags from JSON string to List<String>
     if (json.containsKey('filterTags') && json['filterTags'] is String) {
       try {
         json['filterTags'] = List<String>.from(jsonDecode(json['filterTags'] as String));
       } catch (e) {
+        debugPrint('[ScenarioLocalDataSource:76] ERROR parsing filterTags: $e');
         json['filterTags'] = <String>[];
       }
     }
@@ -43,23 +89,45 @@ class ScenarioLocalDataSource {
     try {
       return Scenario.fromJson(json);
     } catch (e) {
-      return null;
+      debugPrint('[ScenarioLocalDataSource:70] ERROR parsing Scenario from entity: $e');
+      debugPrint('[ScenarioLocalDataSource:70] Entity JSON: $json');
+      // Return a default scenario as fallback to prevent crashes
+      return Scenario(
+        id: entity.id,
+        serverId: entity.serverId,
+        name: entity.name,
+        description: entity.description,
+        filterTags: [],
+        createdBy: entity.createdBy,
+        createdAt: entity.createdAt,
+        status: ScenarioStatus.active,
+        isSynced: entity.isSynced,
+        isDeleted: entity.isDeleted,
+      );
     }
   }
 
   /// Converts database entity to ScenarioTask model with proper key mapping
   ScenarioTask? _mapEntityToScenarioTask(ScenarioTaskEntity entity) {
-    final json = entity.toJson();
-    
-    // Convert completedAt from int (epoch ms) to ISO8601 string
-    if (json.containsKey('completedAt') && json['completedAt'] is int) {
-      final epochMs = json['completedAt'] as int;
-      json['completedAt'] = DateTime.fromMillisecondsSinceEpoch(epochMs).toIso8601String();
-    }
+    // Build JSON map manually to ensure proper type conversion
+    final Map<String, dynamic> json = {
+      'id': entity.id,
+      'serverId': entity.serverId,
+      'scenarioId': entity.scenarioId,
+      'contactId': entity.contactId,
+      'phone': entity.phone,
+      'name': entity.name,
+      'isCompleted': entity.isCompleted,
+      'completedBy': entity.completedBy,
+      'completedAt': entity.completedAt?.toIso8601String(),
+      'isSynced': entity.isSynced,
+    };
     
     try {
       return ScenarioTask.fromJson(json);
     } catch (e) {
+      debugPrint('[ScenarioLocalDataSource:81] ERROR parsing ScenarioTask from entity: $e');
+      debugPrint('[ScenarioLocalDataSource:81] Entity JSON: $json');
       return null;
     }
   }
@@ -67,20 +135,28 @@ class ScenarioLocalDataSource {
   /// Get all scenarios (excluding deleted)
   Future<List<Scenario>> getAllScenarios() async {
     debugPrint('[ScenarioLocalDataSource:67] getAllScenarios: fetching from DB');
+    
+    // Run cleanup FIRST to fix any corrupted data before reading
+    await cleanupCorruptedStatus();
+    
     final entities = await _db.getAllScenarios();
-    debugPrint('[ScenarioLocalDataSource:69] getAllScenarios: raw entities count: ${entities.length}');
+    debugPrint('[ScenarioLocalDataSource:72] getAllScenarios: raw entities count: ${entities.length}');
     final result = entities
         .where((e) => !e.isDeleted)
         .map(_mapEntityToScenario)
         .whereType<Scenario>()
         .toList();
-    debugPrint('[ScenarioLocalDataSource:73] getAllScenarios: returning ${result.length} scenarios');
+    debugPrint('[ScenarioLocalDataSource:76] getAllScenarios: returning ${result.length} scenarios');
     return result;
   }
 
   /// Get scenarios by status
   Future<List<Scenario>> getScenariosByStatus(ScenarioStatus status) async {
     debugPrint('[ScenarioLocalDataSource:78] getScenariosByStatus: status=$status');
+    
+    // Run cleanup on first access to fix any corrupted data
+    await cleanupCorruptedStatus();
+    
     final entities = await _db.getScenariosByStatus(status.backendValue);
     debugPrint('[ScenarioLocalDataSource:80] getScenariosByStatus: raw entities count: ${entities.length}');
     final result = entities
@@ -95,6 +171,10 @@ class ScenarioLocalDataSource {
   /// Get scenario by ID
   Future<Scenario?> getScenarioById(int id) async {
     debugPrint('[ScenarioLocalDataSource:88] getScenarioById: fetching id=$id');
+    
+    // Run cleanup on first access to fix any corrupted data
+    await cleanupCorruptedStatus();
+    
     final entity = await _db.getScenarioById(id);
     if (entity == null) {
       debugPrint('[ScenarioLocalDataSource:90] getScenarioById: entity is NULL for id=$id');
@@ -230,6 +310,32 @@ class ScenarioLocalDataSource {
     return result;
   }
 
+  /// Clean up corrupted status values in the database
+  /// This fixes any scenarios that have status stored with the full enum name
+  /// Only runs once per app session to avoid repeated writes
+  Future<void> cleanupCorruptedStatus() async {
+    if (_cleanupDone) {
+      debugPrint('[ScenarioLocalDataSource:305] cleanupCorruptedStatus: Already done, skipping');
+      return;
+    }
+    
+    debugPrint('[ScenarioLocalDataSource:307] cleanupCorruptedStatus: Starting cleanup');
+    try {
+      // Fix 'ScenarioStatus.active' -> 'active'
+      await _db.customStatement(
+        "UPDATE scenarios SET status = 'active' WHERE status = 'ScenarioStatus.active'"
+      );
+      // Fix 'ScenarioStatus.completed' -> 'completed'
+      await _db.customStatement(
+        "UPDATE scenarios SET status = 'completed' WHERE status = 'ScenarioStatus.completed'"
+      );
+      _cleanupDone = true;
+      debugPrint('[ScenarioLocalDataSource:317] cleanupCorruptedStatus: Cleanup completed');
+    } catch (e) {
+      debugPrint('[ScenarioLocalDataSource:319] cleanupCorruptedStatus: ERROR: $e');
+    }
+  }
+
   /// Get task by ID
   Future<ScenarioTask?> getTaskById(int id) async {
     debugPrint('[ScenarioLocalDataSource:200] getTaskById: id=$id');
@@ -317,6 +423,22 @@ class ScenarioLocalDataSource {
       entityType: const drift.Value('scenario'),
       action: drift.Value(action),
       localId: drift.Value(scenarioId),
+      data: drift.Value(jsonEncode(data ?? {})),
+      status: const drift.Value('pending'),
+    );
+    await _db.insertSyncQueueItem(companion);
+  }
+
+  /// Add task to sync queue for server sync
+  Future<void> addTaskToSyncQueue({
+    required int taskId,
+    required String action,
+    Map<String, dynamic>? data,
+  }) async {
+    final companion = SyncQueueCompanion(
+      entityType: const drift.Value('scenario_task'),
+      action: drift.Value(action),
+      localId: drift.Value(taskId),
       data: drift.Value(jsonEncode(data ?? {})),
       status: const drift.Value('pending'),
     );
