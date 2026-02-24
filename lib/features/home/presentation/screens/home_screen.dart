@@ -7,6 +7,9 @@ import 'package:church_attendance_app/features/auth/presentation/providers/auth_
 import 'package:church_attendance_app/features/contacts/presentation/providers/contact_count_provider.dart';
 import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
+
 /// Home screen - main dashboard after authentication.
 /// Shows user info and provides navigation to other features.
 /// Follows Clean Architecture with separated concerns.

@@ -9,6 +9,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_colors.dart';
+
 /// Contact List Screen with search, filter, and CRUD operations.
 class ContactListScreen extends ConsumerStatefulWidget {
   const ContactListScreen({super.key});

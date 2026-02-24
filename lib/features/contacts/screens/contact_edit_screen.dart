@@ -5,6 +5,8 @@ import 'package:church_attendance_app/features/contacts/presentation/providers/c
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_colors.dart';
+
 /// Contact Edit Screen for creating or editing contacts.
 ///
 /// Features:

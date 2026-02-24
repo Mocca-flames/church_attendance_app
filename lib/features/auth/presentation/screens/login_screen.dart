@@ -6,6 +6,8 @@ import 'package:church_attendance_app/core/enums/app_route.dart';
 import 'package:church_attendance_app/core/presentation/widgets/common_widgets.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 
+import '../../../../core/constants/app_strings.dart';
+
 /// Login screen for user authentication.
 /// Provides form validation and error handling.
 /// Follows Clean Architecture with separated concerns.

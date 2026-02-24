@@ -4,6 +4,9 @@ import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/app_route.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
+
 /// Placeholder screen for Settings feature.
 /// Shows "Coming Soon" message and logout option until the feature is implemented.
 class SettingsScreen extends ConsumerWidget {

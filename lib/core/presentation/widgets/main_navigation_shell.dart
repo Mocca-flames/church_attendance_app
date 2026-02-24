@@ -1,10 +1,11 @@
 import 'package:church_attendance_app/features/contacts/screens/contacts_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/features/home/presentation/screens/home_screen.dart';
 import 'package:church_attendance_app/features/attendance/presentation/screens/attendance_screen.dart';
 
-import 'package:church_attendance_app/features/settings/presentation/screens/settings_screen.dart';
+import '../../../features/more/presentation/screen/more_screen.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_strings.dart';
 
 /// Main navigation shell that provides bottom navigation for the app.
 /// Contains the scaffold with BottomNavigationBar and manages tab switching.
@@ -23,7 +24,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     HomeScreen(),
     AttendanceScreen(),
     ContactsScreen(),
-    SettingsScreen(),
+    MoreScreen(),
   ];
 
   /// List of navigation items
@@ -45,9 +46,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     ),
     
     BottomNavigationBarItem(
-      icon: Icon(Icons.settings_outlined),
-      activeIcon: Icon(Icons.settings),
-      label: AppStrings.settings,
+      icon: Icon(Icons.menu_outlined),
+      activeIcon: Icon(Icons.menu),
+      label: AppStrings.more,
     ),
   ];
 

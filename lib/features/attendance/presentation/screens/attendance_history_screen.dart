@@ -5,6 +5,8 @@ import 'package:church_attendance_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/app_colors.dart';
+
 /// Attendance history screen showing past attendance records.
 ///
 /// Features:

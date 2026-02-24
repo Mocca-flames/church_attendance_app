@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
 
+import '../../constants/app_colors.dart';
+import '../../constants/app_strings.dart';
+
 /// Reusable error container widget for displaying error messages.
 class AppErrorContainer extends StatelessWidget {
   const AppErrorContainer({

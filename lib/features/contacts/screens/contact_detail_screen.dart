@@ -7,6 +7,8 @@ import 'package:church_attendance_app/features/contacts/screens/contact_edit_scr
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_colors.dart';
+
 /// Contact Detail Screen to view contact information.
 ///
 /// Features:

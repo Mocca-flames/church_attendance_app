@@ -7,6 +7,9 @@ import 'package:church_attendance_app/core/presentation/widgets/common_widgets.d
 import 'package:church_attendance_app/core/enums/user_role.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
+
 /// Registration screen for new users.
 /// Provides form validation and role selection.
 /// Follows Clean Architecture with separated concerns.

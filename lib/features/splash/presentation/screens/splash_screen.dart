@@ -4,6 +4,9 @@ import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/app_route.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
+
 /// Splash screen that handles initial authentication check.
 /// Uses Riverpod for auth state management.
 /// Follows Clean Architecture with separated concerns.

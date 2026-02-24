@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/services/vcf_sharing_service.dart';
+
+import '../../../../core/constants/app_colors.dart';
 
 /// Reusable dialog for showing VCF import results.
 /// Used by both FilePicker and Share Intent import flows.

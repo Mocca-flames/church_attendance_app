@@ -12,6 +12,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
+import '../../../../core/constants/app_colors.dart';
+
 /// Card widget for displaying a contact in search results.
 ///
 /// Watches [markedContactIdsProvider] directly so it rebuilds the instant
