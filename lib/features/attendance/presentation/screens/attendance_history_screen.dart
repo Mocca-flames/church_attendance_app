@@ -1,11 +1,9 @@
+import 'package:church_attendance_app/core/constants/app_colors.dart';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
-import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
-import 'package:church_attendance_app/main.dart';
+import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_history_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/constants/app_colors.dart';
 
 /// Attendance history screen showing past attendance records.
 ///
@@ -23,87 +21,38 @@ class AttendanceHistoryScreen extends ConsumerStatefulWidget {
 
 class _AttendanceHistoryScreenState
     extends ConsumerState<AttendanceHistoryScreen> {
-  DateTime _dateFrom = DateTime.now().subtract(const Duration(days: 30));
-  DateTime _dateTo = DateTime.now();
-  ServiceType? _selectedServiceType;
-  bool _isLoading = true;
-  List<AttendanceWithContact> _attendances = [];
-  Map<String, int> _serviceTypeCounts = {};
-
   @override
   void initState() {
     super.initState();
-    _loadAttendances();
-  }
-
-  Future<void> _loadAttendances() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final database = ref.read(databaseProvider);
-      List<AttendanceWithContact> results;
-
-      if (_selectedServiceType != null) {
-        results = await database.getAttendancesWithContactsByServiceType(
-          _selectedServiceType!.backendValue,
-        );
-        // Filter by date range in memory
-        results = results
-            .where((a) =>
-                a.attendance.serviceDate
-                    .isAfter(_dateFrom.subtract(const Duration(days: 1))) &&
-                a.attendance.serviceDate.isBefore(_dateTo.add(const Duration(days: 1))))
-            .toList();
-      } else {
-        results = await database.getAttendancesWithContactsByDateRange(
-          _dateFrom,
-          _dateTo.add(const Duration(days: 1)),
-        );
-      }
-
-      // Calculate service type counts
-      final counts = <String, int>{};
-      for (final attendance in results) {
-        counts[attendance.attendance.serviceType] =
-            (counts[attendance.attendance.serviceType] ?? 0) + 1;
-      }
-
-      setState(() {
-        _attendances = results;
-        _serviceTypeCounts = counts;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading attendance: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+    // Load attendances when screen is first displayed
+    Future.microtask(() {
+      ref.read(attendanceHistoryProvider.notifier).loadAttendances();
+    });
   }
 
   Future<void> _selectDateRange() async {
+    final currentState = ref.read(attendanceHistoryProvider);
     final picked = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      initialDateRange: DateTimeRange(start: _dateFrom, end: _dateTo),
+      initialDateRange: DateTimeRange(
+        start: currentState.dateFrom,
+        end: currentState.dateTo,
+      ),
     );
 
     if (picked != null) {
-      setState(() {
-        _dateFrom = picked.start;
-        _dateTo = picked.end;
-      });
-      _loadAttendances();
+      ref.read(attendanceHistoryProvider.notifier).setDateRange(
+            picked.start,
+            picked.end,
+          );
     }
   }
 
   void _showServiceTypeFilter() {
+    final currentState = ref.read(attendanceHistoryProvider);
+    
     showModalBottomSheet(
       context: context,
       builder: (bottomSheetContext) => SafeArea(
@@ -121,12 +70,10 @@ class _AttendanceHistoryScreenState
               ),
             ),
             RadioGroup<ServiceType?>(
-              groupValue:
-                  _selectedServiceType, // Changed from 'value' to 'groupValue'
+              groupValue: currentState.selectedServiceType,
               onChanged: (value) {
-                setState(() => _selectedServiceType = value);
+                ref.read(attendanceHistoryProvider.notifier).setServiceType(value);
                 Navigator.pop(bottomSheetContext);
-                _loadAttendances();
               },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -134,14 +81,13 @@ class _AttendanceHistoryScreenState
                   const RadioListTile<ServiceType?>(
                     value: null,
                     title: Text('All Services'),
-                    // onChanged is handled by RadioGroup, but keep the parameter structure
                   ),
                   ...ServiceType.values
                       .map((type) => RadioListTile<ServiceType?>(
                             value: type,
                             title: Text(type.displayName),
                             secondary: Text(
-                              '${_serviceTypeCounts[type.backendValue] ?? 0}',
+                              '${currentState.serviceTypeCounts[type.backendValue] ?? 0}',
                               style:
                                   const TextStyle(fontWeight: FontWeight.bold),
                             ),
@@ -157,6 +103,21 @@ class _AttendanceHistoryScreenState
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(attendanceHistoryProvider);
+    
+    // Listen for errors and show snackbar
+    ref.listen<AttendanceHistoryState>(attendanceHistoryProvider, (previous, next) {
+      if (next.error != null && (previous?.error != next.error)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.error!),
+            backgroundColor: Colors.red,
+          ),
+        );
+        ref.read(attendanceHistoryProvider.notifier).clearError();
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Attendance History'),
@@ -168,30 +129,46 @@ class _AttendanceHistoryScreenState
             onPressed: _showServiceTypeFilter,
             tooltip: 'Filter by service type',
           ),
+          IconButton(
+            icon: state.isDownloadingPdf 
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(Icons.download),
+            onPressed: state.isDownloadingPdf
+                ? null
+                : () => ref.read(attendanceHistoryProvider.notifier).downloadPdf(),
+            tooltip: 'Export to PDF',
+          ),
         ],
       ),
       body: Column(
         children: [
           // Date range selector
-          _buildDateRangeSelector(),
+          _buildDateRangeSelector(state),
 
           // Summary cards
-          if (!_isLoading) _buildSummaryCards(),
+          if (!state.isLoading) _buildSummaryCards(state),
 
           // Attendance list
           Expanded(
-            child: _isLoading
+            child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _attendances.isEmpty
+                : state.attendances.isEmpty
                     ? _buildEmptyState()
-                    : _buildAttendanceList(),
+                    : _buildAttendanceList(state),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDateRangeSelector() {
+  Widget _buildDateRangeSelector(AttendanceHistoryState state) {
     return Container(
       padding: const EdgeInsets.all(AppDimens.paddingM),
       child: InkWell(
@@ -213,7 +190,7 @@ class _AttendanceHistoryScreenState
                   const Icon(Icons.calendar_today, size: 20),
                   const SizedBox(width: AppDimens.paddingS),
                   Text(
-                    '${_formatDate(_dateFrom)} - ${_formatDate(_dateTo)}',
+                    '${_formatDate(state.dateFrom)} - ${_formatDate(state.dateTo)}',
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
@@ -226,7 +203,7 @@ class _AttendanceHistoryScreenState
     );
   }
 
-  Widget _buildSummaryCards() {
+  Widget _buildSummaryCards(AttendanceHistoryState state) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
       child: Row(
@@ -234,7 +211,7 @@ class _AttendanceHistoryScreenState
           Expanded(
             child: _SummaryCard(
               title: 'Total',
-              count: _attendances.length,
+              count: state.attendances.length,
               color: AppColors.primary,
             ),
           ),
@@ -242,7 +219,7 @@ class _AttendanceHistoryScreenState
           Expanded(
             child: _SummaryCard(
               title: 'Sunday',
-              count: _serviceTypeCounts[ServiceType.sunday.backendValue] ?? 0,
+              count: state.serviceTypeCounts[ServiceType.sunday.backendValue] ?? 0,
               color: ServiceType.sunday.color,
             ),
           ),
@@ -250,7 +227,7 @@ class _AttendanceHistoryScreenState
           Expanded(
             child: _SummaryCard(
               title: 'Tuesday',
-              count: _serviceTypeCounts[ServiceType.tuesday.backendValue] ?? 0,
+              count: state.serviceTypeCounts[ServiceType.tuesday.backendValue] ?? 0,
               color: ServiceType.tuesday.color,
             ),
           ),
@@ -288,12 +265,12 @@ class _AttendanceHistoryScreenState
     );
   }
 
-  Widget _buildAttendanceList() {
+  Widget _buildAttendanceList(AttendanceHistoryState state) {
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: AppDimens.paddingL),
-      itemCount: _attendances.length,
+      itemCount: state.attendances.length,
       itemBuilder: (context, index) {
-        final attendance = _attendances[index];
+        final attendance = state.attendances[index];
         final serviceType = ServiceType.fromBackend(attendance.attendance.serviceType);
 
         return Card(

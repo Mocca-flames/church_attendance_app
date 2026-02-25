@@ -10,6 +10,7 @@ Future<CreateContactAttendanceResult?> showQuickContactSheet(
   BuildContext context, {
   required String phone,
   required ServiceType serviceType,
+  required DateTime serviceDate,
   required int recordedBy,
 }) async {
   return showModalBottomSheet<CreateContactAttendanceResult?>(
@@ -24,6 +25,7 @@ Future<CreateContactAttendanceResult?> showQuickContactSheet(
     builder: (context) => _QuickContactSheet(
       phone: phone,
       serviceType: serviceType,
+      serviceDate: serviceDate,
       recordedBy: recordedBy,
     ),
   );
@@ -32,11 +34,13 @@ Future<CreateContactAttendanceResult?> showQuickContactSheet(
 class _QuickContactSheet extends ConsumerStatefulWidget {
   final String phone;
   final ServiceType serviceType;
+  final DateTime serviceDate;
   final int recordedBy;
 
   const _QuickContactSheet({
     required this.phone,
     required this.serviceType,
+    required this.serviceDate,
     required this.recordedBy,
   });
 
@@ -122,7 +126,7 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
         phone: _phoneController.text.trim(),
         name: _nameController.text.trim(),
         serviceType: widget.serviceType,
-        serviceDate: DateTime.now(),
+        serviceDate: widget.serviceDate,
         recordedBy: widget.recordedBy,
         isMember: _isMember,
         location: _locationController.text.trim().isEmpty 

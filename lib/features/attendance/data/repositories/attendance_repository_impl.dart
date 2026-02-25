@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/core/network/dio_client.dart';
 import 'package:church_attendance_app/features/attendance/data/datasources/attendance_local_datasource.dart';
@@ -360,6 +363,51 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
         // Skip this record if it fails, will retry next time
         continue;
       }
+    }
+  }
+
+  @override
+  Future<List<AttendanceWithContact>> getAttendanceHistory({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    ServiceType? serviceType,
+  }) async {
+    return _localDataSource.getAttendanceHistory(
+      dateFrom: dateFrom,
+      dateTo: dateTo,
+      serviceType: serviceType,
+    );
+  }
+
+  @override
+  Future<Uint8List> downloadAttendancePdf({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    ServiceType? serviceType,
+    DateTime? date,
+  }) async {
+    // Check if online
+    if (!await _isOnline()) {
+      throw const AttendanceException(
+        'No internet connection. Please try again when online.',
+        type: AttendanceExceptionType.networkError,
+      );
+    }
+
+    try {
+      return await _remoteDataSource.downloadAttendancePdf(
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        serviceType: serviceType,
+        date: date,
+      );
+    } on AttendanceRemoteException catch (e) {
+      throw AttendanceException(
+        e.message,
+        type: e.isNetworkError 
+            ? AttendanceExceptionType.networkError 
+            : AttendanceExceptionType.unknown,
+      );
     }
   }
 

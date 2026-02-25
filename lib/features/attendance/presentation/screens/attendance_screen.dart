@@ -1,5 +1,6 @@
 import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
+import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_date_provider.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/contact_search_provider.dart';
 import 'package:church_attendance_app/features/attendance/presentation/screens/attendance_history_screen.dart';
 import 'package:church_attendance_app/features/attendance/presentation/screens/qr_scanner_screen.dart';
@@ -25,7 +26,12 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
-  ServiceType get _currentServiceType => ServiceType.getServiceTypeByDay();
+  // Get the attendance date state from provider
+  AttendanceDateState get _dateState => ref.watch(attendanceDateProvider);
+  
+  // Convenience getters for the current service type and date
+  ServiceType get _currentServiceType => _dateState.effectiveServiceType;
+  DateTime get _currentServiceDate => _dateState.effectiveServiceDate;
 
   @override
   void initState() {
@@ -40,12 +46,14 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   /// setState juggling needed.
   Future<void> _loadMarkedContacts() async {
     final database = ref.read(databaseProvider);
-    final now = DateTime.now();
-    final dateOnly = DateTime(now.year, now.month, now.day);
-    final nextDay = dateOnly.add(const Duration(days: 1));
+    
+    // Use the effective service date for loading marked contacts
+    final serviceDate = _currentServiceDate;
+    final serviceDateOnly = DateTime(serviceDate.year, serviceDate.month, serviceDate.day);
+    final serviceNextDay = serviceDateOnly.add(const Duration(days: 1));
 
     final attendances =
-        await database.getAttendancesByDateRange(dateOnly, nextDay);
+        await database.getAttendancesByDateRange(serviceDateOnly, serviceNextDay);
 
     if (!mounted) return;
 
@@ -61,7 +69,10 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (_) => QRScannerScreen(serviceType: _currentServiceType)),
+          builder: (_) => QRScannerScreen(
+            serviceType: _currentServiceType,
+            serviceDate: _currentServiceDate,
+          )),
     );
   }
 
@@ -80,6 +91,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       context,
       phone: scannedPhone,
       serviceType: _currentServiceType,
+      serviceDate: _currentServiceDate,
       recordedBy: userId,
     );
 
@@ -112,10 +124,69 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     return serviceType.displayName;
   }
 
+  /// Format date for display
+  String _formatDate(DateTime date) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  /// Show date picker for selecting past date
+  Future<void> _showDatePicker() async {
+    final now = DateTime.now();
+    final thirtyDaysAgo = now.subtract(const Duration(days: 30));
+    
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _dateState.selectedPastDate,
+      firstDate: thirtyDaysAgo,
+      lastDate: now,
+      helpText: 'Select past date for attendance',
+    );
+
+    if (selectedDate != null) {
+      ref.read(attendanceDateProvider.notifier).setSelectedPastDate(selectedDate);
+      // Reload marked contacts for the new date
+      _loadMarkedContacts();
+    }
+  }
+
+  /// Show service type dropdown
+  Future<void> _showServiceTypeSelector() async {
+    await showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Select Service Type',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            ...ServiceType.values.map((type) => ListTile(
+              leading: Icon(type.icon, color: type.color),
+              title: Text(type.displayName),
+              trailing: _dateState.selectedServiceType == type
+                  ? const Icon(Icons.check, color: Colors.green)
+                  : null,
+              onTap: () {
+                ref.read(attendanceDateProvider.notifier).setSelectedServiceType(type);
+                Navigator.pop(context);
+              },
+            )),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final searchState = ref.watch(contactSearchProvider);
-    final currentServiceType = _currentServiceType;
 
     return Scaffold(
       appBar: AppBar(
@@ -132,30 +203,100 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       ),
       body: Column(
         children: [
-          // Service Type Banner
+          // Date Mode Toggle Banner
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+            color: _dateState.isPastDateMode
+                ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
+                : Colors.green.withValues(alpha: 0.1),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.event,
-                  size: 18,
-                  color: Theme.of(context).primaryColor,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Recording for: ${_getServiceTypeDisplayName(currentServiceType)}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).primaryColor,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        _dateState.isPastDateMode ? Icons.calendar_month : Icons.today,
+                        size: 20,
+                        color: _dateState.isPastDateMode
+                            ? Theme.of(context).primaryColor
+                            : Colors.green,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _dateState.isPastDateMode
+                                  ? _formatDate(_dateState.selectedPastDate)
+                                  : 'Today',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _dateState.isPastDateMode
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.green[700],
+                              ),
+                            ),
+                            if (_dateState.isPastDateMode)
+                              Text(
+                                _getServiceTypeDisplayName(_dateState.selectedServiceType),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).primaryColor.withValues(alpha: 0.7),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+                // Toggle button
+                FilledButton.tonalIcon(
+                  onPressed: () {
+                    ref.read(attendanceDateProvider.notifier).togglePastDateMode();
+                    // Reload marked contacts when mode changes
+                    _loadMarkedContacts();
+                  },
+                  icon: Icon(_dateState.isPastDateMode ? Icons.today : Icons.calendar_month),
+                  label: Text(_dateState.isPastDateMode ? 'Today' : 'Past Date'),
                 ),
               ],
             ),
           ),
+          // Past Date Mode: Show date picker and service type selector
+          if (_dateState.isPastDateMode)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+              child: Row(
+                children: [
+                  // Date picker button
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _showDatePicker,
+                      icon: const Icon(Icons.calendar_today, size: 18),
+                      label: Text(_formatDate(_dateState.selectedPastDate)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Service type selector
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _showServiceTypeSelector,
+                      icon: Icon(
+                        _dateState.selectedServiceType.icon,
+                        size: 18,
+                        color: _dateState.selectedServiceType.color,
+                      ),
+                      label: Text(_dateState.selectedServiceType.displayName),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           const SizedBox(height: AppDimens.paddingM),
           _buildSearchField(),
           Expanded(child: _buildResultsList(searchState)),
@@ -300,6 +441,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           key: ValueKey(contact.id), // stable key prevents widget reuse bugs
           contact: contact,
           serviceType: _currentServiceType,
+          serviceDate: _currentServiceDate,
           recordedBy: userId, // Use the authenticated user's ID
           onAttendanceMarked: _loadMarkedContacts,
         );

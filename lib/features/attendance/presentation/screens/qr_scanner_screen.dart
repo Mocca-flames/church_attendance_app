@@ -17,15 +17,20 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 /// Navigator.push(
 ///   context,
 ///   MaterialPageRoute(
-///     builder: (_) => QRScannerScreen(serviceType: ServiceType.sunday),
+///     builder: (_) => QRScannerScreen(
+///       serviceType: ServiceType.sunday,
+///       serviceDate: DateTime.now(),
+///     ),
 ///   ),
 /// );
 /// ```
 class QRScannerScreen extends ConsumerStatefulWidget {
   final ServiceType serviceType;
+  final DateTime serviceDate;
 
   const QRScannerScreen({
     required this.serviceType,
+    required this.serviceDate,
     super.key,
   });
 
@@ -69,6 +74,7 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
             context,
             phone: phone,
             serviceType: widget.serviceType,
+            serviceDate: widget.serviceDate,
             recordedBy: _recordedBy,
           );
 
@@ -107,7 +113,7 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
           await ref.read(attendanceProvider.notifier).recordAttendanceByPhone(
                 phone: phone,
                 serviceType: widget.serviceType,
-                serviceDate: DateTime.now(),
+                serviceDate: widget.serviceDate,
                 recordedBy: _recordedBy,
               );
 
@@ -118,7 +124,7 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
       if (e.type == AttendanceExceptionType.alreadyMarked) {
         if (mounted) {
           _showWarning(
-              '${contact.name ?? phone} already marked for ${widget.serviceType.displayName} today');
+              '${contact.name ?? phone} already marked for ${widget.serviceType.displayName} on ${_formatDate(widget.serviceDate)}');
         }
       } else {
         rethrow;
@@ -191,6 +197,11 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
     );
   }
 
+  String _formatDate(DateTime date) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -241,12 +252,21 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
+                    _formatDate(widget.serviceDate),
+                    style: TextStyle(
+                      color: Colors.grey[300],
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
                     _isProcessing
                         ? 'Processing...'
                         : 'Point camera at member QR code',
                     style: TextStyle(
-                      color: Colors.grey[300],
-                      fontSize: 16,
+                      color: Colors.grey[400],
+                      fontSize: 14,
                     ),
                     textAlign: TextAlign.center,
                   ),

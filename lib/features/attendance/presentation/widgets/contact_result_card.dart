@@ -21,12 +21,14 @@ import '../../../../core/constants/app_colors.dart';
 class ContactResultCard extends ConsumerWidget {
   final ContactEntity contact;
   final ServiceType serviceType;
+  final DateTime serviceDate;
   final int recordedBy;
   final VoidCallback? onAttendanceMarked;
 
   const ContactResultCard({
     required this.contact,
     required this.serviceType,
+    required this.serviceDate,
     super.key,
     this.recordedBy = 1,
     this.onAttendanceMarked,
@@ -304,7 +306,7 @@ class ContactResultCard extends ConsumerWidget {
                 contactId: contact.id,
                 phone: contact.phone,
                 serviceType: serviceType,
-                serviceDate: DateTime.now(),
+                serviceDate: serviceDate,
                 recordedBy: recordedBy,
               );
       logger.d('recordAttendance result: $attendance');
