@@ -15,9 +15,9 @@ import 'package:logger/logger.dart';
 
 /// Card widget for displaying a contact in search results.
 ///
-/// Watches [markedContactIdsProvider] directly so it rebuilds the instant
-/// attendance is marked — no prop drilling or parent setState required.
-class ContactResultCard extends ConsumerWidget {
+/// Uses local state for instant UI feedback - the card updates immediately
+/// when tapped, then syncs with the database in the background.
+class ContactResultCard extends ConsumerStatefulWidget {
   final ContactEntity contact;
   final ServiceType serviceType;
   final DateTime serviceDate;
@@ -33,10 +33,45 @@ class ContactResultCard extends ConsumerWidget {
     this.onAttendanceMarked,
   });
 
+  @override
+  ConsumerState<ContactResultCard> createState() => _ContactResultCardState();
+}
+
+class _ContactResultCardState extends ConsumerState<ContactResultCard> {
+  // Local state for instant UI feedback - updates immediately on tap
+  bool _localIsMarked = false;
+
+  // Local getters for widget properties
+  ContactEntity get _contact => widget.contact;
+  ServiceType get _serviceType => widget.serviceType;
+  DateTime get _serviceDate => widget.serviceDate;
+  int get _recordedBy => widget.recordedBy;
+  VoidCallback? get _onAttendanceMarked => widget.onAttendanceMarked;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize from provider state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncWithProvider();
+    });
+  }
+
+  void _syncWithProvider() {
+    final providerMarked = ref.read(markedContactIdsProvider.select(
+      (state) => state.markedIds.contains(_contact.id),
+    ));
+    if (mounted && _localIsMarked != providerMarked) {
+      setState(() {
+        _localIsMarked = providerMarked;
+      });
+    }
+  }
+
   List<String> get _tags {
-    if (contact.metadata == null || contact.metadata!.isEmpty) return [];
+    if (_contact.metadata == null || _contact.metadata!.isEmpty) return [];
     try {
-      final Map<String, dynamic> meta = jsonDecode(contact.metadata!);
+      final Map<String, dynamic> meta = jsonDecode(_contact.metadata!);
       if (meta.containsKey('tags') && meta['tags'] is List) {
         return (meta['tags'] as List).map((e) => e.toString()).toList();
       }
@@ -46,7 +81,7 @@ class ContactResultCard extends ConsumerWidget {
 
   bool _hasTag(String tag) => _tags.contains(tag);
   bool get _isMember => _hasTag('member');
-  String get _displayName => contact.name ?? contact.phone;
+  String get _displayName => _contact.name ?? _contact.phone;
 
   /// Check if contact has a valid location in metadata
   bool get _hasLocation {
@@ -70,9 +105,9 @@ class ContactResultCard extends ConsumerWidget {
 
   bool get _needsUpdate {
     try {
-      final name = contact.name;
+      final name = _contact.name;
       if (name == null || name.isEmpty) return false;
-      return name == contact.phone;
+      return name == _contact.phone;
     } catch (_) {
       return false;
     }
@@ -161,13 +196,13 @@ class ContactResultCard extends ConsumerWidget {
                 final Logger logger = Logger();
                 logger.d('=== FilledButton onPressed START ===');
                 logger.d(
-                    'contact.id: ${contact.id} (type: ${contact.id.runtimeType})');
+                    'contact.id: ${_contact.id} (type: ${_contact.id.runtimeType})');
                 logger.d(
-                    'contact.phone: ${contact.phone} (type: ${contact.phone.runtimeType})');
+                    'contact.phone: ${_contact.phone} (type: ${_contact.phone.runtimeType})');
                 logger.d(
-                    'contact.name: ${contact.name} (type: ${contact.name?.runtimeType})');
-                logger.d('serviceType: $serviceType');
-                logger.d('recordedBy: $recordedBy');
+                    'contact.name: ${_contact.name} (type: ${_contact.name?.runtimeType})');
+                logger.d('serviceType: $_serviceType');
+                logger.d('recordedBy: $_recordedBy');
                 logger.d('isMember: $isMember');
                 logger.d('formKey.currentState: ${formKey.currentState}');
 
@@ -202,21 +237,31 @@ class ContactResultCard extends ConsumerWidget {
 
       logger.d('name: $name');
       logger.d('location: $location');
-      logger.d('contact.phone: ${contact.phone}');
-      logger.d('serviceType: $serviceType');
-      logger.d('recordedBy: $recordedBy');
+      logger.d('contact.phone: ${_contact.phone}');
+      logger.d('serviceType: $_serviceType');
+      logger.d('recordedBy: $_recordedBy');
       logger.d('isMember: $isMember');
 
       try {
         logger.d('Calling createContactAndRecordAttendance...');
+        // ✅ FIRST: Optimistically update UI SYNCHRONOUSLY before async work
+        ref.read(markedContactIdsProvider.notifier).add(_contact.id);
+        try{
+          await HapticFeedback.mediumImpact();
+          logger.d('Haptic feedback successful');
+        } catch (e) {
+          logger.w('Haptic feedback failed: $e');
+        }
+        
+        // Then perform the actual database operation
         final updateResult = await ref
             .read(attendanceProvider.notifier)
             .createContactAndRecordAttendance(
-              phone: contact.phone,
+              phone: _contact.phone,
               name: name,
-              serviceType: serviceType,
+              serviceType: _serviceType,
               serviceDate: DateTime.now(),
-              recordedBy: recordedBy,
+              recordedBy: _recordedBy,
               isMember: isMember,
               location: location,
             );
@@ -227,17 +272,6 @@ class ContactResultCard extends ConsumerWidget {
           logger.d('Context not mounted, returning');
           return;
         }
-
-        logger.d(
-            'About to update markedContactIdsProvider with contact.id: ${contact.id} (type: ${contact.id.runtimeType})');
-        logger.d(
-            'Current markedContactIdsProvider state: ${ref.read(markedContactIdsProvider)}');
-
-        // Optimistically mark in provider so UI updates immediately.
-        ref.read(markedContactIdsProvider.notifier).add(contact.id);
-
-        logger.d(
-            'markedContactIdsProvider state after add: ${ref.read(markedContactIdsProvider)}');
 
         logger.d('=== _showUpdateDialog result END ===');
         if (updateResult.error != null) {
@@ -261,7 +295,7 @@ class ContactResultCard extends ConsumerWidget {
             behavior: SnackBarBehavior.floating,
           ));
           logger.d('Calling onAttendanceMarked callback...');
-          onAttendanceMarked?.call();
+          _onAttendanceMarked?.call();
           logger.d('onAttendanceMarked callback complete');
         }
         logger.d('=== _showUpdateDialog FULLY COMPLETE ===');
@@ -281,17 +315,20 @@ class ContactResultCard extends ConsumerWidget {
   Future<void> _markAttendance(BuildContext context, WidgetRef ref) async {
     final Logger logger = Logger();
     logger.d('=== _markAttendance START ===');
-    logger.d('contact.id: ${contact.id} (type: ${contact.id.runtimeType})');
+    logger.d('contact.id: ${_contact.id} (type: ${_contact.id.runtimeType})');
     logger.d(
-        'contact.phone: ${contact.phone} (type: ${contact.phone.runtimeType})');
+        'contact.phone: ${_contact.phone} (type: ${_contact.phone.runtimeType})');
     logger.d(
-        'contact.name: ${contact.name} (type: ${contact.name?.runtimeType})');
-    logger.d('serviceType: $serviceType');
-    logger.d('recordedBy: $recordedBy');
+        'contact.name: ${_contact.name} (type: ${_contact.name?.runtimeType})');
+    logger.d('serviceType: $_serviceType');
+    logger.d('recordedBy: $_recordedBy');
 
     // Read current marked set — if already marked, bail early.
+    // Using read() with select() to get just this contact's status
     final alreadyMarked =
-        ref.read(markedContactIdsProvider).contains(contact.id);
+        ref.read(markedContactIdsProvider.select(
+          (state) => state.markedIds.contains(_contact.id),
+        ));
     logger.d('alreadyMarked: $alreadyMarked');
     if (alreadyMarked) {
       logger.d('=== _markAttendance END (already marked) ===');
@@ -299,24 +336,35 @@ class ContactResultCard extends ConsumerWidget {
     }
 
     try {
+      // ✅ FIRST: Update local state SYNCHRONOUSLY for instant UI feedback
+      setState(() {
+        _localIsMarked = true;
+      });
+      
+      // Also update the provider for other widgets
+      ref.read(markedContactIdsProvider.notifier).add(_contact.id);
+      
+      // Trigger haptic feedback immediately for tactile confirmation
+      try {
+        await HapticFeedback.heavyImpact();
+      } catch (e) {
+        logger.w('Haptic feedback failed: $e');
+      }
+
       logger.d('Calling recordAttendance...');
+      // Then perform the actual database operation (can be slow, UI is already updated)
       final attendance =
           await ref.read(attendanceProvider.notifier).recordAttendance(
-                contactId: contact.id,
-                phone: contact.phone,
-                serviceType: serviceType,
-                serviceDate: serviceDate,
-                recordedBy: recordedBy,
+                contactId: _contact.id,
+                phone: _contact.phone,
+                serviceType: _serviceType,
+                serviceDate: _serviceDate,
+                recordedBy: _recordedBy,
               );
       logger.d('recordAttendance result: $attendance');
 
       if (attendance != null) {
-        HapticFeedback.heavyImpact();
         logger.i('Attendance recorded for $_displayName');
-
-        // ✅ Optimistically update the shared provider BEFORE the parent
-        // re-queries the DB. This gives instant visual feedback.
-        ref.read(markedContactIdsProvider.notifier).add(contact.id);
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -335,10 +383,16 @@ class ContactResultCard extends ConsumerWidget {
         }
 
         // Also trigger the parent refresh so the DB and provider stay in sync.
-        onAttendanceMarked?.call();
+        _onAttendanceMarked?.call();
       }
       logger.d('=== _markAttendance END ===');
     } on AttendanceException catch (e) {
+      // Rollback the local state on error
+      setState(() {
+        _localIsMarked = false;
+      });
+      ref.read(markedContactIdsProvider.notifier).remove(_contact.id);
+      
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Row(children: [
@@ -354,6 +408,12 @@ class ContactResultCard extends ConsumerWidget {
     } catch (e, stackTrace) {
       logger.e('Exception in _markAttendance: $e');
       logger.e('Stack trace: $stackTrace');
+      // Rollback the local state on error
+      setState(() {
+        _localIsMarked = false;
+      });
+      ref.read(markedContactIdsProvider.notifier).remove(_contact.id);
+      
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Failed to mark attendance: $e'),
@@ -364,11 +424,10 @@ class ContactResultCard extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the shared provider — rebuilds this card instantly when any
-    // contact is marked, with no parent setState required.
-    final isAlreadyMarked =
-        ref.watch(markedContactIdsProvider).contains(contact.id);
+  Widget build(BuildContext context) {
+    // Use local state for instant UI feedback - updates immediately when tapped
+    // Once marked, stay marked (don't sync backwards from provider)
+    final isAlreadyMarked = _localIsMarked;
 
     return Container(
       margin: const EdgeInsets.symmetric(
@@ -429,7 +488,7 @@ class ContactResultCard extends ConsumerWidget {
             ],
           ),
           subtitle: Text(
-            contact.phone,
+            _contact.phone,
             style: TextStyle(
                 decoration: isAlreadyMarked ? TextDecoration.lineThrough : null,
                 color: isAlreadyMarked ? Colors.grey.shade500 : null),

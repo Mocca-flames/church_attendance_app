@@ -90,24 +90,52 @@ final contactSearchProvider =
   return ContactSearchNotifier();
 });
 
+/// State that includes both marked IDs and a version counter for forcing rebuilds.
+class MarkedContactsState {
+  final Set<int> markedIds;
+  final int version;
+
+  const MarkedContactsState({
+    this.markedIds = const {},
+    this.version = 0,
+  });
+
+  MarkedContactsState copyWith({
+    Set<int>? markedIds,
+    int? version,
+  }) {
+    return MarkedContactsState(
+      markedIds: markedIds ?? this.markedIds,
+      version: version ?? this.version,
+    );
+  }
+}
+
 /// Notifier for managing marked contact IDs for the current service.
 ///
 /// Provides reactive state management for tracking which contacts
 /// have already been marked as present for the current service.
-class MarkedContactIdsNotifier extends Notifier<Set<int>> {
+/// Includes a version counter to force immediate UI rebuilds.
+class MarkedContactIdsNotifier extends Notifier<MarkedContactsState> {
   @override
-  Set<int> build() => {};
+  MarkedContactsState build() => const MarkedContactsState();
 
   void add(int contactId) {
-    state = {...state, contactId};
+    state = state.copyWith(
+      markedIds: {...state.markedIds, contactId},
+      version: state.version + 1,
+    );
   }
 
   void remove(int contactId) {
-    state = state.difference({contactId});
+    state = MarkedContactsState(
+      markedIds: state.markedIds.difference({contactId}),
+      version: state.version + 1,
+    );
   }
 
   void toggle(int contactId) {
-    if (state.contains(contactId)) {
+    if (state.markedIds.contains(contactId)) {
       remove(contactId);
     } else {
       add(contactId);
@@ -115,22 +143,26 @@ class MarkedContactIdsNotifier extends Notifier<Set<int>> {
   }
 
   void clear() {
-    state = {};
+    state = const MarkedContactsState();
   }
 
   void setAll(Set<int> ids) {
-    state = ids;
+    state = MarkedContactsState(
+      markedIds: ids,
+      version: state.version + 1,
+    );
   }
 }
 
-/// Shared reactive set of contact IDs already marked today for the current service.
+/// Shared reactive state of contact IDs already marked today for the current service.
 ///
 /// This is the single source of truth for "already marked" state.
 /// - [AttendanceScreen] writes to it after loading/refreshing from DB.
 /// - [ContactResultCard] reads from it and rebuilds instantly when it changes.
 /// - No manual setState or prop-drilling of isAlreadyMarked needed.
+/// - The version counter ensures immediate UI rebuilds on state changes.
 final markedContactIdsProvider =
-    NotifierProvider<MarkedContactIdsNotifier, Set<int>>(() {
+    NotifierProvider<MarkedContactIdsNotifier, MarkedContactsState>(() {
   return MarkedContactIdsNotifier();
 });
 

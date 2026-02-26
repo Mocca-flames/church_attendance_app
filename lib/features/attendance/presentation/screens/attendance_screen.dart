@@ -2,16 +2,14 @@ import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_date_provider.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/contact_search_provider.dart';
-import 'package:church_attendance_app/features/attendance/presentation/screens/attendance_history_screen.dart';
+
 import 'package:church_attendance_app/features/attendance/presentation/screens/qr_scanner_screen.dart';
 import 'package:church_attendance_app/features/attendance/presentation/widgets/contact_result_card.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:church_attendance_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_strings.dart';
 import '../widgets/quick_contact_dialog.dart';
 
 
@@ -76,13 +74,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     );
   }
 
-  void _navigateToHistory() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const AttendanceHistoryScreen()),
-    );
-  }
-
+  
   void _handleNewContact(String scannedPhone) async {
     final currentUser = ref.read(currentUserProvider);
     final userId = currentUser?.id ?? 1;
@@ -189,118 +181,109 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     final searchState = ref.watch(contactSearchProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.attendance),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            onPressed: _navigateToHistory,
-            tooltip: 'Attendance History',
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Date Mode Toggle Banner
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            color: _dateState.isPastDateMode
-                ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
-                : Colors.green.withValues(alpha: 0.1),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Icon(
-                        _dateState.isPastDateMode ? Icons.calendar_month : Icons.today,
-                        size: 20,
-                        color: _dateState.isPastDateMode
-                            ? Theme.of(context).primaryColor
-                            : Colors.green,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _dateState.isPastDateMode
-                                  ? _formatDate(_dateState.selectedPastDate)
-                                  : 'Today',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: _dateState.isPastDateMode
-                                    ? Theme.of(context).primaryColor
-                                    : Colors.green[700],
-                              ),
-                            ),
-                            if (_dateState.isPastDateMode)
-                              Text(
-                                _getServiceTypeDisplayName(_dateState.selectedServiceType),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Theme.of(context).primaryColor.withValues(alpha: 0.7),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Toggle button
-                FilledButton.tonalIcon(
-                  onPressed: () {
-                    ref.read(attendanceDateProvider.notifier).togglePastDateMode();
-                    // Reload marked contacts when mode changes
-                    _loadMarkedContacts();
-                  },
-                  icon: Icon(_dateState.isPastDateMode ? Icons.today : Icons.calendar_month),
-                  label: Text(_dateState.isPastDateMode ? 'Today' : 'Past Date'),
-                ),
-              ],
-            ),
-          ),
-          // Past Date Mode: Show date picker and service type selector
-          if (_dateState.isPastDateMode)
+      
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Date Mode Toggle Banner
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+              color: _dateState.isPastDateMode
+                  ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
+                  : Colors.green.withValues(alpha: 0.1),
               child: Row(
                 children: [
-                  // Date picker button
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _showDatePicker,
-                      icon: const Icon(Icons.calendar_today, size: 18),
-                      label: Text(_formatDate(_dateState.selectedPastDate)),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _dateState.isPastDateMode ? Icons.calendar_month : Icons.today,
+                          size: 20,
+                          color: _dateState.isPastDateMode
+                              ? Theme.of(context).primaryColor
+                              : Colors.green,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _dateState.isPastDateMode
+                                    ? _formatDate(_dateState.selectedPastDate)
+                                    : 'Today',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _dateState.isPastDateMode
+                                      ? Theme.of(context).primaryColor
+                                      : Colors.green[700],
+                                ),
+                              ),
+                              if (_dateState.isPastDateMode)
+                                Text(
+                                  _getServiceTypeDisplayName(_dateState.selectedServiceType),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context).primaryColor.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  // Service type selector
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _showServiceTypeSelector,
-                      icon: Icon(
-                        _dateState.selectedServiceType.icon,
-                        size: 18,
-                        color: _dateState.selectedServiceType.color,
-                      ),
-                      label: Text(_dateState.selectedServiceType.displayName),
-                    ),
+                  // Toggle button
+                  FilledButton.tonalIcon(
+                    onPressed: () {
+                      ref.read(attendanceDateProvider.notifier).togglePastDateMode();
+                      // Reload marked contacts when mode changes
+                      _loadMarkedContacts();
+                    },
+                    icon: Icon(_dateState.isPastDateMode ? Icons.today : Icons.calendar_month),
+                    label: Text(_dateState.isPastDateMode ? 'Today' : 'Past Date'),
                   ),
                 ],
               ),
             ),
-          const SizedBox(height: AppDimens.paddingM),
-          _buildSearchField(),
-          Expanded(child: _buildResultsList(searchState)),
-        ],
+            // Past Date Mode: Show date picker and service type selector
+            if (_dateState.isPastDateMode)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+                child: Row(
+                  children: [
+                    // Date picker button
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _showDatePicker,
+                        icon: const Icon(Icons.calendar_today, size: 18),
+                        label: Text(_formatDate(_dateState.selectedPastDate)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Service type selector
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _showServiceTypeSelector,
+                        icon: Icon(
+                          _dateState.selectedServiceType.icon,
+                          size: 18,
+                          color: _dateState.selectedServiceType.color,
+                        ),
+                        label: Text(_dateState.selectedServiceType.displayName),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: AppDimens.paddingM),
+            _buildSearchField(),
+            Expanded(child: _buildResultsList(searchState)),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'attendance_fab', // Unique tag to prevent Hero conflict

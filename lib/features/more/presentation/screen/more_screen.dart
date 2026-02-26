@@ -7,6 +7,7 @@ import 'package:church_attendance_app/features/auth/presentation/providers/auth_
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../attendance/presentation/screens/attendance_history_screen.dart';
 
 /// More screen with navigation options for Scenarios and Settings.
 class MoreScreen extends ConsumerWidget {
@@ -15,6 +16,12 @@ class MoreScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = ref.watch(isDarkModeProvider);
+    void navigateToHistory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AttendanceHistoryScreen()),
+    );
+  }
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.more)),
@@ -35,6 +42,21 @@ class MoreScreen extends ConsumerWidget {
               ref.read(themeModeProvider.notifier).toggleThemeMode();
             },
           ),
+          // Attendance History navigation option
+          const Divider(),
+          // Scenarios navigation option
+          ListTile(
+            leading: Icon(
+              Icons.lock_clock,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            title: const Text(AppStrings.scenarios),
+            subtitle: const Text('Manage tasks and follow-ups'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              AppRoute.scenarios.navigate(context);
+            },
+          ),
           const Divider(),
           // Scenarios navigation option
           ListTile(
@@ -53,11 +75,11 @@ class MoreScreen extends ConsumerWidget {
           // Settings navigation option
           ListTile(
             leading: const Icon(Icons.settings, color: AppColors.primary),
-            title: const Text(AppStrings.settings),
-            subtitle: const Text('App preferences and configuration'),
+            title: const Text('History'),
+            subtitle: const Text('View attendance history'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              AppRoute.settings.navigate(context);
+              navigateToHistory();
             },
           ),
           const Divider(),
