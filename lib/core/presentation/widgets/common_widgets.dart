@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
-
-import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 
 /// Reusable error container widget for displaying error messages.
@@ -18,37 +16,39 @@ class AppErrorContainer extends StatelessWidget {
   /// Optional callback when error is dismissed
   final VoidCallback? onDismiss;
 
+  
+
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(AppDimens.paddingM),
       decoration: BoxDecoration(
-        color: AppColors.errorBackground,
+        color: Theme.of(context).colorScheme.onError.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(AppDimens.radiusM),
-        border: Border.all(color: AppColors.errorBorder),
+        border: Border.all(color: Theme.of(context).colorScheme.onError.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline,
-            color: AppColors.errorText,
+            color: Theme.of(context).colorScheme.error,
             size: AppDimens.iconL,
           ),
           const SizedBox(width: AppDimens.paddingS),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: AppColors.errorText,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
                 fontSize: 14,
               ),
             ),
           ),
           if (onDismiss != null)
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.close,
-                color: AppColors.errorText,
+                color: Theme.of(context).colorScheme.error,
                 size: AppDimens.iconM,
               ),
               onPressed: onDismiss,
@@ -156,7 +156,7 @@ class LoadingButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? AppColors.primary,
+          backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.primary,
           foregroundColor: foregroundColor ?? Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimens.radiusM),
@@ -241,8 +241,7 @@ class PasswordField extends StatelessWidget {
           ),
           onPressed: onToggleVisibility,
         ),
-        border: const OutlineInputBorder(),
-      ),
+      ).applyDefaults(Theme.of(context).inputDecorationTheme),
     );
   }
 }
@@ -272,7 +271,7 @@ class AuthLinkRow extends StatelessWidget {
       children: [
         Text(
           questionText,
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         TextButton(
           onPressed: onLinkPressed,
@@ -312,7 +311,7 @@ class AppLogo extends StatelessWidget {
         Icon(
           icon ?? Icons.church,
           size: iconSize ?? AppDimens.iconXXL,
-          color: AppColors.primary,
+          color: Theme.of(context).colorScheme.primary,
         ),
         if (title != null) ...[
           const SizedBox(height: AppDimens.paddingM),
@@ -321,7 +320,7 @@ class AppLogo extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
           ),
         ],
@@ -331,7 +330,7 @@ class AppLogo extends StatelessWidget {
             subtitle!,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
         ],

@@ -8,33 +8,43 @@ import 'package:church_attendance_app/features/auth/presentation/providers/auth_
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:church_attendance_app/main.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
 /// Attendance state to track recording status and data.
 class AttendanceState {
   final bool isLoading;
+  final bool isSyncing;
   final Attendance? lastRecorded;
   final String? error;
+  final String? syncError;
   final List<Attendance> recentRecords;
 
   const AttendanceState({
     this.isLoading = false,
+    this.isSyncing = false,
     this.lastRecorded,
     this.error,
+    this.syncError,
     this.recentRecords = const [],
   });
 
   AttendanceState copyWith({
     bool? isLoading,
+    bool? isSyncing,
     Attendance? lastRecorded,
     String? error,
+    String? syncError,
     List<Attendance>? recentRecords,
     bool clearError = false,
+    bool clearSyncError = false,
     bool clearLastRecorded = false,
   }) {
     return AttendanceState(
       isLoading: isLoading ?? this.isLoading,
+      isSyncing: isSyncing ?? this.isSyncing,
       lastRecorded: clearLastRecorded ? null : (lastRecorded ?? this.lastRecorded),
       error: clearError ? null : (error ?? this.error),
+      syncError: clearSyncError ? null : (syncError ?? this.syncError),
       recentRecords: recentRecords ?? this.recentRecords,
     );
   }
@@ -89,7 +99,13 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     return const AttendanceState();
   }
 
-  /// Records attendance for a contact.
+  /// Triggers haptic feedback for successful attendance recording.
+  void _triggerSuccessHaptic() {
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Records attendance for a contact with Optimistic UI.
+  /// Returns the optimistic attendance immediately while syncing in background.
   Future<Attendance?> recordAttendance({
     required int contactId,
     required String phone,
@@ -97,80 +113,147 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     required DateTime serviceDate,
     required int recordedBy,
   }) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    
-    try {
-      final attendance = await _repository.recordAttendance(
-        contactId: contactId,
-        phone: phone,
-        serviceType: serviceType,
-        serviceDate: serviceDate,
-        recordedBy: recordedBy,
-      );
-      
+    // Create optimistic attendance with a temporary ID (local DB will assign real ID)
+    final now = DateTime.now();
+    final optimisticAttendance = Attendance(
+      id: 0, // Will be replaced by actual ID after local DB insert
+      contactId: contactId,
+      phone: phone,
+      serviceType: serviceType,
+      serviceDate: serviceDate,
+      recordedBy: recordedBy,
+      recordedAt: now,
+      isSynced: false, // Mark as not synced for background sync
+    );
+
+    // Immediately update UI with optimistic data (no loading state)
+    state = state.copyWith(
+      isLoading: false,
+      isSyncing: true,
+      lastRecorded: optimisticAttendance,
+      recentRecords: [optimisticAttendance, ...state.recentRecords],
+      clearError: true,
+    );
+
+    // Trigger haptic feedback for instant tactile confirmation
+    _triggerSuccessHaptic();
+
+    // Run actual repository call in background
+    _repository.recordAttendance(
+      contactId: contactId,
+      phone: phone,
+      serviceType: serviceType,
+      serviceDate: serviceDate,
+      recordedBy: recordedBy,
+    ).then((attendance) {
+      // On success: update with actual attendance data
+      // Replace optimistic record with actual record
+      final updatedRecords = state.recentRecords.map((r) {
+        if (r.contactId == attendance.contactId &&
+            r.serviceType == attendance.serviceType &&
+            r.serviceDate.year == attendance.serviceDate.year &&
+            r.serviceDate.month == attendance.serviceDate.month &&
+            r.serviceDate.day == attendance.serviceDate.day) {
+          return attendance;
+        }
+        return r;
+      }).toList();
+
       state = state.copyWith(
-        isLoading: false,
+        isSyncing: false,
         lastRecorded: attendance,
-        recentRecords: [attendance, ...state.recentRecords],
+        recentRecords: updatedRecords,
       );
-      
-      return attendance;
-    } on AttendanceException catch (e) {
+    }).catchError((error) {
+      // On error: show subtle sync error but keep optimistic data in UI
+      final errorMessage = error is AttendanceException
+          ? error.message
+          : error.toString();
       state = state.copyWith(
-        isLoading: false,
-        error: e.message,
+        isSyncing: false,
+        syncError: 'Sync pending: $errorMessage',
       );
-      return null;
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
-      return null;
-    }
+    });
+
+    // Return optimistic attendance immediately
+    return optimisticAttendance;
   }
 
-  /// Records attendance by phone number (from QR scan).
+  /// Records attendance by phone number (from QR scan) with Optimistic UI.
+  /// Returns the optimistic attendance immediately while syncing in background.
   Future<Attendance?> recordAttendanceByPhone({
     required String phone,
     required ServiceType serviceType,
     required DateTime serviceDate,
     required int recordedBy,
   }) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    
-    try {
-      final attendance = await _repository.recordAttendanceByPhone(
-        phone: phone,
-        serviceType: serviceType,
-        serviceDate: serviceDate,
-        recordedBy: recordedBy,
-      );
-      
+    // Create optimistic attendance
+    final now = DateTime.now();
+    final optimisticAttendance = Attendance(
+      id: 0, // Will be replaced by actual ID after local DB insert
+      contactId: 0, // Will be determined by repository
+      phone: phone,
+      serviceType: serviceType,
+      serviceDate: serviceDate,
+      recordedBy: recordedBy,
+      recordedAt: now,
+      isSynced: false, // Mark as not synced for background sync
+    );
+
+    // Immediately update UI with optimistic data (no loading state)
+    state = state.copyWith(
+      isLoading: false,
+      isSyncing: true,
+      lastRecorded: optimisticAttendance,
+      recentRecords: [optimisticAttendance, ...state.recentRecords],
+      clearError: true,
+    );
+
+    // Trigger haptic feedback for instant tactile confirmation
+    _triggerSuccessHaptic();
+
+    // Run actual repository call in background
+    _repository.recordAttendanceByPhone(
+      phone: phone,
+      serviceType: serviceType,
+      serviceDate: serviceDate,
+      recordedBy: recordedBy,
+    ).then((attendance) {
+      // On success: update with actual attendance data
+      // Replace optimistic record with actual record
+      final updatedRecords = state.recentRecords.map((r) {
+        if (r.phone == attendance.phone &&
+            r.serviceType == attendance.serviceType &&
+            r.serviceDate.year == attendance.serviceDate.year &&
+            r.serviceDate.month == attendance.serviceDate.month &&
+            r.serviceDate.day == attendance.serviceDate.day) {
+          return attendance;
+        }
+        return r;
+      }).toList();
+
       state = state.copyWith(
-        isLoading: false,
+        isSyncing: false,
         lastRecorded: attendance,
-        recentRecords: [attendance, ...state.recentRecords],
+        recentRecords: updatedRecords,
       );
-      
-      return attendance;
-    } on AttendanceException catch (e) {
+    }).catchError((error) {
+      // On error: show subtle sync error but keep optimistic data in UI
+      final errorMessage = error is AttendanceException
+          ? error.message
+          : error.toString();
       state = state.copyWith(
-        isLoading: false,
-        error: e.message,
+        isSyncing: false,
+        syncError: 'Sync pending: $errorMessage',
       );
-      return null;
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
-      return null;
-    }
+    });
+
+    // Return optimistic attendance immediately
+    return optimisticAttendance;
   }
 
-  /// Creates a quick contact and records attendance.
-  /// Returns a CreateContactAttendanceResult to handle different outcomes.
+  /// Creates a quick contact and records attendance with Optimistic UI.
+  /// Returns the optimistic result immediately while syncing in background.
   Future<CreateContactAttendanceResult> createContactAndRecordAttendance({
     required String phone,
     required String name,
@@ -180,37 +263,60 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     bool isMember = false,
     String? location,
   }) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    
-    try {
-      // Create contact first (returns existing if found)
-      final contact = await _repository.createQuickContact(
-        phone: phone,
-        name: name,
-        isMember: isMember,
-        location: location,
-      );
-      
-      // Check if attendance already exists for this contact today
+    // Create optimistic attendance
+    final now = DateTime.now();
+    final optimisticAttendance = Attendance(
+      id: 0, // Will be replaced by actual ID after local DB insert
+      contactId: 0, // Will be determined after contact creation
+      phone: phone,
+      serviceType: serviceType,
+      serviceDate: serviceDate,
+      recordedBy: recordedBy,
+      recordedAt: now,
+      isSynced: false, // Mark as not synced for background sync
+    );
+
+    // Immediately update UI with optimistic data (no loading state)
+    state = state.copyWith(
+      isLoading: false,
+      isSyncing: true,
+      lastRecorded: optimisticAttendance,
+      recentRecords: [optimisticAttendance, ...state.recentRecords],
+      clearError: true,
+    );
+
+    // Trigger haptic feedback for instant tactile confirmation
+    _triggerSuccessHaptic();
+
+    // Return optimistic result immediately
+    final optimisticResult = CreateContactAttendanceResult(
+      attendance: optimisticAttendance,
+      contactSaved: true,
+    );
+
+    // Run actual operations in background
+    _repository.createQuickContact(
+      phone: phone,
+      name: name,
+      isMember: isMember,
+      location: location,
+    ).then((contact) async {
+      // Check if attendance already exists
       final alreadyMarked = await _repository.checkAttendanceExists(
         contactId: contact.id,
         date: serviceDate,
         serviceType: serviceType,
       );
-      
+
       if (alreadyMarked) {
-        // Contact exists/created but already marked
         state = state.copyWith(
-          isLoading: false,
+          isSyncing: false,
           lastRecorded: null,
         );
-        return CreateContactAttendanceResult(
-          contactSaved: true,
-          alreadyMarked: true,
-        );
+        return;
       }
-      
-      // Then record attendance
+
+      // Record attendance
       final attendance = await _repository.recordAttendance(
         contactId: contact.id,
         phone: phone,
@@ -218,30 +324,36 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
         serviceDate: serviceDate,
         recordedBy: recordedBy,
       );
-      
+
+      // Replace optimistic record with actual record
+      final updatedRecords = state.recentRecords.map((r) {
+        if (r.phone == attendance.phone &&
+            r.serviceType == attendance.serviceType &&
+            r.serviceDate.year == attendance.serviceDate.year &&
+            r.serviceDate.month == attendance.serviceDate.month &&
+            r.serviceDate.day == attendance.serviceDate.day) {
+          return attendance;
+        }
+        return r;
+      }).toList();
+
       state = state.copyWith(
-        isLoading: false,
+        isSyncing: false,
         lastRecorded: attendance,
-        recentRecords: [attendance, ...state.recentRecords],
+        recentRecords: updatedRecords,
       );
-      
-      return CreateContactAttendanceResult(
-        attendance: attendance,
-        contactSaved: true,
-      );
-    } on AttendanceException catch (e) {
+    }).catchError((error) {
+      // On error: show subtle sync error but keep optimistic data in UI
+      final errorMessage = error is AttendanceException
+          ? error.message
+          : error.toString();
       state = state.copyWith(
-        isLoading: false,
-        error: e.message,
+        isSyncing: false,
+        syncError: 'Sync pending: $errorMessage',
       );
-      return CreateContactAttendanceResult(error: e.message);
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
-      return CreateContactAttendanceResult(error: e.toString());
-    }
+    });
+
+    return optimisticResult;
   }
 
   /// Gets a contact by phone number.

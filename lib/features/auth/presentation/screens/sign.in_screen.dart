@@ -1,3 +1,4 @@
+import 'package:church_attendance_app/core/widgets/gradient_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
@@ -7,7 +8,6 @@ import 'package:church_attendance_app/core/presentation/widgets/common_widgets.d
 import 'package:church_attendance_app/core/enums/user_role.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 
 /// Registration screen for new users.
@@ -76,7 +76,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
+    ref.watch(authProvider);
     final authError = ref.watch(authErrorProvider);
 
     // Listen for auth state changes
@@ -90,8 +90,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       appBar: AppBar(
         title: const Text(AppStrings.createAccount),
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: AppColors.primary,
+        foregroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: SafeArea(
         child: Center(
@@ -120,8 +119,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       labelText: AppStrings.email,
                       hintText: AppStrings.enterEmail,
                       prefixIcon: Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(),
-                    ),
+                    ).applyDefaults(Theme.of(context).inputDecorationTheme),
                     validator: FormValidators.email,
                   ),
                   const SizedBox(height: AppDimens.paddingM),
@@ -132,8 +130,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     decoration: const InputDecoration(
                       labelText: AppStrings.role,
                       prefixIcon: Icon(Icons.badge_outlined),
-                      border: OutlineInputBorder(),
-                    ),
+                    ).applyDefaults(Theme.of(context).inputDecorationTheme),
                     items: UserRole.values.map((role) {
                       return DropdownMenuItem(
                         value: role,
@@ -158,7 +155,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   Text(
                     AppStrings.selectRole,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.secondary,
                         ),
                   ),
                   const SizedBox(height: AppDimens.paddingM),
@@ -203,10 +200,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   const SizedBox(height: AppDimens.paddingL),
 
                   // Register button
-                  LoadingButton(
+                  GradientButton(
                     onPressed: _handleRegister,
-                    isLoading: authState.isLoading,
-                    label: AppStrings.createAccount,
+                   text: AppStrings.register,
                   ),
                   const SizedBox(height: AppDimens.paddingL),
 

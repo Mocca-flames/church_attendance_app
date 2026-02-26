@@ -99,9 +99,9 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
             builder: (context) => AlertDialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.1)),
+                side: BorderSide(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)),
               ),
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).colorScheme.onSecondary,
               elevation: 0,
               content: const Row(
                 children: [
@@ -214,7 +214,7 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
+              foregroundColor: Theme.of(context).colorScheme.primary,
             ),
             child: const Text('OK'),
           ),
@@ -251,11 +251,9 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
     final contactsAsync = ref.watch(contactListProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      
       appBar: AppBar(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: AppColors.primary,
+      
         shape: const Border(bottom: BorderSide(color: Colors.white10, width: 1)),
         title: _isSearchExpanded
             ? TextField(
@@ -265,16 +263,17 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
                 decoration: InputDecoration(
                   hintText: 'Search contacts...',
                   hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
-                  border: InputBorder.none,
+                  
                   contentPadding: EdgeInsets.zero,
                   isDense: true,
-                  // Add search icon prefix
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Colors.white.withValues(alpha: 0.6),
-                    size: 20,
+                  
+                ).applyDefaults(Theme.of(context).inputDecorationTheme.copyWith(
+                  border: InputBorder.none,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(width: 1.2, color: Colors.white.withValues(alpha: 0.2)),
                   ),
-                ),
+                  focusedBorder: InputBorder.none,
+                )),
                 onChanged: _onSearchChanged,
               )
             : const Text(
@@ -316,22 +315,22 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
             ),
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             onSelected: (value) {
               if (value == 'import_vcf') {
                 _importVcfFile();
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'import_vcf',
                 child: Row(
                   children: [
-                    Icon(Icons.upload_file_outlined, color: Colors.black87),
-                    SizedBox(width: 12),
-                    Text('Import VCF File'),
+                    Icon(Icons.upload_file_outlined, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 12),
+                    Text('Import VCF File', style: TextStyle(color: Theme.of(context).colorScheme.surfaceBright)),
                   ],
-                ),
+                ),  
               ),
             ],
           ),
@@ -342,7 +341,7 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
           // Filter Chips Section
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               border: Border(
                 bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
               ),
@@ -365,10 +364,10 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
         onPressed: _navigateToCreate,
         elevation: 0,
         backgroundColor: Colors.white,
-        foregroundColor: AppColors.contactsColor,
+        foregroundColor: AppColors.neutral500,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.contactsColor, width: 1.5),
+          side: const BorderSide(color: AppColors.deviceActive, width: 1.5),
         ),
         child: const Icon(Icons.add),
       ),
@@ -619,8 +618,8 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
             OutlinedButton(
               onPressed: _handleRefresh,
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                side: BorderSide(color: Theme.of(context).colorScheme.primary),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               child: const Text('Retry'),

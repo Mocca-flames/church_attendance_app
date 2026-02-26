@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/vcf_share_intent_provider.dart';
-import 'package:church_attendance_app/core/constants/app_colors.dart';
 import 'package:church_attendance_app/features/home/presentation/screens/home_screen.dart' show DebugLogManager;
 
 /// Full-screen VCF import overlay that shows when a VCF is received.
@@ -70,11 +69,11 @@ class VcfImportOverlay extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.contact_phone_outlined, color: AppColors.primary),
-              SizedBox(width: 8),
-              Text(
+              Icon(Icons.contact_phone_outlined, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 8),
+              const Text(
                 'Import Contacts',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
@@ -128,7 +127,7 @@ class VcfImportOverlay extends ConsumerWidget {
                   ref.read(vcfShareIntentProvider.notifier).clearPendingVcf();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Import'),

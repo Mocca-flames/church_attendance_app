@@ -5,7 +5,6 @@ import 'package:church_attendance_app/features/contacts/presentation/providers/c
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_colors.dart';
 
 /// Contact Edit Screen for creating or editing contacts.
 ///
@@ -137,7 +136,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Contact' : 'New Contact'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         actions: [
           TextButton(
@@ -185,8 +184,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
                         labelText: 'Phone *',
                         hintText: 'Enter phone number',
                         prefixIcon: Icon(Icons.phone),
-                        border: OutlineInputBorder(),
-                      ),
+                      ).applyDefaults(Theme.of(context).inputDecorationTheme),
                       keyboardType: TextInputType.phone,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -207,8 +205,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
                         labelText: 'Name',
                         hintText: 'Enter name (optional)',
                         prefixIcon: Icon(Icons.person),
-                        border: OutlineInputBorder(),
-                      ),
+                      ).applyDefaults(Theme.of(context).inputDecorationTheme),
                       textCapitalization: TextCapitalization.words,
                     ),
                   ],

@@ -9,13 +9,13 @@ import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf
 import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf_import_status_card.dart';
 import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 
 /// Static debug log manager - stores last 100 log lines globally
 class DebugLogManager {
   static final List<String> _logs = [];
   static VoidCallback? _onLogAdded;
+  static bool _isBuilding = false; // Track if we're in widget build phase
   
   static List<String> get logs => List.unmodifiable(_logs);
   
@@ -28,7 +28,14 @@ class DebugLogManager {
       _logs.removeAt(0);
     }
     debugPrint('[DEBUG] $logLine');
-    _onLogAdded?.call();
+    // Safeguard: Only trigger callback if not during widget build
+    // This prevents "Tried to modify a provider while the widget tree was building" error
+    if (!_isBuilding) {
+      _onLogAdded?.call();
+    } else {
+      // Defer the callback to after build completes
+      Future.microtask(() => _onLogAdded?.call());
+    }
   }
   
   static void clear() {
@@ -39,15 +46,28 @@ class DebugLogManager {
   static void setListener(VoidCallback callback) {
     _onLogAdded = callback;
   }
+  
+  static void setBuilding(bool value) {
+    _isBuilding = value;
+  }
 }
 
 /// Notifier to manage debug log trigger count - avoids circular reference (Riverpod 3.x)
 class DebugLogsTriggerNotifier extends Notifier<int> {
   @override
   int build() {
+    // Set flag to track build phase
+    DebugLogManager.setBuilding(true);
+    
     DebugLogManager.setListener(() {
       state++;
     });
+    
+    // Reset flag when build completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      DebugLogManager.setBuilding(false);
+    });
+    
     return 0;
   }
 }
@@ -110,7 +130,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.appName),
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         actions: [
           // Sync status indicator in app bar
@@ -126,8 +146,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 backgroundColor: Colors.white,
                 child: Text(
                   user.email.isNotEmpty ? user.email[0].toUpperCase() : '?',
-                  style: const TextStyle(
-                    color: AppColors.primary,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -187,10 +207,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Text(
                               syncStatus.progressMessage!,
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context).colorScheme.onSecondaryFixed.withValues(alpha: 0.3)),textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
-                            ),
+                              
+                            
                           ],
                         ] else ...[
                           // Show indeterminate progress
@@ -205,7 +225,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         Text(
                           'Please wait',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textSecondary,
+                            color: Theme.of(context).colorScheme.onSecondary.withValues(alpha: 0.3),
                           ),
                         ),
                       ],
@@ -254,7 +274,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         Text(
                           user.email,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context).colorScheme.onSecondaryFixed.withValues(alpha: 0.3),
                               ),
                         ),
                     ],
@@ -312,7 +332,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     info.displayText,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: info.totalCount > 0
-                              ? AppColors.textSecondary
+                              ? Theme.of(context).colorScheme.onSecondary.withValues(alpha: 0.3)
                               : Colors.orange,
                         ),
                   ),

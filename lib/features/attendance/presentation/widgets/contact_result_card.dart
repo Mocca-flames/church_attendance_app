@@ -12,7 +12,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
-import '../../../../core/constants/app_colors.dart';
 
 /// Card widget for displaying a contact in search results.
 ///
@@ -100,7 +99,7 @@ class ContactResultCard extends ConsumerWidget {
                   decoration: const InputDecoration(
                     labelText: 'Name',
                     hintText: 'Enter contact name',
-                  ),
+                  ).applyDefaults(Theme.of(context).inputDecorationTheme),
                   validator: (value) => (value == null || value.trim().isEmpty)
                       ? 'Name is required'
                       : null,
@@ -114,7 +113,7 @@ class ContactResultCard extends ConsumerWidget {
                     decoration: const InputDecoration(
                       labelText: 'Location (optional)',
                       hintText: 'Enter location',
-                    ),
+                    ).applyDefaults(Theme.of(context).inputDecorationTheme),
                   ),
                   const SizedBox(height: AppDimens.paddingM),
                 ] else
@@ -389,12 +388,12 @@ class ContactResultCard extends ConsumerWidget {
             backgroundColor: isAlreadyMarked
                 ? Colors.green.withValues(alpha: 0.2)
                 : _isMember
-                    ? AppColors.primary.withValues(alpha: 0.1)
+                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
                     : Colors.grey.withValues(alpha: 0.1),
             child: isAlreadyMarked
                 ? const Icon(Icons.check, color: Colors.green)
                 : Icon(Icons.person,
-                    color: _isMember ? AppColors.primary : Colors.grey),
+                    color: _isMember ? Theme.of(context).colorScheme.primary : Colors.grey),
           ),
           title: Row(
             children: [
@@ -415,7 +414,7 @@ class ContactResultCard extends ConsumerWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(

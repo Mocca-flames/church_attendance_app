@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/theme/app_theme.dart';
 import 'package:church_attendance_app/core/navigation/app_navigator.dart';
+import 'package:church_attendance_app/core/presentation/providers/theme_mode_provider.dart';
 import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf_share_intent_handler.dart';
 import 'package:church_attendance_app/features/splash/presentation/screens/splash_screen.dart';
 
@@ -29,11 +30,13 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 
 /// Main application widget.
 /// Follows Clean Architecture - this is the app composition root.
-class ChurchAttendanceApp extends StatelessWidget {
+class ChurchAttendanceApp extends ConsumerWidget {
   const ChurchAttendanceApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    
     // FIX: Removed duplicate VCF check from main.dart
     // The VcfShareIntentHandler + provider now handle VCF detection
     // This prevents duplicate calls to getSharedVcfPath()
@@ -43,6 +46,8 @@ class ChurchAttendanceApp extends StatelessWidget {
         title: 'Church Attendance',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeMode,
         // Always start with SplashScreen - let VcfShareIntentHandler
         // handle showing the import dialog when VCF is detected
         home: const SplashScreen(),

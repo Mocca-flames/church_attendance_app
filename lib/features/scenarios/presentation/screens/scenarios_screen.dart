@@ -48,8 +48,7 @@ class _ScenariosScreenState extends ConsumerState<ScenariosScreen> {
               decoration: const InputDecoration(
                 labelText: 'Name',
                 hintText: 'Enter scenario name',
-                border: OutlineInputBorder(),
-              ),
+              ).applyDefaults(Theme.of(context).inputDecorationTheme),
               autofocus: true,
             ),
             const SizedBox(height: AppDimens.paddingM),
@@ -58,8 +57,7 @@ class _ScenariosScreenState extends ConsumerState<ScenariosScreen> {
               decoration: const InputDecoration(
                 labelText: 'Description (optional)',
                 hintText: 'Enter description',
-                border: OutlineInputBorder(),
-              ),
+              ).applyDefaults(Theme.of(context).inputDecorationTheme),
               maxLines: 3,
             ),
           ],
@@ -113,7 +111,7 @@ class _ScenariosScreenState extends ConsumerState<ScenariosScreen> {
             if (scenario.description?.isNotEmpty == true) ...[
               Text(
                 scenario.description ?? '',
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: Theme.of(context).colorScheme.secondary),
               ),
               const SizedBox(height: AppDimens.paddingM),
             ],
@@ -126,7 +124,7 @@ class _ScenariosScreenState extends ConsumerState<ScenariosScreen> {
             _buildInfoRow(
               'Created',
               _formatDate(scenario.createdAt),
-              AppColors.textSecondary,
+            Theme.of(context).colorScheme.secondary,
             ),
             const SizedBox(height: AppDimens.paddingS),
             _buildInfoRow(
@@ -152,9 +150,9 @@ class _ScenariosScreenState extends ConsumerState<ScenariosScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.secondary,
           ),
         ),
         Text(
@@ -176,7 +174,7 @@ class _ScenariosScreenState extends ConsumerState<ScenariosScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.scenarios),
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
       ),
       body: _buildBody(scenarioState),
@@ -201,10 +199,10 @@ class _ScenariosScreenState extends ConsumerState<ScenariosScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
               size: AppDimens.iconXXL,
-              color: AppColors.error,
+              color: Theme.of(context).colorScheme.error,
             ),
             const SizedBox(height: AppDimens.paddingM),
             Text(
@@ -214,7 +212,7 @@ class _ScenariosScreenState extends ConsumerState<ScenariosScreen> {
             const SizedBox(height: AppDimens.paddingS),
             Text(
               state.error!,
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppDimens.paddingL),
@@ -268,7 +266,7 @@ class _ScenariosScreenState extends ConsumerState<ScenariosScreen> {
           Text(
             'Create your first scenario to get started',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
           const SizedBox(height: AppDimens.paddingL),
@@ -335,7 +333,7 @@ class _ScenarioCard extends ConsumerWidget {
                 Text(
                   scenario.description ?? '',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -371,7 +369,7 @@ class _ScenarioCard extends ConsumerWidget {
                   Text(
                     _formatDate(scenario.createdAt),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                   ),
                 ],
@@ -443,8 +441,8 @@ class _TaskCountBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasTasks = total > 0;
     final color = hasTasks && completed == total
-        ? AppColors.success
-        : AppColors.primary;
+        ? Theme.of(context).colorScheme.secondary
+        : Theme.of(context).colorScheme.primary;
 
     return Container(
       padding: const EdgeInsets.symmetric(

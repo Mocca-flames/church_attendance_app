@@ -2,11 +2,6 @@ import 'package:church_attendance_app/features/contacts/domain/models/contact.da
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-/// Widget that displays a QR code for a contact.
-/// 
-/// The QR code contains the contact's phone number.
-/// Only shows for eligible contacts (members with real names).
-/// Includes role-based icon and color customization.
 class ContactQRCode extends StatelessWidget {
   final Contact contact;
   final double size;
@@ -21,7 +16,6 @@ class ContactQRCode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Check if contact is eligible for QR code
     if (!contact.isEligibleForQRCode) {
       return _buildNotEligible(context);
     }
@@ -29,125 +23,138 @@ class ContactQRCode extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // QR Code with role badge
-        Stack(
-          alignment: Alignment.topRight,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha:0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+        // ── QR Code ────────────────────────────────────────────
+        // Role badge is OUTSIDE the QR container — never overlaps
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white, // always white bg for max contrast
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              child: QrImageView(
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              QrImageView(
                 data: contact.phone,
                 version: QrVersions.auto,
                 size: size,
+                gapless: true,
                 backgroundColor: Colors.white,
-                eyeStyle: QrEyeStyle(
+                errorCorrectionLevel: QrErrorCorrectLevel
+                    .H, // H = 30% tolerance, needed for center overlay
+                eyeStyle: const QrEyeStyle(
                   eyeShape: QrEyeShape.square,
-                  color: contact.roleColor,
+                  color: Colors.black,
                 ),
-                dataModuleStyle: QrDataModuleStyle(
+                dataModuleStyle: const QrDataModuleStyle(
                   dataModuleShape: QrDataModuleShape.square,
-                  color: contact.roleColor,
+                  color: Colors.black,
+                ),
+                errorStateBuilder: (context, error) => SizedBox(
+                  width: size,
+                  height: size,
+                  child: const Center(
+                    child: Text(
+                      'Could not generate QR code',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
               ),
-            ),
-            // Role Badge
-            if (showRoleIcon && contact.primaryRoleTag != null)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: _buildRoleBadge(),
+
+              // ── Center avatar overlay (Samsung-style) ──────────────
+              Container(
+                width:
+                    size * 0.22, // ~22% of QR size — safe zone for H-level ECC
+                height: size * 0.22,
+                decoration: BoxDecoration(
+                  color: _getAvatarColor(contact),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    _getInitials(contact),
+                    style: TextStyle(
+                      fontSize: size * 0.075,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-          ],
+            ],
+          ),
         ),
 
         const SizedBox(height: 16),
 
-        // Contact Name
+        // ── Contact Name ───────────────────────────────────────
         Text(
           contact.name ?? contact.phone,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
 
         const SizedBox(height: 4),
 
-        // Phone Number
+        // ── Phone Number ───────────────────────────────────────
         Text(
           contact.phone,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Colors.grey[600],
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
           textAlign: TextAlign.center,
         ),
 
         const SizedBox(height: 12),
 
-        // Role and Member Badges
+        // ── Role Badge row — fully OUTSIDE the QR ─────────────
         Wrap(
           spacing: 8,
           runSpacing: 8,
           alignment: WrapAlignment.center,
           children: [
-            // Role Badge
             if (contact.primaryRoleTag != null)
               _buildBadge(
                 icon: contact.roleIcon,
-                label: contact.primaryRole?.displayName ?? contact.primaryRoleTag!,
+                label:
+                    contact.primaryRole?.displayName ?? contact.primaryRoleTag!,
                 color: contact.roleColor,
               ),
-            // Member Badge
             if (contact.isMember)
               _buildBadge(
                 icon: Icons.card_membership,
                 label: 'Member',
                 color: Colors.green,
               ),
-            // Location Badge
             if (contact.location != null)
               _buildBadge(
                 icon: Icons.location_on,
-                label: contact.location!.substring(0, 1).toUpperCase() + 
-                       contact.location!.substring(1),
+                label:
+                    contact.location!.substring(0, 1).toUpperCase() +
+                    contact.location!.substring(1),
                 color: Colors.red,
               ),
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildRoleBadge() {
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: contact.roleColor,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha:0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Icon(
-        contact.roleIcon,
-        color: Colors.white,
-        size: 16,
-      ),
     );
   }
 
@@ -159,7 +166,7 @@ class ContactQRCode extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha:0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color),
       ),
@@ -191,28 +198,47 @@ class ContactQRCode extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.qr_code_2,
-            size: size,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.qr_code_2, size: size * 0.6, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'QR code not available',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.grey[600],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: 4),
           Text(
             'Only members with names can have QR codes',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.grey[500],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
+}
+
+String _getInitials(Contact contact) {
+  if (contact.name != null && contact.name!.isNotEmpty) {
+    final parts = contact.name!.trim().split(' ');
+    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    return contact.name![0].toUpperCase();
+  }
+  return contact.phone.substring(0, 2);
+}
+
+Color _getAvatarColor(Contact contact) {
+  final colors = [
+    Colors.blue,
+    Colors.green,
+    Colors.orange,
+    Colors.purple,
+    Colors.teal,
+    Colors.indigo,
+    Colors.pink,
+    Colors.cyan,
+  ];
+  return colors[contact.phone.hashCode.abs() % colors.length];
 }

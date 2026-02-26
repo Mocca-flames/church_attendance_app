@@ -17,8 +17,11 @@ class VcfShareIntentHandler extends ConsumerWidget {
     // Watch the VCF share intent state - this triggers rebuilds when state changes
     final shareState = ref.watch(vcfShareIntentProvider);
 
-    // Log state for debugging
-    DebugLogManager.addLog('[VCF Handler] State: ${shareState.status}');
+    // Log state for debugging - DELAYED to avoid modifying provider during build
+    // This was causing: "Tried to modify a provider while the widget tree was building"
+    Future.microtask(() {
+      DebugLogManager.addLog('[VCF Handler] State: ${shareState.status}');
+    });
     
     // The UI (overlay/dialogs) is handled by:
     // 1. VcfImportOverlay on HomeScreen - shows overlay on home screen

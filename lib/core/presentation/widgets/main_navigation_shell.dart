@@ -4,7 +4,6 @@ import 'package:church_attendance_app/features/home/presentation/screens/home_sc
 import 'package:church_attendance_app/features/attendance/presentation/screens/attendance_screen.dart';
 
 import '../../../features/more/presentation/screen/more_screen.dart';
-import '../../constants/app_colors.dart';
 import '../../constants/app_strings.dart';
 
 /// Main navigation shell that provides bottom navigation for the app.
@@ -67,8 +66,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           });
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
         items: _navItems,
       ),
     );

@@ -1,4 +1,3 @@
-import 'package:church_attendance_app/core/constants/app_colors.dart';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_history_provider.dart';
@@ -25,7 +24,8 @@ class _AttendanceHistoryScreenState
   void initState() {
     super.initState();
     // Load attendances when screen is first displayed
-    Future.microtask(() {
+    // Use addPostFrameCallback to avoid modifying provider during widget tree building
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(attendanceHistoryProvider.notifier).loadAttendances();
     });
   }
@@ -121,7 +121,7 @@ class _AttendanceHistoryScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Attendance History'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -212,7 +212,7 @@ class _AttendanceHistoryScreenState
             child: _SummaryCard(
               title: 'Total',
               count: state.attendances.length,
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(width: AppDimens.paddingS),

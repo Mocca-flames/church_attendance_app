@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/app_route.dart';
+import 'package:church_attendance_app/core/presentation/providers/theme_mode_provider.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -13,18 +14,34 @@ class MoreScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = ref.watch(isDarkModeProvider);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.settings),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
+      appBar: AppBar(title: const Text(AppStrings.more)),
+
       body: ListView(
         children: [
           const SizedBox(height: AppDimens.paddingM),
+          // Dark Mode toggle
+          SwitchListTile(
+            secondary: Icon(
+              isDarkMode ? Icons.dark_mode : Icons.light_mode,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            title: const Text('Dark Mode'),
+            subtitle: Text(isDarkMode ? 'Enabled' : 'Disabled'),
+            value: isDarkMode,
+            onChanged: (value) {
+              ref.read(themeModeProvider.notifier).toggleThemeMode();
+            },
+          ),
+          const Divider(),
           // Scenarios navigation option
           ListTile(
-            leading: const Icon(Icons.checklist, color: AppColors.scenariosColor),
+            leading: Icon(
+              Icons.checklist,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             title: const Text(AppStrings.scenarios),
             subtitle: const Text('Manage tasks and follow-ups'),
             trailing: const Icon(Icons.chevron_right),
@@ -58,7 +75,7 @@ class MoreScreen extends ConsumerWidget {
               icon: const Icon(Icons.logout),
               label: const Text(AppStrings.logout),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
+                backgroundColor: Theme.of(context).colorScheme.error,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppDimens.paddingL,

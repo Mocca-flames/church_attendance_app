@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:church_attendance_app/core/constants/app_colors.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/vcf_share_intent_provider.dart';
 import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf_import_dialog.dart';
 
@@ -82,9 +81,9 @@ class _ProgressCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -96,12 +95,12 @@ class _ProgressCard extends StatelessWidget {
       child: Row(
         children: [
           // Animated progress indicator
-          const SizedBox(
+          SizedBox(
             width: 24,
             height: 24,
             child: CircularProgressIndicator(
               strokeWidth: 2.5,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
             ),
           ),
           const SizedBox(width: 16),
@@ -179,7 +178,7 @@ class _AnimatedDotsState extends State<_AnimatedDots>
               width: 4,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: opacity.clamp(0.3, 1.0)),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: opacity.clamp(0.3, 1.0)),
                 shape: BoxShape.circle,
               ),
             );

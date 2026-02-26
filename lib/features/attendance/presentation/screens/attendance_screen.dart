@@ -191,7 +191,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.attendance),
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -308,7 +308,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         onPressed: _navigateToScanner,
         icon: const Icon(Icons.qr_code_scanner),
         label: const Text('Scan QR'),
-        backgroundColor: AppColors.attendanceColor,
+        backgroundColor: AppColors.accentMint,
         foregroundColor: Colors.white,
       ),
     );
@@ -333,10 +333,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                   },
                 )
               : null,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          filled: true,
-          fillColor: Colors.grey[50],
-        ),
+        ).applyDefaults(Theme.of(context).inputDecorationTheme),
         onChanged: (query) =>
             ref.read(contactSearchProvider.notifier).search(query),
         textInputAction: TextInputAction.search,

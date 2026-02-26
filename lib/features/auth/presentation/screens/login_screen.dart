@@ -1,3 +1,4 @@
+import 'package:church_attendance_app/core/widgets/gradient_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
@@ -62,7 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
+    ref.watch(authProvider);
     final authError = ref.watch(authErrorProvider);
 
     // Listen for auth state changes and navigate to home if authenticated
@@ -100,8 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       labelText: AppStrings.email,
                       hintText: AppStrings.enterEmail,
                       prefixIcon: Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(),
-                    ),
+                    ).applyDefaults(Theme.of(context).inputDecorationTheme),
                     validator: FormValidators.email,
                   ),
                   const SizedBox(height: AppDimens.paddingM),
@@ -130,10 +130,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: AppDimens.paddingL),
 
                   // Login button
-                  LoadingButton(
+                  GradientButton(
                     onPressed: _handleLogin,
-                    isLoading: authState.isLoading,
-                    label: AppStrings.signIn,
+                  
+                    text: AppStrings.signIn,
                   ),
                   const SizedBox(height: AppDimens.paddingL),
 

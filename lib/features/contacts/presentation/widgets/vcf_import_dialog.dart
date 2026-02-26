@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:church_attendance_app/core/services/vcf_sharing_service.dart';
 
-import '../../../../core/constants/app_colors.dart';
 
 /// Reusable dialog for showing VCF import results.
 /// Used by both FilePicker and Share Intent import flows.
@@ -94,7 +93,7 @@ class VcfImportResultDialog extends StatelessWidget {
             onDismiss?.call();
           },
           style: TextButton.styleFrom(
-            foregroundColor: AppColors.primary,
+            foregroundColor: Theme.of(context).colorScheme.primary,
           ),
           child: const Text('OK'),
         ),
@@ -133,7 +132,7 @@ class VcfImportLoadingDialog extends StatelessWidget {
     return AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.1)),
+        side: BorderSide(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)),
       ),
       backgroundColor: Colors.white,
       elevation: 0,
@@ -175,14 +174,14 @@ class VcfShareConfirmDialog extends StatelessWidget {
       ),
       elevation: 0,
       backgroundColor: Colors.white,
-      title: const Row(
+      title: Row(
         children: [
           Icon(
             Icons.contact_phone_outlined,
-            color: AppColors.primary,
+            color: Theme.of(context).colorScheme.primary,
           ),
-          SizedBox(width: 8),
-          Text(
+          const SizedBox(width: 8),
+          const Text(
             'Import Contacts',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
@@ -202,9 +201,9 @@ class VcfShareConfirmDialog extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.description_outlined,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -223,9 +222,9 @@ class VcfShareConfirmDialog extends StatelessWidget {
           // Contact count
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.people_outline,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -330,7 +329,7 @@ class VcfShareConfirmDialog extends StatelessWidget {
                 }
               : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
+            backgroundColor: Theme.of(context).colorScheme.primary,
             foregroundColor: Colors.white,
           ),
           child: const Text('Import'),
