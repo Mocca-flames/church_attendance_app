@@ -18,6 +18,9 @@ abstract class ContactRepository {
   /// Get contacts by tag
   Future<List<Contact>> getContactsByTag(String tag);
 
+  /// Get contacts that do NOT have a specific tag (e.g., non-members/visitors)
+  Future<List<Contact>> getContactsWithoutTag(String tag);
+
   /// Create new contact (saves locally and adds to sync queue)
   Future<Contact> createContact(Contact contact);
 

@@ -129,8 +129,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.appName),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        title:  Text(AppStrings.appName, style: Theme.of(context).textTheme.titleLarge),
+        backgroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.5),
         foregroundColor: Colors.white,
         actions: [
           // Sync status indicator in app bar

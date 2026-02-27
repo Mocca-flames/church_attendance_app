@@ -39,7 +39,16 @@ abstract class ScenarioRepository {
     required int contactId,
     required String phone,
     String? name,
+    String? notes,
+    DateTime? dueDate,
+    String priority = 'medium',
   });
+
+  /// Update an existing task
+  Future<ScenarioTask> updateTask(ScenarioTask task);
+
+  /// Delete a task
+  Future<void> deleteTask(int taskId);
 
   /// Complete a task
   Future<ScenarioTask> completeTask({

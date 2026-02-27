@@ -45,6 +45,9 @@ sealed class ScenarioTask with _$ScenarioTask {
     int? completedBy,
     DateTime? completedAt,
     @Default(false) bool isSynced,
+    String? notes,
+    DateTime? dueDate,
+    @Default('medium') String priority,
   }) = _ScenarioTask;
 
   factory ScenarioTask.fromJson(Map<String, dynamic> json) =>

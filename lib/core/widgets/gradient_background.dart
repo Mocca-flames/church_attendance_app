@@ -23,12 +23,7 @@ class DynamicBackground extends StatelessWidget {
             ? LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: gradientColors ?? [
-                  AppColors.gradientStart,
-                  AppColors.backgroundPrimary,
-                  AppColors.gradientEnd,
-                ],
-                stops: const [0.0, 0.5, 1.0],
+                colors: gradientColors ?? AppColors.backgroundGradientLight,
               )
             : null,
         color: useGradient ? null : AppColors.backgroundPrimary,

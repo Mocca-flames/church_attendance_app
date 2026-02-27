@@ -6,6 +6,7 @@ import 'package:church_attendance_app/features/home/presentation/screens/home_sc
 import 'package:church_attendance_app/features/splash/presentation/screens/splash_screen.dart';
 import 'package:church_attendance_app/features/attendance/presentation/screens/attendance_screen.dart';
 import 'package:church_attendance_app/features/scenarios/presentation/screens/scenarios_screen.dart';
+import 'package:church_attendance_app/features/scenarios/presentation/screens/scenario_detail_screen.dart';
 import 'package:church_attendance_app/features/settings/presentation/screens/settings_screen.dart';
 import 'package:church_attendance_app/core/presentation/widgets/main_navigation_shell.dart';
 
@@ -19,6 +20,7 @@ enum AppRoute {
   home,
   attendance,
   scenarios,
+  scenarioDetail,
   contacts,
   settings;
 
@@ -42,6 +44,8 @@ enum AppRoute {
         return 'Mark';
       case AppRoute.scenarios:
         return 'To-do';
+      case AppRoute.scenarioDetail:
+        return 'Scenario Detail';
       case AppRoute.contacts:
         return 'Contacts';
       case AppRoute.settings:
@@ -66,6 +70,8 @@ enum AppRoute {
         return const AttendanceScreen();
       case AppRoute.scenarios:
         return const ScenariosScreen();
+      case AppRoute.scenarioDetail:
+        return const ScenarioDetailScreen(scenarioId: 0);
       case AppRoute.contacts:
         return const ContactsScreen();
       case AppRoute.settings:

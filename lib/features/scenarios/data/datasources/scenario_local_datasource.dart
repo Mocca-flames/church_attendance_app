@@ -121,6 +121,9 @@ class ScenarioLocalDataSource {
       'completedBy': entity.completedBy,
       'completedAt': entity.completedAt?.toIso8601String(),
       'isSynced': entity.isSynced,
+      'notes': entity.notes,
+      'dueDate': entity.dueDate?.toIso8601String(),
+      'priority': entity.priority,
     };
     
     try {
@@ -355,6 +358,9 @@ class ScenarioLocalDataSource {
     required int contactId,
     required String phone,
     String? name,
+    String? notes,
+    DateTime? dueDate,
+    String priority = 'medium',
   }) async {
     debugPrint('[ScenarioLocalDataSource:209] createTask: scenarioId=$scenarioId, contactId=$contactId');
     final companion = ScenarioTasksCompanion(
@@ -362,6 +368,9 @@ class ScenarioLocalDataSource {
       contactId: drift.Value(contactId),
       phone: drift.Value(phone),
       name: name != null ? drift.Value(name) : const drift.Value.absent(),
+      notes: notes != null ? drift.Value(notes) : const drift.Value.absent(),
+      dueDate: dueDate != null ? drift.Value(dueDate) : const drift.Value.absent(),
+      priority: drift.Value(priority),
       isCompleted: const drift.Value(false),
       isSynced: const drift.Value(false),
     );
@@ -391,6 +400,40 @@ class ScenarioLocalDataSource {
     }
     debugPrint('[ScenarioLocalDataSource:234] completeTask: completed task: id=${task.id}');
     return task;
+  }
+
+  /// Update a scenario task
+  Future<ScenarioTask> updateTask(ScenarioTask task) async {
+    debugPrint('[ScenarioLocalDataSource] updateTask: id=${task.id}');
+    
+    final companion = ScenarioTasksCompanion(
+      id: drift.Value(task.id),
+      serverId: task.serverId != null ? drift.Value(task.serverId!) : const drift.Value.absent(),
+      scenarioId: drift.Value(task.scenarioId),
+      contactId: drift.Value(task.contactId),
+      phone: drift.Value(task.phone),
+      name: task.name != null ? drift.Value(task.name!) : const drift.Value.absent(),
+      notes: task.notes != null ? drift.Value(task.notes!) : const drift.Value.absent(),
+      dueDate: task.dueDate != null ? drift.Value(task.dueDate!) : const drift.Value.absent(),
+      priority: drift.Value(task.priority),
+      isCompleted: drift.Value(task.isCompleted),
+      completedBy: task.completedBy != null ? drift.Value(task.completedBy!) : const drift.Value.absent(),
+      completedAt: task.completedAt != null ? drift.Value(task.completedAt!) : const drift.Value.absent(),
+      isSynced: const drift.Value(false),
+    );
+    
+    await _db.updateScenarioTask(companion);
+    final updated = await getTaskById(task.id);
+    if (updated == null) {
+      throw Exception('Failed to update task: task is null after update');
+    }
+    return updated;
+  }
+
+  /// Delete a scenario task
+  Future<void> deleteTask(int taskId) async {
+    debugPrint('[ScenarioLocalDataSource] deleteTask: id=$taskId');
+    await _db.deleteScenarioTask(taskId);
   }
 
   /// Mark task as synced

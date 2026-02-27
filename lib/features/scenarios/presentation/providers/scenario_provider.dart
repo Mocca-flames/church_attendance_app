@@ -36,6 +36,7 @@ class ScenarioState {
   final bool isLoading;
   final Scenario? selectedScenario;
   final List<Scenario> scenarios;
+  final List<ScenarioTask> tasks;
   final String? error;
   final bool isSaving;
   final bool isDeleting;
@@ -44,6 +45,7 @@ class ScenarioState {
     this.isLoading = false,
     this.selectedScenario,
     this.scenarios = const [],
+    this.tasks = const [],
     this.error,
     this.isSaving = false,
     this.isDeleting = false,
@@ -53,6 +55,7 @@ class ScenarioState {
     bool? isLoading,
     Scenario? selectedScenario,
     List<Scenario>? scenarios,
+    List<ScenarioTask>? tasks,
     String? error,
     bool? isSaving,
     bool? isDeleting,
@@ -63,6 +66,7 @@ class ScenarioState {
       isLoading: isLoading ?? this.isLoading,
       selectedScenario: clearSelectedScenario ? null : (selectedScenario ?? this.selectedScenario),
       scenarios: scenarios ?? this.scenarios,
+      tasks: tasks ?? this.tasks,
       error: clearError ? null : (error ?? this.error),
       isSaving: isSaving ?? this.isSaving,
       isDeleting: isDeleting ?? this.isDeleting,
@@ -227,6 +231,112 @@ class ScenarioNotifier extends Notifier<ScenarioState> {
         error: e.toString(),
       );
       return null;
+    }
+  }
+
+  /// Create a new task
+  Future<ScenarioTask?> createTask({
+    required int scenarioId,
+    required int contactId,
+    required String phone,
+    String? name,
+    String? notes,
+    DateTime? dueDate,
+    String priority = 'medium',
+  }) async {
+    state = state.copyWith(isSaving: true, clearError: true);
+    
+    try {
+      final task = await _repository.createTask(
+        scenarioId: scenarioId,
+        contactId: contactId,
+        phone: phone,
+        name: name,
+        notes: notes,
+        dueDate: dueDate,
+        priority: priority,
+      );
+      
+      // Reload tasks for this scenario
+      final tasks = await _repository.getTasksByScenario(scenarioId);
+      
+      state = state.copyWith(
+        isSaving: false,
+        tasks: tasks,
+      );
+      return task;
+    } catch (e) {
+      state = state.copyWith(
+        isSaving: false,
+        error: e.toString(),
+      );
+      return null;
+    }
+  }
+
+  /// Update a task
+  Future<ScenarioTask?> updateTask(ScenarioTask task) async {
+    state = state.copyWith(isSaving: true, clearError: true);
+    
+    try {
+      final updated = await _repository.updateTask(task);
+      
+      // Reload tasks for this scenario
+      final tasks = await _repository.getTasksByScenario(task.scenarioId);
+      
+      state = state.copyWith(
+        isSaving: false,
+        tasks: tasks,
+      );
+      return updated;
+    } catch (e) {
+      state = state.copyWith(
+        isSaving: false,
+        error: e.toString(),
+      );
+      return null;
+    }
+  }
+
+  /// Delete a task
+  Future<bool> deleteTask(int taskId, int scenarioId) async {
+    state = state.copyWith(isDeleting: true, clearError: true);
+    
+    try {
+      await _repository.deleteTask(taskId);
+      
+      // Reload tasks for this scenario
+      final tasks = await _repository.getTasksByScenario(scenarioId);
+      
+      state = state.copyWith(
+        isDeleting: false,
+        tasks: tasks,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isDeleting: false,
+        error: e.toString(),
+      );
+      return false;
+    }
+  }
+
+  /// Load tasks for a scenario
+  Future<void> loadTasks(int scenarioId) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    
+    try {
+      final tasks = await _repository.getTasksByScenario(scenarioId);
+      state = state.copyWith(
+        isLoading: false,
+        tasks: tasks,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
     }
   }
 

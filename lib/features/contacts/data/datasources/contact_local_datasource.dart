@@ -88,6 +88,16 @@ class ContactLocalDataSource {
         .toList();
   }
 
+  /// Get contacts that do NOT have a specific tag (e.g., non-members/visitors)
+  Future<List<Contact>> getContactsWithoutTag(String tag) async {
+    final entities = await _db.getContactsWithoutTag(tag);
+    return entities
+        .where((e) => !e.isDeleted)
+        .map(_mapEntityToContact)
+        .whereType<Contact>()
+        .toList();
+  }
+
   /// Create new contact
   Future<Contact> createContact({
     required String phone,

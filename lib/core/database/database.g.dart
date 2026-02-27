@@ -11,60 +11,95 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserEntity> {
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
   static const VerificationMeta _emailMeta = const VerificationMeta('email');
   @override
   late final GeneratedColumn<String> email = GeneratedColumn<String>(
-      'email', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 255),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
-  static const VerificationMeta _passwordHashMeta =
-      const VerificationMeta('passwordHash');
+    'email',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 255,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _passwordHashMeta = const VerificationMeta(
+    'passwordHash',
+  );
   @override
   late final GeneratedColumn<String> passwordHash = GeneratedColumn<String>(
-      'password_hash', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+    'password_hash',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _roleMeta = const VerificationMeta('role');
   @override
   late final GeneratedColumn<String> role = GeneratedColumn<String>(
-      'role', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _isActiveMeta =
-      const VerificationMeta('isActive');
+    'role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
   @override
   late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
-      'is_active', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_active" IN (0, 1))'),
-      defaultValue: const Constant(true));
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, email, passwordHash, role, isActive, createdAt];
+  List<GeneratedColumn> get $columns => [
+    id,
+    email,
+    passwordHash,
+    role,
+    isActive,
+    createdAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'users';
   @override
-  VerificationContext validateIntegrity(Insertable<UserEntity> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<UserEntity> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -72,31 +107,42 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserEntity> {
     }
     if (data.containsKey('email')) {
       context.handle(
-          _emailMeta, email.isAcceptableOrUnknown(data['email']!, _emailMeta));
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
     } else if (isInserting) {
       context.missing(_emailMeta);
     }
     if (data.containsKey('password_hash')) {
       context.handle(
+        _passwordHashMeta,
+        passwordHash.isAcceptableOrUnknown(
+          data['password_hash']!,
           _passwordHashMeta,
-          passwordHash.isAcceptableOrUnknown(
-              data['password_hash']!, _passwordHashMeta));
+        ),
+      );
     } else if (isInserting) {
       context.missing(_passwordHashMeta);
     }
     if (data.containsKey('role')) {
       context.handle(
-          _roleMeta, role.isAcceptableOrUnknown(data['role']!, _roleMeta));
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
     } else if (isInserting) {
       context.missing(_roleMeta);
     }
     if (data.containsKey('is_active')) {
-      context.handle(_isActiveMeta,
-          isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta));
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
     }
     if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
     }
     return context;
   }
@@ -107,18 +153,30 @@ class $UsersTable extends Users with TableInfo<$UsersTable, UserEntity> {
   UserEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return UserEntity(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      email: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}email'])!,
-      passwordHash: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}password_hash'])!,
-      role: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}role'])!,
-      isActive: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_active'])!,
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      )!,
+      passwordHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}password_hash'],
+      )!,
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
     );
   }
 
@@ -135,13 +193,14 @@ class UserEntity extends DataClass implements Insertable<UserEntity> {
   final String role;
   final bool isActive;
   final DateTime createdAt;
-  const UserEntity(
-      {required this.id,
-      required this.email,
-      required this.passwordHash,
-      required this.role,
-      required this.isActive,
-      required this.createdAt});
+  const UserEntity({
+    required this.id,
+    required this.email,
+    required this.passwordHash,
+    required this.role,
+    required this.isActive,
+    required this.createdAt,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -165,8 +224,10 @@ class UserEntity extends DataClass implements Insertable<UserEntity> {
     );
   }
 
-  factory UserEntity.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory UserEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return UserEntity(
       id: serializer.fromJson<int>(json['id']),
@@ -190,21 +251,21 @@ class UserEntity extends DataClass implements Insertable<UserEntity> {
     };
   }
 
-  UserEntity copyWith(
-          {int? id,
-          String? email,
-          String? passwordHash,
-          String? role,
-          bool? isActive,
-          DateTime? createdAt}) =>
-      UserEntity(
-        id: id ?? this.id,
-        email: email ?? this.email,
-        passwordHash: passwordHash ?? this.passwordHash,
-        role: role ?? this.role,
-        isActive: isActive ?? this.isActive,
-        createdAt: createdAt ?? this.createdAt,
-      );
+  UserEntity copyWith({
+    int? id,
+    String? email,
+    String? passwordHash,
+    String? role,
+    bool? isActive,
+    DateTime? createdAt,
+  }) => UserEntity(
+    id: id ?? this.id,
+    email: email ?? this.email,
+    passwordHash: passwordHash ?? this.passwordHash,
+    role: role ?? this.role,
+    isActive: isActive ?? this.isActive,
+    createdAt: createdAt ?? this.createdAt,
+  );
   UserEntity copyWithCompanion(UsersCompanion data) {
     return UserEntity(
       id: data.id.present ? data.id.value : this.id,
@@ -268,9 +329,9 @@ class UsersCompanion extends UpdateCompanion<UserEntity> {
     required String role,
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
-  })  : email = Value(email),
-        passwordHash = Value(passwordHash),
-        role = Value(role);
+  }) : email = Value(email),
+       passwordHash = Value(passwordHash),
+       role = Value(role);
   static Insertable<UserEntity> custom({
     Expression<int>? id,
     Expression<String>? email,
@@ -289,13 +350,14 @@ class UsersCompanion extends UpdateCompanion<UserEntity> {
     });
   }
 
-  UsersCompanion copyWith(
-      {Value<int>? id,
-      Value<String>? email,
-      Value<String>? passwordHash,
-      Value<String>? role,
-      Value<bool>? isActive,
-      Value<DateTime>? createdAt}) {
+  UsersCompanion copyWith({
+    Value<int>? id,
+    Value<String>? email,
+    Value<String>? passwordHash,
+    Value<String>? role,
+    Value<bool>? isActive,
+    Value<DateTime>? createdAt,
+  }) {
     return UsersCompanion(
       id: id ?? this.id,
       email: email ?? this.email,
@@ -353,164 +415,235 @@ class $ContactsTable extends Contacts
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _serverIdMeta =
-      const VerificationMeta('serverId');
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
   @override
   late final GeneratedColumn<int> serverId = GeneratedColumn<int>(
-      'server_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
+    'server_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
-      'name', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+    'name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
   @override
   late final GeneratedColumn<String> phone = GeneratedColumn<String>(
-      'phone', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 20),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
+    'phone',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 20,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
-      'status', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('active'));
-  static const VerificationMeta _optOutSmsMeta =
-      const VerificationMeta('optOutSms');
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('active'),
+  );
+  static const VerificationMeta _optOutSmsMeta = const VerificationMeta(
+    'optOutSms',
+  );
   @override
   late final GeneratedColumn<bool> optOutSms = GeneratedColumn<bool>(
-      'opt_out_sms', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("opt_out_sms" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _optOutWhatsappMeta =
-      const VerificationMeta('optOutWhatsapp');
+    'opt_out_sms',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("opt_out_sms" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _optOutWhatsappMeta = const VerificationMeta(
+    'optOutWhatsapp',
+  );
   @override
   late final GeneratedColumn<bool> optOutWhatsapp = GeneratedColumn<bool>(
-      'opt_out_whatsapp', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("opt_out_whatsapp" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _metadataMeta =
-      const VerificationMeta('metadata');
+    'opt_out_whatsapp',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("opt_out_whatsapp" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _metadataMeta = const VerificationMeta(
+    'metadata',
+  );
   @override
   late final GeneratedColumn<String> metadata = GeneratedColumn<String>(
-      'metadata', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
+    'metadata',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
-  static const VerificationMeta _isSyncedMeta =
-      const VerificationMeta('isSynced');
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _isSyncedMeta = const VerificationMeta(
+    'isSynced',
+  );
   @override
   late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
-      'is_synced', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_synced" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _isDeletedMeta =
-      const VerificationMeta('isDeleted');
+    'is_synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
   @override
   late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-      'is_deleted', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
-      defaultValue: const Constant(false));
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
-        id,
-        serverId,
-        name,
-        phone,
-        status,
-        optOutSms,
-        optOutWhatsapp,
-        metadata,
-        createdAt,
-        isSynced,
-        isDeleted
-      ];
+    id,
+    serverId,
+    name,
+    phone,
+    status,
+    optOutSms,
+    optOutWhatsapp,
+    metadata,
+    createdAt,
+    isSynced,
+    isDeleted,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'contacts';
   @override
-  VerificationContext validateIntegrity(Insertable<ContactEntity> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<ContactEntity> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
     if (data.containsKey('server_id')) {
-      context.handle(_serverIdMeta,
-          serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta));
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
     }
     if (data.containsKey('name')) {
       context.handle(
-          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
     }
     if (data.containsKey('phone')) {
       context.handle(
-          _phoneMeta, phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta));
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
     } else if (isInserting) {
       context.missing(_phoneMeta);
     }
     if (data.containsKey('status')) {
-      context.handle(_statusMeta,
-          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
     }
     if (data.containsKey('opt_out_sms')) {
       context.handle(
-          _optOutSmsMeta,
-          optOutSms.isAcceptableOrUnknown(
-              data['opt_out_sms']!, _optOutSmsMeta));
+        _optOutSmsMeta,
+        optOutSms.isAcceptableOrUnknown(data['opt_out_sms']!, _optOutSmsMeta),
+      );
     }
     if (data.containsKey('opt_out_whatsapp')) {
       context.handle(
+        _optOutWhatsappMeta,
+        optOutWhatsapp.isAcceptableOrUnknown(
+          data['opt_out_whatsapp']!,
           _optOutWhatsappMeta,
-          optOutWhatsapp.isAcceptableOrUnknown(
-              data['opt_out_whatsapp']!, _optOutWhatsappMeta));
+        ),
+      );
     }
     if (data.containsKey('metadata')) {
-      context.handle(_metadataMeta,
-          metadata.isAcceptableOrUnknown(data['metadata']!, _metadataMeta));
+      context.handle(
+        _metadataMeta,
+        metadata.isAcceptableOrUnknown(data['metadata']!, _metadataMeta),
+      );
     }
     if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
     }
     if (data.containsKey('is_synced')) {
-      context.handle(_isSyncedMeta,
-          isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta));
+      context.handle(
+        _isSyncedMeta,
+        isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta),
+      );
     }
     if (data.containsKey('is_deleted')) {
-      context.handle(_isDeletedMeta,
-          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
     }
     return context;
   }
@@ -521,28 +654,50 @@ class $ContactsTable extends Contacts
   ContactEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ContactEntity(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      serverId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}server_id']),
-      name: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}name']),
-      phone: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}phone'])!,
-      status: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
-      optOutSms: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}opt_out_sms'])!,
-      optOutWhatsapp: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}opt_out_whatsapp'])!,
-      metadata: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}metadata']),
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      isSynced: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_synced'])!,
-      isDeleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}server_id'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      ),
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      optOutSms: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}opt_out_sms'],
+      )!,
+      optOutWhatsapp: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}opt_out_whatsapp'],
+      )!,
+      metadata: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}metadata'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      isSynced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_synced'],
+      )!,
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
     );
   }
 
@@ -564,18 +719,19 @@ class ContactEntity extends DataClass implements Insertable<ContactEntity> {
   final DateTime createdAt;
   final bool isSynced;
   final bool isDeleted;
-  const ContactEntity(
-      {required this.id,
-      this.serverId,
-      this.name,
-      required this.phone,
-      required this.status,
-      required this.optOutSms,
-      required this.optOutWhatsapp,
-      this.metadata,
-      required this.createdAt,
-      required this.isSynced,
-      required this.isDeleted});
+  const ContactEntity({
+    required this.id,
+    this.serverId,
+    this.name,
+    required this.phone,
+    required this.status,
+    required this.optOutSms,
+    required this.optOutWhatsapp,
+    this.metadata,
+    required this.createdAt,
+    required this.isSynced,
+    required this.isDeleted,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -619,8 +775,10 @@ class ContactEntity extends DataClass implements Insertable<ContactEntity> {
     );
   }
 
-  factory ContactEntity.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory ContactEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ContactEntity(
       id: serializer.fromJson<int>(json['id']),
@@ -654,31 +812,31 @@ class ContactEntity extends DataClass implements Insertable<ContactEntity> {
     };
   }
 
-  ContactEntity copyWith(
-          {int? id,
-          Value<int?> serverId = const Value.absent(),
-          Value<String?> name = const Value.absent(),
-          String? phone,
-          String? status,
-          bool? optOutSms,
-          bool? optOutWhatsapp,
-          Value<String?> metadata = const Value.absent(),
-          DateTime? createdAt,
-          bool? isSynced,
-          bool? isDeleted}) =>
-      ContactEntity(
-        id: id ?? this.id,
-        serverId: serverId.present ? serverId.value : this.serverId,
-        name: name.present ? name.value : this.name,
-        phone: phone ?? this.phone,
-        status: status ?? this.status,
-        optOutSms: optOutSms ?? this.optOutSms,
-        optOutWhatsapp: optOutWhatsapp ?? this.optOutWhatsapp,
-        metadata: metadata.present ? metadata.value : this.metadata,
-        createdAt: createdAt ?? this.createdAt,
-        isSynced: isSynced ?? this.isSynced,
-        isDeleted: isDeleted ?? this.isDeleted,
-      );
+  ContactEntity copyWith({
+    int? id,
+    Value<int?> serverId = const Value.absent(),
+    Value<String?> name = const Value.absent(),
+    String? phone,
+    String? status,
+    bool? optOutSms,
+    bool? optOutWhatsapp,
+    Value<String?> metadata = const Value.absent(),
+    DateTime? createdAt,
+    bool? isSynced,
+    bool? isDeleted,
+  }) => ContactEntity(
+    id: id ?? this.id,
+    serverId: serverId.present ? serverId.value : this.serverId,
+    name: name.present ? name.value : this.name,
+    phone: phone ?? this.phone,
+    status: status ?? this.status,
+    optOutSms: optOutSms ?? this.optOutSms,
+    optOutWhatsapp: optOutWhatsapp ?? this.optOutWhatsapp,
+    metadata: metadata.present ? metadata.value : this.metadata,
+    createdAt: createdAt ?? this.createdAt,
+    isSynced: isSynced ?? this.isSynced,
+    isDeleted: isDeleted ?? this.isDeleted,
+  );
   ContactEntity copyWithCompanion(ContactsCompanion data) {
     return ContactEntity(
       id: data.id.present ? data.id.value : this.id,
@@ -716,8 +874,19 @@ class ContactEntity extends DataClass implements Insertable<ContactEntity> {
   }
 
   @override
-  int get hashCode => Object.hash(id, serverId, name, phone, status, optOutSms,
-      optOutWhatsapp, metadata, createdAt, isSynced, isDeleted);
+  int get hashCode => Object.hash(
+    id,
+    serverId,
+    name,
+    phone,
+    status,
+    optOutSms,
+    optOutWhatsapp,
+    metadata,
+    createdAt,
+    isSynced,
+    isDeleted,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -801,18 +970,19 @@ class ContactsCompanion extends UpdateCompanion<ContactEntity> {
     });
   }
 
-  ContactsCompanion copyWith(
-      {Value<int>? id,
-      Value<int?>? serverId,
-      Value<String?>? name,
-      Value<String>? phone,
-      Value<String>? status,
-      Value<bool>? optOutSms,
-      Value<bool>? optOutWhatsapp,
-      Value<String?>? metadata,
-      Value<DateTime>? createdAt,
-      Value<bool>? isSynced,
-      Value<bool>? isDeleted}) {
+  ContactsCompanion copyWith({
+    Value<int>? id,
+    Value<int?>? serverId,
+    Value<String?>? name,
+    Value<String>? phone,
+    Value<String>? status,
+    Value<bool>? optOutSms,
+    Value<bool>? optOutWhatsapp,
+    Value<String?>? metadata,
+    Value<DateTime>? createdAt,
+    Value<bool>? isSynced,
+    Value<bool>? isDeleted,
+  }) {
     return ContactsCompanion(
       id: id ?? this.id,
       serverId: serverId ?? this.serverId,
@@ -895,139 +1065,197 @@ class $AttendancesTable extends Attendances
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _serverIdMeta =
-      const VerificationMeta('serverId');
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
   @override
   late final GeneratedColumn<int> serverId = GeneratedColumn<int>(
-      'server_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
-  static const VerificationMeta _contactIdMeta =
-      const VerificationMeta('contactId');
+    'server_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _contactIdMeta = const VerificationMeta(
+    'contactId',
+  );
   @override
   late final GeneratedColumn<int> contactId = GeneratedColumn<int>(
-      'contact_id', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+    'contact_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
   @override
   late final GeneratedColumn<String> phone = GeneratedColumn<String>(
-      'phone', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _serviceTypeMeta =
-      const VerificationMeta('serviceType');
+    'phone',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _serviceTypeMeta = const VerificationMeta(
+    'serviceType',
+  );
   @override
   late final GeneratedColumn<String> serviceType = GeneratedColumn<String>(
-      'service_type', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _serviceDateMeta =
-      const VerificationMeta('serviceDate');
+    'service_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _serviceDateMeta = const VerificationMeta(
+    'serviceDate',
+  );
   @override
   late final GeneratedColumn<DateTime> serviceDate = GeneratedColumn<DateTime>(
-      'service_date', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
-  static const VerificationMeta _recordedByMeta =
-      const VerificationMeta('recordedBy');
+    'service_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedByMeta = const VerificationMeta(
+    'recordedBy',
+  );
   @override
   late final GeneratedColumn<int> recordedBy = GeneratedColumn<int>(
-      'recorded_by', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
-  static const VerificationMeta _recordedAtMeta =
-      const VerificationMeta('recordedAt');
+    'recorded_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMeta = const VerificationMeta(
+    'recordedAt',
+  );
   @override
   late final GeneratedColumn<DateTime> recordedAt = GeneratedColumn<DateTime>(
-      'recorded_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
-  static const VerificationMeta _isSyncedMeta =
-      const VerificationMeta('isSynced');
+    'recorded_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _isSyncedMeta = const VerificationMeta(
+    'isSynced',
+  );
   @override
   late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
-      'is_synced', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_synced" IN (0, 1))'),
-      defaultValue: const Constant(false));
+    'is_synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
-        id,
-        serverId,
-        contactId,
-        phone,
-        serviceType,
-        serviceDate,
-        recordedBy,
-        recordedAt,
-        isSynced
-      ];
+    id,
+    serverId,
+    contactId,
+    phone,
+    serviceType,
+    serviceDate,
+    recordedBy,
+    recordedAt,
+    isSynced,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'attendances';
   @override
-  VerificationContext validateIntegrity(Insertable<AttendanceEntity> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<AttendanceEntity> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
     if (data.containsKey('server_id')) {
-      context.handle(_serverIdMeta,
-          serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta));
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
     }
     if (data.containsKey('contact_id')) {
-      context.handle(_contactIdMeta,
-          contactId.isAcceptableOrUnknown(data['contact_id']!, _contactIdMeta));
+      context.handle(
+        _contactIdMeta,
+        contactId.isAcceptableOrUnknown(data['contact_id']!, _contactIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_contactIdMeta);
     }
     if (data.containsKey('phone')) {
       context.handle(
-          _phoneMeta, phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta));
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
     } else if (isInserting) {
       context.missing(_phoneMeta);
     }
     if (data.containsKey('service_type')) {
       context.handle(
+        _serviceTypeMeta,
+        serviceType.isAcceptableOrUnknown(
+          data['service_type']!,
           _serviceTypeMeta,
-          serviceType.isAcceptableOrUnknown(
-              data['service_type']!, _serviceTypeMeta));
+        ),
+      );
     } else if (isInserting) {
       context.missing(_serviceTypeMeta);
     }
     if (data.containsKey('service_date')) {
       context.handle(
+        _serviceDateMeta,
+        serviceDate.isAcceptableOrUnknown(
+          data['service_date']!,
           _serviceDateMeta,
-          serviceDate.isAcceptableOrUnknown(
-              data['service_date']!, _serviceDateMeta));
+        ),
+      );
     } else if (isInserting) {
       context.missing(_serviceDateMeta);
     }
     if (data.containsKey('recorded_by')) {
       context.handle(
-          _recordedByMeta,
-          recordedBy.isAcceptableOrUnknown(
-              data['recorded_by']!, _recordedByMeta));
+        _recordedByMeta,
+        recordedBy.isAcceptableOrUnknown(data['recorded_by']!, _recordedByMeta),
+      );
     } else if (isInserting) {
       context.missing(_recordedByMeta);
     }
     if (data.containsKey('recorded_at')) {
       context.handle(
-          _recordedAtMeta,
-          recordedAt.isAcceptableOrUnknown(
-              data['recorded_at']!, _recordedAtMeta));
+        _recordedAtMeta,
+        recordedAt.isAcceptableOrUnknown(data['recorded_at']!, _recordedAtMeta),
+      );
     }
     if (data.containsKey('is_synced')) {
-      context.handle(_isSyncedMeta,
-          isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta));
+      context.handle(
+        _isSyncedMeta,
+        isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta),
+      );
     }
     return context;
   }
@@ -1038,24 +1266,42 @@ class $AttendancesTable extends Attendances
   AttendanceEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return AttendanceEntity(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      serverId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}server_id']),
-      contactId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}contact_id'])!,
-      phone: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}phone'])!,
-      serviceType: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}service_type'])!,
-      serviceDate: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}service_date'])!,
-      recordedBy: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}recorded_by'])!,
-      recordedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}recorded_at'])!,
-      isSynced: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_synced'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}server_id'],
+      ),
+      contactId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}contact_id'],
+      )!,
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      )!,
+      serviceType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}service_type'],
+      )!,
+      serviceDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}service_date'],
+      )!,
+      recordedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recorded_by'],
+      )!,
+      recordedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}recorded_at'],
+      )!,
+      isSynced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_synced'],
+      )!,
     );
   }
 
@@ -1076,16 +1322,17 @@ class AttendanceEntity extends DataClass
   final int recordedBy;
   final DateTime recordedAt;
   final bool isSynced;
-  const AttendanceEntity(
-      {required this.id,
-      this.serverId,
-      required this.contactId,
-      required this.phone,
-      required this.serviceType,
-      required this.serviceDate,
-      required this.recordedBy,
-      required this.recordedAt,
-      required this.isSynced});
+  const AttendanceEntity({
+    required this.id,
+    this.serverId,
+    required this.contactId,
+    required this.phone,
+    required this.serviceType,
+    required this.serviceDate,
+    required this.recordedBy,
+    required this.recordedAt,
+    required this.isSynced,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1119,8 +1366,10 @@ class AttendanceEntity extends DataClass
     );
   }
 
-  factory AttendanceEntity.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory AttendanceEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return AttendanceEntity(
       id: serializer.fromJson<int>(json['id']),
@@ -1150,41 +1399,45 @@ class AttendanceEntity extends DataClass
     };
   }
 
-  AttendanceEntity copyWith(
-          {int? id,
-          Value<int?> serverId = const Value.absent(),
-          int? contactId,
-          String? phone,
-          String? serviceType,
-          DateTime? serviceDate,
-          int? recordedBy,
-          DateTime? recordedAt,
-          bool? isSynced}) =>
-      AttendanceEntity(
-        id: id ?? this.id,
-        serverId: serverId.present ? serverId.value : this.serverId,
-        contactId: contactId ?? this.contactId,
-        phone: phone ?? this.phone,
-        serviceType: serviceType ?? this.serviceType,
-        serviceDate: serviceDate ?? this.serviceDate,
-        recordedBy: recordedBy ?? this.recordedBy,
-        recordedAt: recordedAt ?? this.recordedAt,
-        isSynced: isSynced ?? this.isSynced,
-      );
+  AttendanceEntity copyWith({
+    int? id,
+    Value<int?> serverId = const Value.absent(),
+    int? contactId,
+    String? phone,
+    String? serviceType,
+    DateTime? serviceDate,
+    int? recordedBy,
+    DateTime? recordedAt,
+    bool? isSynced,
+  }) => AttendanceEntity(
+    id: id ?? this.id,
+    serverId: serverId.present ? serverId.value : this.serverId,
+    contactId: contactId ?? this.contactId,
+    phone: phone ?? this.phone,
+    serviceType: serviceType ?? this.serviceType,
+    serviceDate: serviceDate ?? this.serviceDate,
+    recordedBy: recordedBy ?? this.recordedBy,
+    recordedAt: recordedAt ?? this.recordedAt,
+    isSynced: isSynced ?? this.isSynced,
+  );
   AttendanceEntity copyWithCompanion(AttendancesCompanion data) {
     return AttendanceEntity(
       id: data.id.present ? data.id.value : this.id,
       serverId: data.serverId.present ? data.serverId.value : this.serverId,
       contactId: data.contactId.present ? data.contactId.value : this.contactId,
       phone: data.phone.present ? data.phone.value : this.phone,
-      serviceType:
-          data.serviceType.present ? data.serviceType.value : this.serviceType,
-      serviceDate:
-          data.serviceDate.present ? data.serviceDate.value : this.serviceDate,
-      recordedBy:
-          data.recordedBy.present ? data.recordedBy.value : this.recordedBy,
-      recordedAt:
-          data.recordedAt.present ? data.recordedAt.value : this.recordedAt,
+      serviceType: data.serviceType.present
+          ? data.serviceType.value
+          : this.serviceType,
+      serviceDate: data.serviceDate.present
+          ? data.serviceDate.value
+          : this.serviceDate,
+      recordedBy: data.recordedBy.present
+          ? data.recordedBy.value
+          : this.recordedBy,
+      recordedAt: data.recordedAt.present
+          ? data.recordedAt.value
+          : this.recordedAt,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
     );
   }
@@ -1206,8 +1459,17 @@ class AttendanceEntity extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(id, serverId, contactId, phone, serviceType,
-      serviceDate, recordedBy, recordedAt, isSynced);
+  int get hashCode => Object.hash(
+    id,
+    serverId,
+    contactId,
+    phone,
+    serviceType,
+    serviceDate,
+    recordedBy,
+    recordedAt,
+    isSynced,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1254,11 +1516,11 @@ class AttendancesCompanion extends UpdateCompanion<AttendanceEntity> {
     required int recordedBy,
     this.recordedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
-  })  : contactId = Value(contactId),
-        phone = Value(phone),
-        serviceType = Value(serviceType),
-        serviceDate = Value(serviceDate),
-        recordedBy = Value(recordedBy);
+  }) : contactId = Value(contactId),
+       phone = Value(phone),
+       serviceType = Value(serviceType),
+       serviceDate = Value(serviceDate),
+       recordedBy = Value(recordedBy);
   static Insertable<AttendanceEntity> custom({
     Expression<int>? id,
     Expression<int>? serverId,
@@ -1283,16 +1545,17 @@ class AttendancesCompanion extends UpdateCompanion<AttendanceEntity> {
     });
   }
 
-  AttendancesCompanion copyWith(
-      {Value<int>? id,
-      Value<int?>? serverId,
-      Value<int>? contactId,
-      Value<String>? phone,
-      Value<String>? serviceType,
-      Value<DateTime>? serviceDate,
-      Value<int>? recordedBy,
-      Value<DateTime>? recordedAt,
-      Value<bool>? isSynced}) {
+  AttendancesCompanion copyWith({
+    Value<int>? id,
+    Value<int?>? serverId,
+    Value<int>? contactId,
+    Value<String>? phone,
+    Value<String>? serviceType,
+    Value<DateTime>? serviceDate,
+    Value<int>? recordedBy,
+    Value<DateTime>? recordedAt,
+    Value<bool>? isSynced,
+  }) {
     return AttendancesCompanion(
       id: id ?? this.id,
       serverId: serverId ?? this.serverId,
@@ -1365,163 +1628,236 @@ class $ScenariosTable extends Scenarios
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _serverIdMeta =
-      const VerificationMeta('serverId');
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
   @override
   late final GeneratedColumn<int> serverId = GeneratedColumn<int>(
-      'server_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
+    'server_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
-      'name', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 200),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
-  static const VerificationMeta _descriptionMeta =
-      const VerificationMeta('description');
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 200,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
   @override
   late final GeneratedColumn<String> description = GeneratedColumn<String>(
-      'description', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _filterTagsMeta =
-      const VerificationMeta('filterTags');
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _filterTagsMeta = const VerificationMeta(
+    'filterTags',
+  );
   @override
   late final GeneratedColumn<String> filterTags = GeneratedColumn<String>(
-      'filter_tags', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+    'filter_tags',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
-      'status', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('active'));
-  static const VerificationMeta _createdByMeta =
-      const VerificationMeta('createdBy');
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('active'),
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
   @override
   late final GeneratedColumn<int> createdBy = GeneratedColumn<int>(
-      'created_by', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
+    'created_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
-  static const VerificationMeta _completedAtMeta =
-      const VerificationMeta('completedAt');
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
   @override
   late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
-      'completed_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _isSyncedMeta =
-      const VerificationMeta('isSynced');
+    'completed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isSyncedMeta = const VerificationMeta(
+    'isSynced',
+  );
   @override
   late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
-      'is_synced', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_synced" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _isDeletedMeta =
-      const VerificationMeta('isDeleted');
+    'is_synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
+    'isDeleted',
+  );
   @override
   late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-      'is_deleted', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_deleted" IN (0, 1))'),
-      defaultValue: const Constant(false));
+    'is_deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_deleted" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
-        id,
-        serverId,
-        name,
-        description,
-        filterTags,
-        status,
-        createdBy,
-        createdAt,
-        completedAt,
-        isSynced,
-        isDeleted
-      ];
+    id,
+    serverId,
+    name,
+    description,
+    filterTags,
+    status,
+    createdBy,
+    createdAt,
+    completedAt,
+    isSynced,
+    isDeleted,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'scenarios';
   @override
-  VerificationContext validateIntegrity(Insertable<ScenarioEntity> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<ScenarioEntity> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
     if (data.containsKey('server_id')) {
-      context.handle(_serverIdMeta,
-          serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta));
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
     }
     if (data.containsKey('name')) {
       context.handle(
-          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
     if (data.containsKey('description')) {
       context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
           _descriptionMeta,
-          description.isAcceptableOrUnknown(
-              data['description']!, _descriptionMeta));
+        ),
+      );
     }
     if (data.containsKey('filter_tags')) {
       context.handle(
-          _filterTagsMeta,
-          filterTags.isAcceptableOrUnknown(
-              data['filter_tags']!, _filterTagsMeta));
+        _filterTagsMeta,
+        filterTags.isAcceptableOrUnknown(data['filter_tags']!, _filterTagsMeta),
+      );
     } else if (isInserting) {
       context.missing(_filterTagsMeta);
     }
     if (data.containsKey('status')) {
-      context.handle(_statusMeta,
-          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
     }
     if (data.containsKey('created_by')) {
-      context.handle(_createdByMeta,
-          createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta));
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
     } else if (isInserting) {
       context.missing(_createdByMeta);
     }
     if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
     }
     if (data.containsKey('completed_at')) {
       context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
           _completedAtMeta,
-          completedAt.isAcceptableOrUnknown(
-              data['completed_at']!, _completedAtMeta));
+        ),
+      );
     }
     if (data.containsKey('is_synced')) {
-      context.handle(_isSyncedMeta,
-          isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta));
+      context.handle(
+        _isSyncedMeta,
+        isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta),
+      );
     }
     if (data.containsKey('is_deleted')) {
-      context.handle(_isDeletedMeta,
-          isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta));
+      context.handle(
+        _isDeletedMeta,
+        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
+      );
     }
     return context;
   }
@@ -1532,28 +1868,50 @@ class $ScenariosTable extends Scenarios
   ScenarioEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ScenarioEntity(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      serverId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}server_id']),
-      name: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
-      description: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}description']),
-      filterTags: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}filter_tags'])!,
-      status: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
-      createdBy: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}created_by'])!,
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      completedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}completed_at']),
-      isSynced: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_synced'])!,
-      isDeleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_deleted'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}server_id'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+      filterTags: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}filter_tags'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_by'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
+      ),
+      isSynced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_synced'],
+      )!,
+      isDeleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_deleted'],
+      )!,
     );
   }
 
@@ -1575,18 +1933,19 @@ class ScenarioEntity extends DataClass implements Insertable<ScenarioEntity> {
   final DateTime? completedAt;
   final bool isSynced;
   final bool isDeleted;
-  const ScenarioEntity(
-      {required this.id,
-      this.serverId,
-      required this.name,
-      this.description,
-      required this.filterTags,
-      required this.status,
-      required this.createdBy,
-      required this.createdAt,
-      this.completedAt,
-      required this.isSynced,
-      required this.isDeleted});
+  const ScenarioEntity({
+    required this.id,
+    this.serverId,
+    required this.name,
+    this.description,
+    required this.filterTags,
+    required this.status,
+    required this.createdBy,
+    required this.createdAt,
+    this.completedAt,
+    required this.isSynced,
+    required this.isDeleted,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1632,8 +1991,10 @@ class ScenarioEntity extends DataClass implements Insertable<ScenarioEntity> {
     );
   }
 
-  factory ScenarioEntity.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory ScenarioEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ScenarioEntity(
       id: serializer.fromJson<int>(json['id']),
@@ -1667,45 +2028,48 @@ class ScenarioEntity extends DataClass implements Insertable<ScenarioEntity> {
     };
   }
 
-  ScenarioEntity copyWith(
-          {int? id,
-          Value<int?> serverId = const Value.absent(),
-          String? name,
-          Value<String?> description = const Value.absent(),
-          String? filterTags,
-          String? status,
-          int? createdBy,
-          DateTime? createdAt,
-          Value<DateTime?> completedAt = const Value.absent(),
-          bool? isSynced,
-          bool? isDeleted}) =>
-      ScenarioEntity(
-        id: id ?? this.id,
-        serverId: serverId.present ? serverId.value : this.serverId,
-        name: name ?? this.name,
-        description: description.present ? description.value : this.description,
-        filterTags: filterTags ?? this.filterTags,
-        status: status ?? this.status,
-        createdBy: createdBy ?? this.createdBy,
-        createdAt: createdAt ?? this.createdAt,
-        completedAt: completedAt.present ? completedAt.value : this.completedAt,
-        isSynced: isSynced ?? this.isSynced,
-        isDeleted: isDeleted ?? this.isDeleted,
-      );
+  ScenarioEntity copyWith({
+    int? id,
+    Value<int?> serverId = const Value.absent(),
+    String? name,
+    Value<String?> description = const Value.absent(),
+    String? filterTags,
+    String? status,
+    int? createdBy,
+    DateTime? createdAt,
+    Value<DateTime?> completedAt = const Value.absent(),
+    bool? isSynced,
+    bool? isDeleted,
+  }) => ScenarioEntity(
+    id: id ?? this.id,
+    serverId: serverId.present ? serverId.value : this.serverId,
+    name: name ?? this.name,
+    description: description.present ? description.value : this.description,
+    filterTags: filterTags ?? this.filterTags,
+    status: status ?? this.status,
+    createdBy: createdBy ?? this.createdBy,
+    createdAt: createdAt ?? this.createdAt,
+    completedAt: completedAt.present ? completedAt.value : this.completedAt,
+    isSynced: isSynced ?? this.isSynced,
+    isDeleted: isDeleted ?? this.isDeleted,
+  );
   ScenarioEntity copyWithCompanion(ScenariosCompanion data) {
     return ScenarioEntity(
       id: data.id.present ? data.id.value : this.id,
       serverId: data.serverId.present ? data.serverId.value : this.serverId,
       name: data.name.present ? data.name.value : this.name,
-      description:
-          data.description.present ? data.description.value : this.description,
-      filterTags:
-          data.filterTags.present ? data.filterTags.value : this.filterTags,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      filterTags: data.filterTags.present
+          ? data.filterTags.value
+          : this.filterTags,
       status: data.status.present ? data.status.value : this.status,
       createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      completedAt:
-          data.completedAt.present ? data.completedAt.value : this.completedAt,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
       isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
     );
@@ -1730,8 +2094,19 @@ class ScenarioEntity extends DataClass implements Insertable<ScenarioEntity> {
   }
 
   @override
-  int get hashCode => Object.hash(id, serverId, name, description, filterTags,
-      status, createdBy, createdAt, completedAt, isSynced, isDeleted);
+  int get hashCode => Object.hash(
+    id,
+    serverId,
+    name,
+    description,
+    filterTags,
+    status,
+    createdBy,
+    createdAt,
+    completedAt,
+    isSynced,
+    isDeleted,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1786,9 +2161,9 @@ class ScenariosCompanion extends UpdateCompanion<ScenarioEntity> {
     this.completedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.isDeleted = const Value.absent(),
-  })  : name = Value(name),
-        filterTags = Value(filterTags),
-        createdBy = Value(createdBy);
+  }) : name = Value(name),
+       filterTags = Value(filterTags),
+       createdBy = Value(createdBy);
   static Insertable<ScenarioEntity> custom({
     Expression<int>? id,
     Expression<int>? serverId,
@@ -1817,18 +2192,19 @@ class ScenariosCompanion extends UpdateCompanion<ScenarioEntity> {
     });
   }
 
-  ScenariosCompanion copyWith(
-      {Value<int>? id,
-      Value<int?>? serverId,
-      Value<String>? name,
-      Value<String?>? description,
-      Value<String>? filterTags,
-      Value<String>? status,
-      Value<int>? createdBy,
-      Value<DateTime>? createdAt,
-      Value<DateTime?>? completedAt,
-      Value<bool>? isSynced,
-      Value<bool>? isDeleted}) {
+  ScenariosCompanion copyWith({
+    Value<int>? id,
+    Value<int?>? serverId,
+    Value<String>? name,
+    Value<String?>? description,
+    Value<String>? filterTags,
+    Value<String>? status,
+    Value<int>? createdBy,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? completedAt,
+    Value<bool>? isSynced,
+    Value<bool>? isDeleted,
+  }) {
     return ScenariosCompanion(
       id: id ?? this.id,
       serverId: serverId ?? this.serverId,
@@ -1911,147 +2287,268 @@ class $ScenarioTasksTable extends ScenarioTasks
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _serverIdMeta =
-      const VerificationMeta('serverId');
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
   @override
   late final GeneratedColumn<int> serverId = GeneratedColumn<int>(
-      'server_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
-  static const VerificationMeta _scenarioIdMeta =
-      const VerificationMeta('scenarioId');
+    'server_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _scenarioIdMeta = const VerificationMeta(
+    'scenarioId',
+  );
   @override
   late final GeneratedColumn<int> scenarioId = GeneratedColumn<int>(
-      'scenario_id', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
-  static const VerificationMeta _contactIdMeta =
-      const VerificationMeta('contactId');
+    'scenario_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contactIdMeta = const VerificationMeta(
+    'contactId',
+  );
   @override
   late final GeneratedColumn<int> contactId = GeneratedColumn<int>(
-      'contact_id', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+    'contact_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
   @override
   late final GeneratedColumn<String> phone = GeneratedColumn<String>(
-      'phone', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+    'phone',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
-      'name', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _isCompletedMeta =
-      const VerificationMeta('isCompleted');
+    'name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isCompletedMeta = const VerificationMeta(
+    'isCompleted',
+  );
   @override
   late final GeneratedColumn<bool> isCompleted = GeneratedColumn<bool>(
-      'is_completed', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("is_completed" IN (0, 1))'),
-      defaultValue: const Constant(false));
-  static const VerificationMeta _completedByMeta =
-      const VerificationMeta('completedBy');
+    'is_completed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_completed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _completedByMeta = const VerificationMeta(
+    'completedBy',
+  );
   @override
   late final GeneratedColumn<int> completedBy = GeneratedColumn<int>(
-      'completed_by', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
-  static const VerificationMeta _completedAtMeta =
-      const VerificationMeta('completedAt');
+    'completed_by',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
   @override
   late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
-      'completed_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _isSyncedMeta =
-      const VerificationMeta('isSynced');
+    'completed_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isSyncedMeta = const VerificationMeta(
+    'isSynced',
+  );
   @override
   late final GeneratedColumn<bool> isSynced = GeneratedColumn<bool>(
-      'is_synced', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("is_synced" IN (0, 1))'),
-      defaultValue: const Constant(false));
+    'is_synced',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_synced" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dueDateMeta = const VerificationMeta(
+    'dueDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dueDate = GeneratedColumn<DateTime>(
+    'due_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _priorityMeta = const VerificationMeta(
+    'priority',
+  );
+  @override
+  late final GeneratedColumn<String> priority = GeneratedColumn<String>(
+    'priority',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('medium'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
-        id,
-        serverId,
-        scenarioId,
-        contactId,
-        phone,
-        name,
-        isCompleted,
-        completedBy,
-        completedAt,
-        isSynced
-      ];
+    id,
+    serverId,
+    scenarioId,
+    contactId,
+    phone,
+    name,
+    isCompleted,
+    completedBy,
+    completedAt,
+    isSynced,
+    notes,
+    dueDate,
+    priority,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'scenario_tasks';
   @override
-  VerificationContext validateIntegrity(Insertable<ScenarioTaskEntity> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<ScenarioTaskEntity> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
     if (data.containsKey('server_id')) {
-      context.handle(_serverIdMeta,
-          serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta));
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
     }
     if (data.containsKey('scenario_id')) {
       context.handle(
-          _scenarioIdMeta,
-          scenarioId.isAcceptableOrUnknown(
-              data['scenario_id']!, _scenarioIdMeta));
+        _scenarioIdMeta,
+        scenarioId.isAcceptableOrUnknown(data['scenario_id']!, _scenarioIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_scenarioIdMeta);
     }
     if (data.containsKey('contact_id')) {
-      context.handle(_contactIdMeta,
-          contactId.isAcceptableOrUnknown(data['contact_id']!, _contactIdMeta));
+      context.handle(
+        _contactIdMeta,
+        contactId.isAcceptableOrUnknown(data['contact_id']!, _contactIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_contactIdMeta);
     }
     if (data.containsKey('phone')) {
       context.handle(
-          _phoneMeta, phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta));
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
     } else if (isInserting) {
       context.missing(_phoneMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
-          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
     }
     if (data.containsKey('is_completed')) {
       context.handle(
+        _isCompletedMeta,
+        isCompleted.isAcceptableOrUnknown(
+          data['is_completed']!,
           _isCompletedMeta,
-          isCompleted.isAcceptableOrUnknown(
-              data['is_completed']!, _isCompletedMeta));
+        ),
+      );
     }
     if (data.containsKey('completed_by')) {
       context.handle(
+        _completedByMeta,
+        completedBy.isAcceptableOrUnknown(
+          data['completed_by']!,
           _completedByMeta,
-          completedBy.isAcceptableOrUnknown(
-              data['completed_by']!, _completedByMeta));
+        ),
+      );
     }
     if (data.containsKey('completed_at')) {
       context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
           _completedAtMeta,
-          completedAt.isAcceptableOrUnknown(
-              data['completed_at']!, _completedAtMeta));
+        ),
+      );
     }
     if (data.containsKey('is_synced')) {
-      context.handle(_isSyncedMeta,
-          isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta));
+      context.handle(
+        _isSyncedMeta,
+        isSynced.isAcceptableOrUnknown(data['is_synced']!, _isSyncedMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('due_date')) {
+      context.handle(
+        _dueDateMeta,
+        dueDate.isAcceptableOrUnknown(data['due_date']!, _dueDateMeta),
+      );
+    }
+    if (data.containsKey('priority')) {
+      context.handle(
+        _priorityMeta,
+        priority.isAcceptableOrUnknown(data['priority']!, _priorityMeta),
+      );
     }
     return context;
   }
@@ -2062,26 +2559,58 @@ class $ScenarioTasksTable extends ScenarioTasks
   ScenarioTaskEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ScenarioTaskEntity(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      serverId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}server_id']),
-      scenarioId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}scenario_id'])!,
-      contactId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}contact_id'])!,
-      phone: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}phone'])!,
-      name: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}name']),
-      isCompleted: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_completed'])!,
-      completedBy: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}completed_by']),
-      completedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}completed_at']),
-      isSynced: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_synced'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}server_id'],
+      ),
+      scenarioId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}scenario_id'],
+      )!,
+      contactId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}contact_id'],
+      )!,
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      ),
+      isCompleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_completed'],
+      )!,
+      completedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}completed_by'],
+      ),
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
+      ),
+      isSynced: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_synced'],
+      )!,
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      dueDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}due_date'],
+      ),
+      priority: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}priority'],
+      )!,
     );
   }
 
@@ -2103,17 +2632,24 @@ class ScenarioTaskEntity extends DataClass
   final int? completedBy;
   final DateTime? completedAt;
   final bool isSynced;
-  const ScenarioTaskEntity(
-      {required this.id,
-      this.serverId,
-      required this.scenarioId,
-      required this.contactId,
-      required this.phone,
-      this.name,
-      required this.isCompleted,
-      this.completedBy,
-      this.completedAt,
-      required this.isSynced});
+  final String? notes;
+  final DateTime? dueDate;
+  final String priority;
+  const ScenarioTaskEntity({
+    required this.id,
+    this.serverId,
+    required this.scenarioId,
+    required this.contactId,
+    required this.phone,
+    this.name,
+    required this.isCompleted,
+    this.completedBy,
+    this.completedAt,
+    required this.isSynced,
+    this.notes,
+    this.dueDate,
+    required this.priority,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2135,6 +2671,13 @@ class ScenarioTaskEntity extends DataClass
       map['completed_at'] = Variable<DateTime>(completedAt);
     }
     map['is_synced'] = Variable<bool>(isSynced);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || dueDate != null) {
+      map['due_date'] = Variable<DateTime>(dueDate);
+    }
+    map['priority'] = Variable<String>(priority);
     return map;
   }
 
@@ -2156,11 +2699,20 @@ class ScenarioTaskEntity extends DataClass
           ? const Value.absent()
           : Value(completedAt),
       isSynced: Value(isSynced),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      dueDate: dueDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dueDate),
+      priority: Value(priority),
     );
   }
 
-  factory ScenarioTaskEntity.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory ScenarioTaskEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ScenarioTaskEntity(
       id: serializer.fromJson<int>(json['id']),
@@ -2173,6 +2725,9 @@ class ScenarioTaskEntity extends DataClass
       completedBy: serializer.fromJson<int?>(json['completedBy']),
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      dueDate: serializer.fromJson<DateTime?>(json['dueDate']),
+      priority: serializer.fromJson<String>(json['priority']),
     );
   }
   @override
@@ -2189,48 +2744,64 @@ class ScenarioTaskEntity extends DataClass
       'completedBy': serializer.toJson<int?>(completedBy),
       'completedAt': serializer.toJson<DateTime?>(completedAt),
       'isSynced': serializer.toJson<bool>(isSynced),
+      'notes': serializer.toJson<String?>(notes),
+      'dueDate': serializer.toJson<DateTime?>(dueDate),
+      'priority': serializer.toJson<String>(priority),
     };
   }
 
-  ScenarioTaskEntity copyWith(
-          {int? id,
-          Value<int?> serverId = const Value.absent(),
-          int? scenarioId,
-          int? contactId,
-          String? phone,
-          Value<String?> name = const Value.absent(),
-          bool? isCompleted,
-          Value<int?> completedBy = const Value.absent(),
-          Value<DateTime?> completedAt = const Value.absent(),
-          bool? isSynced}) =>
-      ScenarioTaskEntity(
-        id: id ?? this.id,
-        serverId: serverId.present ? serverId.value : this.serverId,
-        scenarioId: scenarioId ?? this.scenarioId,
-        contactId: contactId ?? this.contactId,
-        phone: phone ?? this.phone,
-        name: name.present ? name.value : this.name,
-        isCompleted: isCompleted ?? this.isCompleted,
-        completedBy: completedBy.present ? completedBy.value : this.completedBy,
-        completedAt: completedAt.present ? completedAt.value : this.completedAt,
-        isSynced: isSynced ?? this.isSynced,
-      );
+  ScenarioTaskEntity copyWith({
+    int? id,
+    Value<int?> serverId = const Value.absent(),
+    int? scenarioId,
+    int? contactId,
+    String? phone,
+    Value<String?> name = const Value.absent(),
+    bool? isCompleted,
+    Value<int?> completedBy = const Value.absent(),
+    Value<DateTime?> completedAt = const Value.absent(),
+    bool? isSynced,
+    Value<String?> notes = const Value.absent(),
+    Value<DateTime?> dueDate = const Value.absent(),
+    String? priority,
+  }) => ScenarioTaskEntity(
+    id: id ?? this.id,
+    serverId: serverId.present ? serverId.value : this.serverId,
+    scenarioId: scenarioId ?? this.scenarioId,
+    contactId: contactId ?? this.contactId,
+    phone: phone ?? this.phone,
+    name: name.present ? name.value : this.name,
+    isCompleted: isCompleted ?? this.isCompleted,
+    completedBy: completedBy.present ? completedBy.value : this.completedBy,
+    completedAt: completedAt.present ? completedAt.value : this.completedAt,
+    isSynced: isSynced ?? this.isSynced,
+    notes: notes.present ? notes.value : this.notes,
+    dueDate: dueDate.present ? dueDate.value : this.dueDate,
+    priority: priority ?? this.priority,
+  );
   ScenarioTaskEntity copyWithCompanion(ScenarioTasksCompanion data) {
     return ScenarioTaskEntity(
       id: data.id.present ? data.id.value : this.id,
       serverId: data.serverId.present ? data.serverId.value : this.serverId,
-      scenarioId:
-          data.scenarioId.present ? data.scenarioId.value : this.scenarioId,
+      scenarioId: data.scenarioId.present
+          ? data.scenarioId.value
+          : this.scenarioId,
       contactId: data.contactId.present ? data.contactId.value : this.contactId,
       phone: data.phone.present ? data.phone.value : this.phone,
       name: data.name.present ? data.name.value : this.name,
-      isCompleted:
-          data.isCompleted.present ? data.isCompleted.value : this.isCompleted,
-      completedBy:
-          data.completedBy.present ? data.completedBy.value : this.completedBy,
-      completedAt:
-          data.completedAt.present ? data.completedAt.value : this.completedAt,
+      isCompleted: data.isCompleted.present
+          ? data.isCompleted.value
+          : this.isCompleted,
+      completedBy: data.completedBy.present
+          ? data.completedBy.value
+          : this.completedBy,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
       isSynced: data.isSynced.present ? data.isSynced.value : this.isSynced,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
+      priority: data.priority.present ? data.priority.value : this.priority,
     );
   }
 
@@ -2246,14 +2817,30 @@ class ScenarioTaskEntity extends DataClass
           ..write('isCompleted: $isCompleted, ')
           ..write('completedBy: $completedBy, ')
           ..write('completedAt: $completedAt, ')
-          ..write('isSynced: $isSynced')
+          ..write('isSynced: $isSynced, ')
+          ..write('notes: $notes, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('priority: $priority')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, serverId, scenarioId, contactId, phone,
-      name, isCompleted, completedBy, completedAt, isSynced);
+  int get hashCode => Object.hash(
+    id,
+    serverId,
+    scenarioId,
+    contactId,
+    phone,
+    name,
+    isCompleted,
+    completedBy,
+    completedAt,
+    isSynced,
+    notes,
+    dueDate,
+    priority,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2267,7 +2854,10 @@ class ScenarioTaskEntity extends DataClass
           other.isCompleted == this.isCompleted &&
           other.completedBy == this.completedBy &&
           other.completedAt == this.completedAt &&
-          other.isSynced == this.isSynced);
+          other.isSynced == this.isSynced &&
+          other.notes == this.notes &&
+          other.dueDate == this.dueDate &&
+          other.priority == this.priority);
 }
 
 class ScenarioTasksCompanion extends UpdateCompanion<ScenarioTaskEntity> {
@@ -2281,6 +2871,9 @@ class ScenarioTasksCompanion extends UpdateCompanion<ScenarioTaskEntity> {
   final Value<int?> completedBy;
   final Value<DateTime?> completedAt;
   final Value<bool> isSynced;
+  final Value<String?> notes;
+  final Value<DateTime?> dueDate;
+  final Value<String> priority;
   const ScenarioTasksCompanion({
     this.id = const Value.absent(),
     this.serverId = const Value.absent(),
@@ -2292,6 +2885,9 @@ class ScenarioTasksCompanion extends UpdateCompanion<ScenarioTaskEntity> {
     this.completedBy = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    this.priority = const Value.absent(),
   });
   ScenarioTasksCompanion.insert({
     this.id = const Value.absent(),
@@ -2304,9 +2900,12 @@ class ScenarioTasksCompanion extends UpdateCompanion<ScenarioTaskEntity> {
     this.completedBy = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.isSynced = const Value.absent(),
-  })  : scenarioId = Value(scenarioId),
-        contactId = Value(contactId),
-        phone = Value(phone);
+    this.notes = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    this.priority = const Value.absent(),
+  }) : scenarioId = Value(scenarioId),
+       contactId = Value(contactId),
+       phone = Value(phone);
   static Insertable<ScenarioTaskEntity> custom({
     Expression<int>? id,
     Expression<int>? serverId,
@@ -2318,6 +2917,9 @@ class ScenarioTasksCompanion extends UpdateCompanion<ScenarioTaskEntity> {
     Expression<int>? completedBy,
     Expression<DateTime>? completedAt,
     Expression<bool>? isSynced,
+    Expression<String>? notes,
+    Expression<DateTime>? dueDate,
+    Expression<String>? priority,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2330,20 +2932,27 @@ class ScenarioTasksCompanion extends UpdateCompanion<ScenarioTaskEntity> {
       if (completedBy != null) 'completed_by': completedBy,
       if (completedAt != null) 'completed_at': completedAt,
       if (isSynced != null) 'is_synced': isSynced,
+      if (notes != null) 'notes': notes,
+      if (dueDate != null) 'due_date': dueDate,
+      if (priority != null) 'priority': priority,
     });
   }
 
-  ScenarioTasksCompanion copyWith(
-      {Value<int>? id,
-      Value<int?>? serverId,
-      Value<int>? scenarioId,
-      Value<int>? contactId,
-      Value<String>? phone,
-      Value<String?>? name,
-      Value<bool>? isCompleted,
-      Value<int?>? completedBy,
-      Value<DateTime?>? completedAt,
-      Value<bool>? isSynced}) {
+  ScenarioTasksCompanion copyWith({
+    Value<int>? id,
+    Value<int?>? serverId,
+    Value<int>? scenarioId,
+    Value<int>? contactId,
+    Value<String>? phone,
+    Value<String?>? name,
+    Value<bool>? isCompleted,
+    Value<int?>? completedBy,
+    Value<DateTime?>? completedAt,
+    Value<bool>? isSynced,
+    Value<String?>? notes,
+    Value<DateTime?>? dueDate,
+    Value<String>? priority,
+  }) {
     return ScenarioTasksCompanion(
       id: id ?? this.id,
       serverId: serverId ?? this.serverId,
@@ -2355,6 +2964,9 @@ class ScenarioTasksCompanion extends UpdateCompanion<ScenarioTaskEntity> {
       completedBy: completedBy ?? this.completedBy,
       completedAt: completedAt ?? this.completedAt,
       isSynced: isSynced ?? this.isSynced,
+      notes: notes ?? this.notes,
+      dueDate: dueDate ?? this.dueDate,
+      priority: priority ?? this.priority,
     );
   }
 
@@ -2391,6 +3003,15 @@ class ScenarioTasksCompanion extends UpdateCompanion<ScenarioTaskEntity> {
     if (isSynced.present) {
       map['is_synced'] = Variable<bool>(isSynced.value);
     }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (dueDate.present) {
+      map['due_date'] = Variable<DateTime>(dueDate.value);
+    }
+    if (priority.present) {
+      map['priority'] = Variable<String>(priority.value);
+    }
     return map;
   }
 
@@ -2406,7 +3027,10 @@ class ScenarioTasksCompanion extends UpdateCompanion<ScenarioTaskEntity> {
           ..write('isCompleted: $isCompleted, ')
           ..write('completedBy: $completedBy, ')
           ..write('completedAt: $completedAt, ')
-          ..write('isSynced: $isSynced')
+          ..write('isSynced: $isSynced, ')
+          ..write('notes: $notes, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('priority: $priority')
           ..write(')'))
         .toString();
   }
@@ -2421,97 +3045,148 @@ class $SyncQueueTable extends SyncQueue
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _entityTypeMeta =
-      const VerificationMeta('entityType');
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _entityTypeMeta = const VerificationMeta(
+    'entityType',
+  );
   @override
   late final GeneratedColumn<String> entityType = GeneratedColumn<String>(
-      'entity_type', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+    'entity_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _actionMeta = const VerificationMeta('action');
   @override
   late final GeneratedColumn<String> action = GeneratedColumn<String>(
-      'action', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _localIdMeta =
-      const VerificationMeta('localId');
+    'action',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localIdMeta = const VerificationMeta(
+    'localId',
+  );
   @override
   late final GeneratedColumn<int> localId = GeneratedColumn<int>(
-      'local_id', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
-  static const VerificationMeta _serverIdMeta =
-      const VerificationMeta('serverId');
+    'local_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
   @override
   late final GeneratedColumn<int> serverId = GeneratedColumn<int>(
-      'server_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
+    'server_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _dataMeta = const VerificationMeta('data');
   @override
   late final GeneratedColumn<String> data = GeneratedColumn<String>(
-      'data', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+    'data',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
-      'status', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('pending'));
-  static const VerificationMeta _errorMessageMeta =
-      const VerificationMeta('errorMessage');
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('pending'),
+  );
+  static const VerificationMeta _errorMessageMeta = const VerificationMeta(
+    'errorMessage',
+  );
   @override
   late final GeneratedColumn<String> errorMessage = GeneratedColumn<String>(
-      'error_message', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _retryCountMeta =
-      const VerificationMeta('retryCount');
+    'error_message',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _retryCountMeta = const VerificationMeta(
+    'retryCount',
+  );
   @override
   late final GeneratedColumn<int> retryCount = GeneratedColumn<int>(
-      'retry_count', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0));
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
+    'retry_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime,
-      requiredDuringInsert: false,
-      defaultValue: currentDateAndTime);
-  static const VerificationMeta _lastAttemptAtMeta =
-      const VerificationMeta('lastAttemptAt');
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _lastAttemptAtMeta = const VerificationMeta(
+    'lastAttemptAt',
+  );
   @override
   late final GeneratedColumn<DateTime> lastAttemptAt =
-      GeneratedColumn<DateTime>('last_attempt_at', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+      GeneratedColumn<DateTime>(
+        'last_attempt_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
-        id,
-        entityType,
-        action,
-        localId,
-        serverId,
-        data,
-        status,
-        errorMessage,
-        retryCount,
-        createdAt,
-        lastAttemptAt
-      ];
+    id,
+    entityType,
+    action,
+    localId,
+    serverId,
+    data,
+    status,
+    errorMessage,
+    retryCount,
+    createdAt,
+    lastAttemptAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'sync_queue';
   @override
-  VerificationContext validateIntegrity(Insertable<SyncQueueEntity> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<SyncQueueEntity> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -2519,59 +3194,77 @@ class $SyncQueueTable extends SyncQueue
     }
     if (data.containsKey('entity_type')) {
       context.handle(
-          _entityTypeMeta,
-          entityType.isAcceptableOrUnknown(
-              data['entity_type']!, _entityTypeMeta));
+        _entityTypeMeta,
+        entityType.isAcceptableOrUnknown(data['entity_type']!, _entityTypeMeta),
+      );
     } else if (isInserting) {
       context.missing(_entityTypeMeta);
     }
     if (data.containsKey('action')) {
-      context.handle(_actionMeta,
-          action.isAcceptableOrUnknown(data['action']!, _actionMeta));
+      context.handle(
+        _actionMeta,
+        action.isAcceptableOrUnknown(data['action']!, _actionMeta),
+      );
     } else if (isInserting) {
       context.missing(_actionMeta);
     }
     if (data.containsKey('local_id')) {
-      context.handle(_localIdMeta,
-          localId.isAcceptableOrUnknown(data['local_id']!, _localIdMeta));
+      context.handle(
+        _localIdMeta,
+        localId.isAcceptableOrUnknown(data['local_id']!, _localIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_localIdMeta);
     }
     if (data.containsKey('server_id')) {
-      context.handle(_serverIdMeta,
-          serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta));
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
     }
     if (data.containsKey('data')) {
       context.handle(
-          _dataMeta, this.data.isAcceptableOrUnknown(data['data']!, _dataMeta));
+        _dataMeta,
+        this.data.isAcceptableOrUnknown(data['data']!, _dataMeta),
+      );
     } else if (isInserting) {
       context.missing(_dataMeta);
     }
     if (data.containsKey('status')) {
-      context.handle(_statusMeta,
-          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
     }
     if (data.containsKey('error_message')) {
       context.handle(
+        _errorMessageMeta,
+        errorMessage.isAcceptableOrUnknown(
+          data['error_message']!,
           _errorMessageMeta,
-          errorMessage.isAcceptableOrUnknown(
-              data['error_message']!, _errorMessageMeta));
+        ),
+      );
     }
     if (data.containsKey('retry_count')) {
       context.handle(
-          _retryCountMeta,
-          retryCount.isAcceptableOrUnknown(
-              data['retry_count']!, _retryCountMeta));
+        _retryCountMeta,
+        retryCount.isAcceptableOrUnknown(data['retry_count']!, _retryCountMeta),
+      );
     }
     if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
     }
     if (data.containsKey('last_attempt_at')) {
       context.handle(
+        _lastAttemptAtMeta,
+        lastAttemptAt.isAcceptableOrUnknown(
+          data['last_attempt_at']!,
           _lastAttemptAtMeta,
-          lastAttemptAt.isAcceptableOrUnknown(
-              data['last_attempt_at']!, _lastAttemptAtMeta));
+        ),
+      );
     }
     return context;
   }
@@ -2582,28 +3275,50 @@ class $SyncQueueTable extends SyncQueue
   SyncQueueEntity map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return SyncQueueEntity(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      entityType: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}entity_type'])!,
-      action: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}action'])!,
-      localId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}local_id'])!,
-      serverId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}server_id']),
-      data: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}data'])!,
-      status: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
-      errorMessage: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}error_message']),
-      retryCount: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}retry_count'])!,
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      entityType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_type'],
+      )!,
+      action: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}action'],
+      )!,
+      localId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}local_id'],
+      )!,
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}server_id'],
+      ),
+      data: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}data'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      errorMessage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error_message'],
+      ),
+      retryCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}retry_count'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
       lastAttemptAt: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}last_attempt_at']),
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_attempt_at'],
+      ),
     );
   }
 
@@ -2625,18 +3340,19 @@ class SyncQueueEntity extends DataClass implements Insertable<SyncQueueEntity> {
   final int retryCount;
   final DateTime createdAt;
   final DateTime? lastAttemptAt;
-  const SyncQueueEntity(
-      {required this.id,
-      required this.entityType,
-      required this.action,
-      required this.localId,
-      this.serverId,
-      required this.data,
-      required this.status,
-      this.errorMessage,
-      required this.retryCount,
-      required this.createdAt,
-      this.lastAttemptAt});
+  const SyncQueueEntity({
+    required this.id,
+    required this.entityType,
+    required this.action,
+    required this.localId,
+    this.serverId,
+    required this.data,
+    required this.status,
+    this.errorMessage,
+    required this.retryCount,
+    required this.createdAt,
+    this.lastAttemptAt,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2682,8 +3398,10 @@ class SyncQueueEntity extends DataClass implements Insertable<SyncQueueEntity> {
     );
   }
 
-  factory SyncQueueEntity.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory SyncQueueEntity.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SyncQueueEntity(
       id: serializer.fromJson<int>(json['id']),
@@ -2717,38 +3435,39 @@ class SyncQueueEntity extends DataClass implements Insertable<SyncQueueEntity> {
     };
   }
 
-  SyncQueueEntity copyWith(
-          {int? id,
-          String? entityType,
-          String? action,
-          int? localId,
-          Value<int?> serverId = const Value.absent(),
-          String? data,
-          String? status,
-          Value<String?> errorMessage = const Value.absent(),
-          int? retryCount,
-          DateTime? createdAt,
-          Value<DateTime?> lastAttemptAt = const Value.absent()}) =>
-      SyncQueueEntity(
-        id: id ?? this.id,
-        entityType: entityType ?? this.entityType,
-        action: action ?? this.action,
-        localId: localId ?? this.localId,
-        serverId: serverId.present ? serverId.value : this.serverId,
-        data: data ?? this.data,
-        status: status ?? this.status,
-        errorMessage:
-            errorMessage.present ? errorMessage.value : this.errorMessage,
-        retryCount: retryCount ?? this.retryCount,
-        createdAt: createdAt ?? this.createdAt,
-        lastAttemptAt:
-            lastAttemptAt.present ? lastAttemptAt.value : this.lastAttemptAt,
-      );
+  SyncQueueEntity copyWith({
+    int? id,
+    String? entityType,
+    String? action,
+    int? localId,
+    Value<int?> serverId = const Value.absent(),
+    String? data,
+    String? status,
+    Value<String?> errorMessage = const Value.absent(),
+    int? retryCount,
+    DateTime? createdAt,
+    Value<DateTime?> lastAttemptAt = const Value.absent(),
+  }) => SyncQueueEntity(
+    id: id ?? this.id,
+    entityType: entityType ?? this.entityType,
+    action: action ?? this.action,
+    localId: localId ?? this.localId,
+    serverId: serverId.present ? serverId.value : this.serverId,
+    data: data ?? this.data,
+    status: status ?? this.status,
+    errorMessage: errorMessage.present ? errorMessage.value : this.errorMessage,
+    retryCount: retryCount ?? this.retryCount,
+    createdAt: createdAt ?? this.createdAt,
+    lastAttemptAt: lastAttemptAt.present
+        ? lastAttemptAt.value
+        : this.lastAttemptAt,
+  );
   SyncQueueEntity copyWithCompanion(SyncQueueCompanion data) {
     return SyncQueueEntity(
       id: data.id.present ? data.id.value : this.id,
-      entityType:
-          data.entityType.present ? data.entityType.value : this.entityType,
+      entityType: data.entityType.present
+          ? data.entityType.value
+          : this.entityType,
       action: data.action.present ? data.action.value : this.action,
       localId: data.localId.present ? data.localId.value : this.localId,
       serverId: data.serverId.present ? data.serverId.value : this.serverId,
@@ -2757,8 +3476,9 @@ class SyncQueueEntity extends DataClass implements Insertable<SyncQueueEntity> {
       errorMessage: data.errorMessage.present
           ? data.errorMessage.value
           : this.errorMessage,
-      retryCount:
-          data.retryCount.present ? data.retryCount.value : this.retryCount,
+      retryCount: data.retryCount.present
+          ? data.retryCount.value
+          : this.retryCount,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       lastAttemptAt: data.lastAttemptAt.present
           ? data.lastAttemptAt.value
@@ -2785,8 +3505,19 @@ class SyncQueueEntity extends DataClass implements Insertable<SyncQueueEntity> {
   }
 
   @override
-  int get hashCode => Object.hash(id, entityType, action, localId, serverId,
-      data, status, errorMessage, retryCount, createdAt, lastAttemptAt);
+  int get hashCode => Object.hash(
+    id,
+    entityType,
+    action,
+    localId,
+    serverId,
+    data,
+    status,
+    errorMessage,
+    retryCount,
+    createdAt,
+    lastAttemptAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2841,10 +3572,10 @@ class SyncQueueCompanion extends UpdateCompanion<SyncQueueEntity> {
     this.retryCount = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.lastAttemptAt = const Value.absent(),
-  })  : entityType = Value(entityType),
-        action = Value(action),
-        localId = Value(localId),
-        data = Value(data);
+  }) : entityType = Value(entityType),
+       action = Value(action),
+       localId = Value(localId),
+       data = Value(data);
   static Insertable<SyncQueueEntity> custom({
     Expression<int>? id,
     Expression<String>? entityType,
@@ -2873,18 +3604,19 @@ class SyncQueueCompanion extends UpdateCompanion<SyncQueueEntity> {
     });
   }
 
-  SyncQueueCompanion copyWith(
-      {Value<int>? id,
-      Value<String>? entityType,
-      Value<String>? action,
-      Value<int>? localId,
-      Value<int?>? serverId,
-      Value<String>? data,
-      Value<String>? status,
-      Value<String?>? errorMessage,
-      Value<int>? retryCount,
-      Value<DateTime>? createdAt,
-      Value<DateTime?>? lastAttemptAt}) {
+  SyncQueueCompanion copyWith({
+    Value<int>? id,
+    Value<String>? entityType,
+    Value<String>? action,
+    Value<int>? localId,
+    Value<int?>? serverId,
+    Value<String>? data,
+    Value<String>? status,
+    Value<String?>? errorMessage,
+    Value<int>? retryCount,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? lastAttemptAt,
+  }) {
     return SyncQueueCompanion(
       id: id ?? this.id,
       entityType: entityType ?? this.entityType,
@@ -2971,26 +3703,34 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [users, contacts, attendances, scenarios, scenarioTasks, syncQueue];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    users,
+    contacts,
+    attendances,
+    scenarios,
+    scenarioTasks,
+    syncQueue,
+  ];
 }
 
-typedef $$UsersTableCreateCompanionBuilder = UsersCompanion Function({
-  Value<int> id,
-  required String email,
-  required String passwordHash,
-  required String role,
-  Value<bool> isActive,
-  Value<DateTime> createdAt,
-});
-typedef $$UsersTableUpdateCompanionBuilder = UsersCompanion Function({
-  Value<int> id,
-  Value<String> email,
-  Value<String> passwordHash,
-  Value<String> role,
-  Value<bool> isActive,
-  Value<DateTime> createdAt,
-});
+typedef $$UsersTableCreateCompanionBuilder =
+    UsersCompanion Function({
+      Value<int> id,
+      required String email,
+      required String passwordHash,
+      required String role,
+      Value<bool> isActive,
+      Value<DateTime> createdAt,
+    });
+typedef $$UsersTableUpdateCompanionBuilder =
+    UsersCompanion Function({
+      Value<int> id,
+      Value<String> email,
+      Value<String> passwordHash,
+      Value<String> role,
+      Value<bool> isActive,
+      Value<DateTime> createdAt,
+    });
 
 class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
   $$UsersTableFilterComposer({
@@ -3001,22 +3741,34 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get email => $composableBuilder(
-      column: $table.email, builder: (column) => ColumnFilters(column));
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get passwordHash => $composableBuilder(
-      column: $table.passwordHash, builder: (column) => ColumnFilters(column));
+    column: $table.passwordHash,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get role => $composableBuilder(
-      column: $table.role, builder: (column) => ColumnFilters(column));
+    column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get isActive => $composableBuilder(
-      column: $table.isActive, builder: (column) => ColumnFilters(column));
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$UsersTableOrderingComposer
@@ -3029,23 +3781,34 @@ class $$UsersTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get email => $composableBuilder(
-      column: $table.email, builder: (column) => ColumnOrderings(column));
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get passwordHash => $composableBuilder(
-      column: $table.passwordHash,
-      builder: (column) => ColumnOrderings(column));
+    column: $table.passwordHash,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get role => $composableBuilder(
-      column: $table.role, builder: (column) => ColumnOrderings(column));
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get isActive => $composableBuilder(
-      column: $table.isActive, builder: (column) => ColumnOrderings(column));
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$UsersTableAnnotationComposer
@@ -3064,7 +3827,9 @@ class $$UsersTableAnnotationComposer
       $composableBuilder(column: $table.email, builder: (column) => column);
 
   GeneratedColumn<String> get passwordHash => $composableBuilder(
-      column: $table.passwordHash, builder: (column) => column);
+    column: $table.passwordHash,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get role =>
       $composableBuilder(column: $table.role, builder: (column) => column);
@@ -3076,20 +3841,24 @@ class $$UsersTableAnnotationComposer
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
-class $$UsersTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $UsersTable,
-    UserEntity,
-    $$UsersTableFilterComposer,
-    $$UsersTableOrderingComposer,
-    $$UsersTableAnnotationComposer,
-    $$UsersTableCreateCompanionBuilder,
-    $$UsersTableUpdateCompanionBuilder,
-    (UserEntity, BaseReferences<_$AppDatabase, $UsersTable, UserEntity>),
-    UserEntity,
-    PrefetchHooks Function()> {
+class $$UsersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $UsersTable,
+          UserEntity,
+          $$UsersTableFilterComposer,
+          $$UsersTableOrderingComposer,
+          $$UsersTableAnnotationComposer,
+          $$UsersTableCreateCompanionBuilder,
+          $$UsersTableUpdateCompanionBuilder,
+          (UserEntity, BaseReferences<_$AppDatabase, $UsersTable, UserEntity>),
+          UserEntity,
+          PrefetchHooks Function()
+        > {
   $$UsersTableTableManager(_$AppDatabase db, $UsersTable table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -3098,83 +3867,88 @@ class $$UsersTableTableManager extends RootTableManager<
               $$UsersTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$UsersTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<String> email = const Value.absent(),
-            Value<String> passwordHash = const Value.absent(),
-            Value<String> role = const Value.absent(),
-            Value<bool> isActive = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-          }) =>
-              UsersCompanion(
-            id: id,
-            email: email,
-            passwordHash: passwordHash,
-            role: role,
-            isActive: isActive,
-            createdAt: createdAt,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            required String email,
-            required String passwordHash,
-            required String role,
-            Value<bool> isActive = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-          }) =>
-              UsersCompanion.insert(
-            id: id,
-            email: email,
-            passwordHash: passwordHash,
-            role: role,
-            isActive: isActive,
-            createdAt: createdAt,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> email = const Value.absent(),
+                Value<String> passwordHash = const Value.absent(),
+                Value<String> role = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => UsersCompanion(
+                id: id,
+                email: email,
+                passwordHash: passwordHash,
+                role: role,
+                isActive: isActive,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String email,
+                required String passwordHash,
+                required String role,
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => UsersCompanion.insert(
+                id: id,
+                email: email,
+                passwordHash: passwordHash,
+                role: role,
+                isActive: isActive,
+                createdAt: createdAt,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$UsersTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $UsersTable,
-    UserEntity,
-    $$UsersTableFilterComposer,
-    $$UsersTableOrderingComposer,
-    $$UsersTableAnnotationComposer,
-    $$UsersTableCreateCompanionBuilder,
-    $$UsersTableUpdateCompanionBuilder,
-    (UserEntity, BaseReferences<_$AppDatabase, $UsersTable, UserEntity>),
-    UserEntity,
-    PrefetchHooks Function()>;
-typedef $$ContactsTableCreateCompanionBuilder = ContactsCompanion Function({
-  Value<int> id,
-  Value<int?> serverId,
-  Value<String?> name,
-  required String phone,
-  Value<String> status,
-  Value<bool> optOutSms,
-  Value<bool> optOutWhatsapp,
-  Value<String?> metadata,
-  Value<DateTime> createdAt,
-  Value<bool> isSynced,
-  Value<bool> isDeleted,
-});
-typedef $$ContactsTableUpdateCompanionBuilder = ContactsCompanion Function({
-  Value<int> id,
-  Value<int?> serverId,
-  Value<String?> name,
-  Value<String> phone,
-  Value<String> status,
-  Value<bool> optOutSms,
-  Value<bool> optOutWhatsapp,
-  Value<String?> metadata,
-  Value<DateTime> createdAt,
-  Value<bool> isSynced,
-  Value<bool> isDeleted,
-});
+typedef $$UsersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $UsersTable,
+      UserEntity,
+      $$UsersTableFilterComposer,
+      $$UsersTableOrderingComposer,
+      $$UsersTableAnnotationComposer,
+      $$UsersTableCreateCompanionBuilder,
+      $$UsersTableUpdateCompanionBuilder,
+      (UserEntity, BaseReferences<_$AppDatabase, $UsersTable, UserEntity>),
+      UserEntity,
+      PrefetchHooks Function()
+    >;
+typedef $$ContactsTableCreateCompanionBuilder =
+    ContactsCompanion Function({
+      Value<int> id,
+      Value<int?> serverId,
+      Value<String?> name,
+      required String phone,
+      Value<String> status,
+      Value<bool> optOutSms,
+      Value<bool> optOutWhatsapp,
+      Value<String?> metadata,
+      Value<DateTime> createdAt,
+      Value<bool> isSynced,
+      Value<bool> isDeleted,
+    });
+typedef $$ContactsTableUpdateCompanionBuilder =
+    ContactsCompanion Function({
+      Value<int> id,
+      Value<int?> serverId,
+      Value<String?> name,
+      Value<String> phone,
+      Value<String> status,
+      Value<bool> optOutSms,
+      Value<bool> optOutWhatsapp,
+      Value<String?> metadata,
+      Value<DateTime> createdAt,
+      Value<bool> isSynced,
+      Value<bool> isDeleted,
+    });
 
 class $$ContactsTableFilterComposer
     extends Composer<_$AppDatabase, $ContactsTable> {
@@ -3186,38 +3960,59 @@ class $$ContactsTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get serverId => $composableBuilder(
-      column: $table.serverId, builder: (column) => ColumnFilters(column));
+    column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnFilters(column));
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get phone => $composableBuilder(
-      column: $table.phone, builder: (column) => ColumnFilters(column));
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnFilters(column));
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get optOutSms => $composableBuilder(
-      column: $table.optOutSms, builder: (column) => ColumnFilters(column));
+    column: $table.optOutSms,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get optOutWhatsapp => $composableBuilder(
-      column: $table.optOutWhatsapp,
-      builder: (column) => ColumnFilters(column));
+    column: $table.optOutWhatsapp,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get metadata => $composableBuilder(
-      column: $table.metadata, builder: (column) => ColumnFilters(column));
+    column: $table.metadata,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get isSynced => $composableBuilder(
-      column: $table.isSynced, builder: (column) => ColumnFilters(column));
+    column: $table.isSynced,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
+    column: $table.isDeleted,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$ContactsTableOrderingComposer
@@ -3230,38 +4025,59 @@ class $$ContactsTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get serverId => $composableBuilder(
-      column: $table.serverId, builder: (column) => ColumnOrderings(column));
+    column: $table.serverId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnOrderings(column));
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get phone => $composableBuilder(
-      column: $table.phone, builder: (column) => ColumnOrderings(column));
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnOrderings(column));
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get optOutSms => $composableBuilder(
-      column: $table.optOutSms, builder: (column) => ColumnOrderings(column));
+    column: $table.optOutSms,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get optOutWhatsapp => $composableBuilder(
-      column: $table.optOutWhatsapp,
-      builder: (column) => ColumnOrderings(column));
+    column: $table.optOutWhatsapp,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get metadata => $composableBuilder(
-      column: $table.metadata, builder: (column) => ColumnOrderings(column));
+    column: $table.metadata,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get isSynced => $composableBuilder(
-      column: $table.isSynced, builder: (column) => ColumnOrderings(column));
+    column: $table.isSynced,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ContactsTableAnnotationComposer
@@ -3292,7 +4108,9 @@ class $$ContactsTableAnnotationComposer
       $composableBuilder(column: $table.optOutSms, builder: (column) => column);
 
   GeneratedColumn<bool> get optOutWhatsapp => $composableBuilder(
-      column: $table.optOutWhatsapp, builder: (column) => column);
+    column: $table.optOutWhatsapp,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get metadata =>
       $composableBuilder(column: $table.metadata, builder: (column) => column);
@@ -3307,23 +4125,27 @@ class $$ContactsTableAnnotationComposer
       $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 }
 
-class $$ContactsTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $ContactsTable,
-    ContactEntity,
-    $$ContactsTableFilterComposer,
-    $$ContactsTableOrderingComposer,
-    $$ContactsTableAnnotationComposer,
-    $$ContactsTableCreateCompanionBuilder,
-    $$ContactsTableUpdateCompanionBuilder,
-    (
-      ContactEntity,
-      BaseReferences<_$AppDatabase, $ContactsTable, ContactEntity>
-    ),
-    ContactEntity,
-    PrefetchHooks Function()> {
+class $$ContactsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ContactsTable,
+          ContactEntity,
+          $$ContactsTableFilterComposer,
+          $$ContactsTableOrderingComposer,
+          $$ContactsTableAnnotationComposer,
+          $$ContactsTableCreateCompanionBuilder,
+          $$ContactsTableUpdateCompanionBuilder,
+          (
+            ContactEntity,
+            BaseReferences<_$AppDatabase, $ContactsTable, ContactEntity>,
+          ),
+          ContactEntity,
+          PrefetchHooks Function()
+        > {
   $$ContactsTableTableManager(_$AppDatabase db, $ContactsTable table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -3332,104 +4154,107 @@ class $$ContactsTableTableManager extends RootTableManager<
               $$ContactsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$ContactsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> serverId = const Value.absent(),
-            Value<String?> name = const Value.absent(),
-            Value<String> phone = const Value.absent(),
-            Value<String> status = const Value.absent(),
-            Value<bool> optOutSms = const Value.absent(),
-            Value<bool> optOutWhatsapp = const Value.absent(),
-            Value<String?> metadata = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<bool> isSynced = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
-          }) =>
-              ContactsCompanion(
-            id: id,
-            serverId: serverId,
-            name: name,
-            phone: phone,
-            status: status,
-            optOutSms: optOutSms,
-            optOutWhatsapp: optOutWhatsapp,
-            metadata: metadata,
-            createdAt: createdAt,
-            isSynced: isSynced,
-            isDeleted: isDeleted,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> serverId = const Value.absent(),
-            Value<String?> name = const Value.absent(),
-            required String phone,
-            Value<String> status = const Value.absent(),
-            Value<bool> optOutSms = const Value.absent(),
-            Value<bool> optOutWhatsapp = const Value.absent(),
-            Value<String?> metadata = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<bool> isSynced = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
-          }) =>
-              ContactsCompanion.insert(
-            id: id,
-            serverId: serverId,
-            name: name,
-            phone: phone,
-            status: status,
-            optOutSms: optOutSms,
-            optOutWhatsapp: optOutWhatsapp,
-            metadata: metadata,
-            createdAt: createdAt,
-            isSynced: isSynced,
-            isDeleted: isDeleted,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> serverId = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                Value<String> phone = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<bool> optOutSms = const Value.absent(),
+                Value<bool> optOutWhatsapp = const Value.absent(),
+                Value<String?> metadata = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+              }) => ContactsCompanion(
+                id: id,
+                serverId: serverId,
+                name: name,
+                phone: phone,
+                status: status,
+                optOutSms: optOutSms,
+                optOutWhatsapp: optOutWhatsapp,
+                metadata: metadata,
+                createdAt: createdAt,
+                isSynced: isSynced,
+                isDeleted: isDeleted,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> serverId = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                required String phone,
+                Value<String> status = const Value.absent(),
+                Value<bool> optOutSms = const Value.absent(),
+                Value<bool> optOutWhatsapp = const Value.absent(),
+                Value<String?> metadata = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+              }) => ContactsCompanion.insert(
+                id: id,
+                serverId: serverId,
+                name: name,
+                phone: phone,
+                status: status,
+                optOutSms: optOutSms,
+                optOutWhatsapp: optOutWhatsapp,
+                metadata: metadata,
+                createdAt: createdAt,
+                isSynced: isSynced,
+                isDeleted: isDeleted,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$ContactsTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $ContactsTable,
-    ContactEntity,
-    $$ContactsTableFilterComposer,
-    $$ContactsTableOrderingComposer,
-    $$ContactsTableAnnotationComposer,
-    $$ContactsTableCreateCompanionBuilder,
-    $$ContactsTableUpdateCompanionBuilder,
-    (
+typedef $$ContactsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ContactsTable,
       ContactEntity,
-      BaseReferences<_$AppDatabase, $ContactsTable, ContactEntity>
-    ),
-    ContactEntity,
-    PrefetchHooks Function()>;
-typedef $$AttendancesTableCreateCompanionBuilder = AttendancesCompanion
-    Function({
-  Value<int> id,
-  Value<int?> serverId,
-  required int contactId,
-  required String phone,
-  required String serviceType,
-  required DateTime serviceDate,
-  required int recordedBy,
-  Value<DateTime> recordedAt,
-  Value<bool> isSynced,
-});
-typedef $$AttendancesTableUpdateCompanionBuilder = AttendancesCompanion
-    Function({
-  Value<int> id,
-  Value<int?> serverId,
-  Value<int> contactId,
-  Value<String> phone,
-  Value<String> serviceType,
-  Value<DateTime> serviceDate,
-  Value<int> recordedBy,
-  Value<DateTime> recordedAt,
-  Value<bool> isSynced,
-});
+      $$ContactsTableFilterComposer,
+      $$ContactsTableOrderingComposer,
+      $$ContactsTableAnnotationComposer,
+      $$ContactsTableCreateCompanionBuilder,
+      $$ContactsTableUpdateCompanionBuilder,
+      (
+        ContactEntity,
+        BaseReferences<_$AppDatabase, $ContactsTable, ContactEntity>,
+      ),
+      ContactEntity,
+      PrefetchHooks Function()
+    >;
+typedef $$AttendancesTableCreateCompanionBuilder =
+    AttendancesCompanion Function({
+      Value<int> id,
+      Value<int?> serverId,
+      required int contactId,
+      required String phone,
+      required String serviceType,
+      required DateTime serviceDate,
+      required int recordedBy,
+      Value<DateTime> recordedAt,
+      Value<bool> isSynced,
+    });
+typedef $$AttendancesTableUpdateCompanionBuilder =
+    AttendancesCompanion Function({
+      Value<int> id,
+      Value<int?> serverId,
+      Value<int> contactId,
+      Value<String> phone,
+      Value<String> serviceType,
+      Value<DateTime> serviceDate,
+      Value<int> recordedBy,
+      Value<DateTime> recordedAt,
+      Value<bool> isSynced,
+    });
 
 class $$AttendancesTableFilterComposer
     extends Composer<_$AppDatabase, $AttendancesTable> {
@@ -3441,31 +4266,49 @@ class $$AttendancesTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get serverId => $composableBuilder(
-      column: $table.serverId, builder: (column) => ColumnFilters(column));
+    column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get contactId => $composableBuilder(
-      column: $table.contactId, builder: (column) => ColumnFilters(column));
+    column: $table.contactId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get phone => $composableBuilder(
-      column: $table.phone, builder: (column) => ColumnFilters(column));
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get serviceType => $composableBuilder(
-      column: $table.serviceType, builder: (column) => ColumnFilters(column));
+    column: $table.serviceType,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get serviceDate => $composableBuilder(
-      column: $table.serviceDate, builder: (column) => ColumnFilters(column));
+    column: $table.serviceDate,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get recordedBy => $composableBuilder(
-      column: $table.recordedBy, builder: (column) => ColumnFilters(column));
+    column: $table.recordedBy,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get recordedAt => $composableBuilder(
-      column: $table.recordedAt, builder: (column) => ColumnFilters(column));
+    column: $table.recordedAt,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get isSynced => $composableBuilder(
-      column: $table.isSynced, builder: (column) => ColumnFilters(column));
+    column: $table.isSynced,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$AttendancesTableOrderingComposer
@@ -3478,31 +4321,49 @@ class $$AttendancesTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get serverId => $composableBuilder(
-      column: $table.serverId, builder: (column) => ColumnOrderings(column));
+    column: $table.serverId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get contactId => $composableBuilder(
-      column: $table.contactId, builder: (column) => ColumnOrderings(column));
+    column: $table.contactId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get phone => $composableBuilder(
-      column: $table.phone, builder: (column) => ColumnOrderings(column));
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get serviceType => $composableBuilder(
-      column: $table.serviceType, builder: (column) => ColumnOrderings(column));
+    column: $table.serviceType,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get serviceDate => $composableBuilder(
-      column: $table.serviceDate, builder: (column) => ColumnOrderings(column));
+    column: $table.serviceDate,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get recordedBy => $composableBuilder(
-      column: $table.recordedBy, builder: (column) => ColumnOrderings(column));
+    column: $table.recordedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get recordedAt => $composableBuilder(
-      column: $table.recordedAt, builder: (column) => ColumnOrderings(column));
+    column: $table.recordedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get isSynced => $composableBuilder(
-      column: $table.isSynced, builder: (column) => ColumnOrderings(column));
+    column: $table.isSynced,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AttendancesTableAnnotationComposer
@@ -3527,38 +4388,50 @@ class $$AttendancesTableAnnotationComposer
       $composableBuilder(column: $table.phone, builder: (column) => column);
 
   GeneratedColumn<String> get serviceType => $composableBuilder(
-      column: $table.serviceType, builder: (column) => column);
+    column: $table.serviceType,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get serviceDate => $composableBuilder(
-      column: $table.serviceDate, builder: (column) => column);
+    column: $table.serviceDate,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get recordedBy => $composableBuilder(
-      column: $table.recordedBy, builder: (column) => column);
+    column: $table.recordedBy,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get recordedAt => $composableBuilder(
-      column: $table.recordedAt, builder: (column) => column);
+    column: $table.recordedAt,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
 }
 
-class $$AttendancesTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $AttendancesTable,
-    AttendanceEntity,
-    $$AttendancesTableFilterComposer,
-    $$AttendancesTableOrderingComposer,
-    $$AttendancesTableAnnotationComposer,
-    $$AttendancesTableCreateCompanionBuilder,
-    $$AttendancesTableUpdateCompanionBuilder,
-    (
-      AttendanceEntity,
-      BaseReferences<_$AppDatabase, $AttendancesTable, AttendanceEntity>
-    ),
-    AttendanceEntity,
-    PrefetchHooks Function()> {
+class $$AttendancesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AttendancesTable,
+          AttendanceEntity,
+          $$AttendancesTableFilterComposer,
+          $$AttendancesTableOrderingComposer,
+          $$AttendancesTableAnnotationComposer,
+          $$AttendancesTableCreateCompanionBuilder,
+          $$AttendancesTableUpdateCompanionBuilder,
+          (
+            AttendanceEntity,
+            BaseReferences<_$AppDatabase, $AttendancesTable, AttendanceEntity>,
+          ),
+          AttendanceEntity,
+          PrefetchHooks Function()
+        > {
   $$AttendancesTableTableManager(_$AppDatabase db, $AttendancesTable table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -3567,98 +4440,103 @@ class $$AttendancesTableTableManager extends RootTableManager<
               $$AttendancesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$AttendancesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> serverId = const Value.absent(),
-            Value<int> contactId = const Value.absent(),
-            Value<String> phone = const Value.absent(),
-            Value<String> serviceType = const Value.absent(),
-            Value<DateTime> serviceDate = const Value.absent(),
-            Value<int> recordedBy = const Value.absent(),
-            Value<DateTime> recordedAt = const Value.absent(),
-            Value<bool> isSynced = const Value.absent(),
-          }) =>
-              AttendancesCompanion(
-            id: id,
-            serverId: serverId,
-            contactId: contactId,
-            phone: phone,
-            serviceType: serviceType,
-            serviceDate: serviceDate,
-            recordedBy: recordedBy,
-            recordedAt: recordedAt,
-            isSynced: isSynced,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> serverId = const Value.absent(),
-            required int contactId,
-            required String phone,
-            required String serviceType,
-            required DateTime serviceDate,
-            required int recordedBy,
-            Value<DateTime> recordedAt = const Value.absent(),
-            Value<bool> isSynced = const Value.absent(),
-          }) =>
-              AttendancesCompanion.insert(
-            id: id,
-            serverId: serverId,
-            contactId: contactId,
-            phone: phone,
-            serviceType: serviceType,
-            serviceDate: serviceDate,
-            recordedBy: recordedBy,
-            recordedAt: recordedAt,
-            isSynced: isSynced,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> serverId = const Value.absent(),
+                Value<int> contactId = const Value.absent(),
+                Value<String> phone = const Value.absent(),
+                Value<String> serviceType = const Value.absent(),
+                Value<DateTime> serviceDate = const Value.absent(),
+                Value<int> recordedBy = const Value.absent(),
+                Value<DateTime> recordedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+              }) => AttendancesCompanion(
+                id: id,
+                serverId: serverId,
+                contactId: contactId,
+                phone: phone,
+                serviceType: serviceType,
+                serviceDate: serviceDate,
+                recordedBy: recordedBy,
+                recordedAt: recordedAt,
+                isSynced: isSynced,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> serverId = const Value.absent(),
+                required int contactId,
+                required String phone,
+                required String serviceType,
+                required DateTime serviceDate,
+                required int recordedBy,
+                Value<DateTime> recordedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+              }) => AttendancesCompanion.insert(
+                id: id,
+                serverId: serverId,
+                contactId: contactId,
+                phone: phone,
+                serviceType: serviceType,
+                serviceDate: serviceDate,
+                recordedBy: recordedBy,
+                recordedAt: recordedAt,
+                isSynced: isSynced,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$AttendancesTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $AttendancesTable,
-    AttendanceEntity,
-    $$AttendancesTableFilterComposer,
-    $$AttendancesTableOrderingComposer,
-    $$AttendancesTableAnnotationComposer,
-    $$AttendancesTableCreateCompanionBuilder,
-    $$AttendancesTableUpdateCompanionBuilder,
-    (
+typedef $$AttendancesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AttendancesTable,
       AttendanceEntity,
-      BaseReferences<_$AppDatabase, $AttendancesTable, AttendanceEntity>
-    ),
-    AttendanceEntity,
-    PrefetchHooks Function()>;
-typedef $$ScenariosTableCreateCompanionBuilder = ScenariosCompanion Function({
-  Value<int> id,
-  Value<int?> serverId,
-  required String name,
-  Value<String?> description,
-  required String filterTags,
-  Value<String> status,
-  required int createdBy,
-  Value<DateTime> createdAt,
-  Value<DateTime?> completedAt,
-  Value<bool> isSynced,
-  Value<bool> isDeleted,
-});
-typedef $$ScenariosTableUpdateCompanionBuilder = ScenariosCompanion Function({
-  Value<int> id,
-  Value<int?> serverId,
-  Value<String> name,
-  Value<String?> description,
-  Value<String> filterTags,
-  Value<String> status,
-  Value<int> createdBy,
-  Value<DateTime> createdAt,
-  Value<DateTime?> completedAt,
-  Value<bool> isSynced,
-  Value<bool> isDeleted,
-});
+      $$AttendancesTableFilterComposer,
+      $$AttendancesTableOrderingComposer,
+      $$AttendancesTableAnnotationComposer,
+      $$AttendancesTableCreateCompanionBuilder,
+      $$AttendancesTableUpdateCompanionBuilder,
+      (
+        AttendanceEntity,
+        BaseReferences<_$AppDatabase, $AttendancesTable, AttendanceEntity>,
+      ),
+      AttendanceEntity,
+      PrefetchHooks Function()
+    >;
+typedef $$ScenariosTableCreateCompanionBuilder =
+    ScenariosCompanion Function({
+      Value<int> id,
+      Value<int?> serverId,
+      required String name,
+      Value<String?> description,
+      required String filterTags,
+      Value<String> status,
+      required int createdBy,
+      Value<DateTime> createdAt,
+      Value<DateTime?> completedAt,
+      Value<bool> isSynced,
+      Value<bool> isDeleted,
+    });
+typedef $$ScenariosTableUpdateCompanionBuilder =
+    ScenariosCompanion Function({
+      Value<int> id,
+      Value<int?> serverId,
+      Value<String> name,
+      Value<String?> description,
+      Value<String> filterTags,
+      Value<String> status,
+      Value<int> createdBy,
+      Value<DateTime> createdAt,
+      Value<DateTime?> completedAt,
+      Value<bool> isSynced,
+      Value<bool> isDeleted,
+    });
 
 class $$ScenariosTableFilterComposer
     extends Composer<_$AppDatabase, $ScenariosTable> {
@@ -3670,37 +4548,59 @@ class $$ScenariosTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get serverId => $composableBuilder(
-      column: $table.serverId, builder: (column) => ColumnFilters(column));
+    column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnFilters(column));
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get description => $composableBuilder(
-      column: $table.description, builder: (column) => ColumnFilters(column));
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get filterTags => $composableBuilder(
-      column: $table.filterTags, builder: (column) => ColumnFilters(column));
+    column: $table.filterTags,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnFilters(column));
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get createdBy => $composableBuilder(
-      column: $table.createdBy, builder: (column) => ColumnFilters(column));
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => ColumnFilters(column));
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get isSynced => $composableBuilder(
-      column: $table.isSynced, builder: (column) => ColumnFilters(column));
+    column: $table.isSynced,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnFilters(column));
+    column: $table.isDeleted,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$ScenariosTableOrderingComposer
@@ -3713,37 +4613,59 @@ class $$ScenariosTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get serverId => $composableBuilder(
-      column: $table.serverId, builder: (column) => ColumnOrderings(column));
+    column: $table.serverId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnOrderings(column));
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get description => $composableBuilder(
-      column: $table.description, builder: (column) => ColumnOrderings(column));
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get filterTags => $composableBuilder(
-      column: $table.filterTags, builder: (column) => ColumnOrderings(column));
+    column: $table.filterTags,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnOrderings(column));
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get createdBy => $composableBuilder(
-      column: $table.createdBy, builder: (column) => ColumnOrderings(column));
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => ColumnOrderings(column));
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get isSynced => $composableBuilder(
-      column: $table.isSynced, builder: (column) => ColumnOrderings(column));
+    column: $table.isSynced,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get isDeleted => $composableBuilder(
-      column: $table.isDeleted, builder: (column) => ColumnOrderings(column));
+    column: $table.isDeleted,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ScenariosTableAnnotationComposer
@@ -3765,10 +4687,14 @@ class $$ScenariosTableAnnotationComposer
       $composableBuilder(column: $table.name, builder: (column) => column);
 
   GeneratedColumn<String> get description => $composableBuilder(
-      column: $table.description, builder: (column) => column);
+    column: $table.description,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get filterTags => $composableBuilder(
-      column: $table.filterTags, builder: (column) => column);
+    column: $table.filterTags,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
@@ -3780,7 +4706,9 @@ class $$ScenariosTableAnnotationComposer
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => column);
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
@@ -3789,23 +4717,27 @@ class $$ScenariosTableAnnotationComposer
       $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 }
 
-class $$ScenariosTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $ScenariosTable,
-    ScenarioEntity,
-    $$ScenariosTableFilterComposer,
-    $$ScenariosTableOrderingComposer,
-    $$ScenariosTableAnnotationComposer,
-    $$ScenariosTableCreateCompanionBuilder,
-    $$ScenariosTableUpdateCompanionBuilder,
-    (
-      ScenarioEntity,
-      BaseReferences<_$AppDatabase, $ScenariosTable, ScenarioEntity>
-    ),
-    ScenarioEntity,
-    PrefetchHooks Function()> {
+class $$ScenariosTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ScenariosTable,
+          ScenarioEntity,
+          $$ScenariosTableFilterComposer,
+          $$ScenariosTableOrderingComposer,
+          $$ScenariosTableAnnotationComposer,
+          $$ScenariosTableCreateCompanionBuilder,
+          $$ScenariosTableUpdateCompanionBuilder,
+          (
+            ScenarioEntity,
+            BaseReferences<_$AppDatabase, $ScenariosTable, ScenarioEntity>,
+          ),
+          ScenarioEntity,
+          PrefetchHooks Function()
+        > {
   $$ScenariosTableTableManager(_$AppDatabase db, $ScenariosTable table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -3814,106 +4746,115 @@ class $$ScenariosTableTableManager extends RootTableManager<
               $$ScenariosTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$ScenariosTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> serverId = const Value.absent(),
-            Value<String> name = const Value.absent(),
-            Value<String?> description = const Value.absent(),
-            Value<String> filterTags = const Value.absent(),
-            Value<String> status = const Value.absent(),
-            Value<int> createdBy = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime?> completedAt = const Value.absent(),
-            Value<bool> isSynced = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
-          }) =>
-              ScenariosCompanion(
-            id: id,
-            serverId: serverId,
-            name: name,
-            description: description,
-            filterTags: filterTags,
-            status: status,
-            createdBy: createdBy,
-            createdAt: createdAt,
-            completedAt: completedAt,
-            isSynced: isSynced,
-            isDeleted: isDeleted,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> serverId = const Value.absent(),
-            required String name,
-            Value<String?> description = const Value.absent(),
-            required String filterTags,
-            Value<String> status = const Value.absent(),
-            required int createdBy,
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime?> completedAt = const Value.absent(),
-            Value<bool> isSynced = const Value.absent(),
-            Value<bool> isDeleted = const Value.absent(),
-          }) =>
-              ScenariosCompanion.insert(
-            id: id,
-            serverId: serverId,
-            name: name,
-            description: description,
-            filterTags: filterTags,
-            status: status,
-            createdBy: createdBy,
-            createdAt: createdAt,
-            completedAt: completedAt,
-            isSynced: isSynced,
-            isDeleted: isDeleted,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> serverId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<String> filterTags = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<int> createdBy = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+              }) => ScenariosCompanion(
+                id: id,
+                serverId: serverId,
+                name: name,
+                description: description,
+                filterTags: filterTags,
+                status: status,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                completedAt: completedAt,
+                isSynced: isSynced,
+                isDeleted: isDeleted,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> serverId = const Value.absent(),
+                required String name,
+                Value<String?> description = const Value.absent(),
+                required String filterTags,
+                Value<String> status = const Value.absent(),
+                required int createdBy,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<bool> isDeleted = const Value.absent(),
+              }) => ScenariosCompanion.insert(
+                id: id,
+                serverId: serverId,
+                name: name,
+                description: description,
+                filterTags: filterTags,
+                status: status,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                completedAt: completedAt,
+                isSynced: isSynced,
+                isDeleted: isDeleted,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$ScenariosTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $ScenariosTable,
-    ScenarioEntity,
-    $$ScenariosTableFilterComposer,
-    $$ScenariosTableOrderingComposer,
-    $$ScenariosTableAnnotationComposer,
-    $$ScenariosTableCreateCompanionBuilder,
-    $$ScenariosTableUpdateCompanionBuilder,
-    (
+typedef $$ScenariosTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ScenariosTable,
       ScenarioEntity,
-      BaseReferences<_$AppDatabase, $ScenariosTable, ScenarioEntity>
-    ),
-    ScenarioEntity,
-    PrefetchHooks Function()>;
-typedef $$ScenarioTasksTableCreateCompanionBuilder = ScenarioTasksCompanion
-    Function({
-  Value<int> id,
-  Value<int?> serverId,
-  required int scenarioId,
-  required int contactId,
-  required String phone,
-  Value<String?> name,
-  Value<bool> isCompleted,
-  Value<int?> completedBy,
-  Value<DateTime?> completedAt,
-  Value<bool> isSynced,
-});
-typedef $$ScenarioTasksTableUpdateCompanionBuilder = ScenarioTasksCompanion
-    Function({
-  Value<int> id,
-  Value<int?> serverId,
-  Value<int> scenarioId,
-  Value<int> contactId,
-  Value<String> phone,
-  Value<String?> name,
-  Value<bool> isCompleted,
-  Value<int?> completedBy,
-  Value<DateTime?> completedAt,
-  Value<bool> isSynced,
-});
+      $$ScenariosTableFilterComposer,
+      $$ScenariosTableOrderingComposer,
+      $$ScenariosTableAnnotationComposer,
+      $$ScenariosTableCreateCompanionBuilder,
+      $$ScenariosTableUpdateCompanionBuilder,
+      (
+        ScenarioEntity,
+        BaseReferences<_$AppDatabase, $ScenariosTable, ScenarioEntity>,
+      ),
+      ScenarioEntity,
+      PrefetchHooks Function()
+    >;
+typedef $$ScenarioTasksTableCreateCompanionBuilder =
+    ScenarioTasksCompanion Function({
+      Value<int> id,
+      Value<int?> serverId,
+      required int scenarioId,
+      required int contactId,
+      required String phone,
+      Value<String?> name,
+      Value<bool> isCompleted,
+      Value<int?> completedBy,
+      Value<DateTime?> completedAt,
+      Value<bool> isSynced,
+      Value<String?> notes,
+      Value<DateTime?> dueDate,
+      Value<String> priority,
+    });
+typedef $$ScenarioTasksTableUpdateCompanionBuilder =
+    ScenarioTasksCompanion Function({
+      Value<int> id,
+      Value<int?> serverId,
+      Value<int> scenarioId,
+      Value<int> contactId,
+      Value<String> phone,
+      Value<String?> name,
+      Value<bool> isCompleted,
+      Value<int?> completedBy,
+      Value<DateTime?> completedAt,
+      Value<bool> isSynced,
+      Value<String?> notes,
+      Value<DateTime?> dueDate,
+      Value<String> priority,
+    });
 
 class $$ScenarioTasksTableFilterComposer
     extends Composer<_$AppDatabase, $ScenarioTasksTable> {
@@ -3925,34 +4866,69 @@ class $$ScenarioTasksTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get serverId => $composableBuilder(
-      column: $table.serverId, builder: (column) => ColumnFilters(column));
+    column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get scenarioId => $composableBuilder(
-      column: $table.scenarioId, builder: (column) => ColumnFilters(column));
+    column: $table.scenarioId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get contactId => $composableBuilder(
-      column: $table.contactId, builder: (column) => ColumnFilters(column));
+    column: $table.contactId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get phone => $composableBuilder(
-      column: $table.phone, builder: (column) => ColumnFilters(column));
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnFilters(column));
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get isCompleted => $composableBuilder(
-      column: $table.isCompleted, builder: (column) => ColumnFilters(column));
+    column: $table.isCompleted,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get completedBy => $composableBuilder(
-      column: $table.completedBy, builder: (column) => ColumnFilters(column));
+    column: $table.completedBy,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => ColumnFilters(column));
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<bool> get isSynced => $composableBuilder(
-      column: $table.isSynced, builder: (column) => ColumnFilters(column));
+    column: $table.isSynced,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get priority => $composableBuilder(
+    column: $table.priority,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$ScenarioTasksTableOrderingComposer
@@ -3965,34 +4941,69 @@ class $$ScenarioTasksTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get serverId => $composableBuilder(
-      column: $table.serverId, builder: (column) => ColumnOrderings(column));
+    column: $table.serverId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get scenarioId => $composableBuilder(
-      column: $table.scenarioId, builder: (column) => ColumnOrderings(column));
+    column: $table.scenarioId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get contactId => $composableBuilder(
-      column: $table.contactId, builder: (column) => ColumnOrderings(column));
+    column: $table.contactId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get phone => $composableBuilder(
-      column: $table.phone, builder: (column) => ColumnOrderings(column));
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get name => $composableBuilder(
-      column: $table.name, builder: (column) => ColumnOrderings(column));
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get isCompleted => $composableBuilder(
-      column: $table.isCompleted, builder: (column) => ColumnOrderings(column));
+    column: $table.isCompleted,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get completedBy => $composableBuilder(
-      column: $table.completedBy, builder: (column) => ColumnOrderings(column));
+    column: $table.completedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => ColumnOrderings(column));
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<bool> get isSynced => $composableBuilder(
-      column: $table.isSynced, builder: (column) => ColumnOrderings(column));
+    column: $table.isSynced,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get priority => $composableBuilder(
+    column: $table.priority,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ScenarioTasksTableAnnotationComposer
@@ -4011,7 +5022,9 @@ class $$ScenarioTasksTableAnnotationComposer
       $composableBuilder(column: $table.serverId, builder: (column) => column);
 
   GeneratedColumn<int> get scenarioId => $composableBuilder(
-      column: $table.scenarioId, builder: (column) => column);
+    column: $table.scenarioId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get contactId =>
       $composableBuilder(column: $table.contactId, builder: (column) => column);
@@ -4023,35 +5036,58 @@ class $$ScenarioTasksTableAnnotationComposer
       $composableBuilder(column: $table.name, builder: (column) => column);
 
   GeneratedColumn<bool> get isCompleted => $composableBuilder(
-      column: $table.isCompleted, builder: (column) => column);
+    column: $table.isCompleted,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get completedBy => $composableBuilder(
-      column: $table.completedBy, builder: (column) => column);
+    column: $table.completedBy,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => column);
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<bool> get isSynced =>
       $composableBuilder(column: $table.isSynced, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dueDate =>
+      $composableBuilder(column: $table.dueDate, builder: (column) => column);
+
+  GeneratedColumn<String> get priority =>
+      $composableBuilder(column: $table.priority, builder: (column) => column);
 }
 
-class $$ScenarioTasksTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $ScenarioTasksTable,
-    ScenarioTaskEntity,
-    $$ScenarioTasksTableFilterComposer,
-    $$ScenarioTasksTableOrderingComposer,
-    $$ScenarioTasksTableAnnotationComposer,
-    $$ScenarioTasksTableCreateCompanionBuilder,
-    $$ScenarioTasksTableUpdateCompanionBuilder,
-    (
-      ScenarioTaskEntity,
-      BaseReferences<_$AppDatabase, $ScenarioTasksTable, ScenarioTaskEntity>
-    ),
-    ScenarioTaskEntity,
-    PrefetchHooks Function()> {
+class $$ScenarioTasksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ScenarioTasksTable,
+          ScenarioTaskEntity,
+          $$ScenarioTasksTableFilterComposer,
+          $$ScenarioTasksTableOrderingComposer,
+          $$ScenarioTasksTableAnnotationComposer,
+          $$ScenarioTasksTableCreateCompanionBuilder,
+          $$ScenarioTasksTableUpdateCompanionBuilder,
+          (
+            ScenarioTaskEntity,
+            BaseReferences<
+              _$AppDatabase,
+              $ScenarioTasksTable,
+              ScenarioTaskEntity
+            >,
+          ),
+          ScenarioTaskEntity,
+          PrefetchHooks Function()
+        > {
   $$ScenarioTasksTableTableManager(_$AppDatabase db, $ScenarioTasksTable table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -4060,102 +5096,119 @@ class $$ScenarioTasksTableTableManager extends RootTableManager<
               $$ScenarioTasksTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$ScenarioTasksTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> serverId = const Value.absent(),
-            Value<int> scenarioId = const Value.absent(),
-            Value<int> contactId = const Value.absent(),
-            Value<String> phone = const Value.absent(),
-            Value<String?> name = const Value.absent(),
-            Value<bool> isCompleted = const Value.absent(),
-            Value<int?> completedBy = const Value.absent(),
-            Value<DateTime?> completedAt = const Value.absent(),
-            Value<bool> isSynced = const Value.absent(),
-          }) =>
-              ScenarioTasksCompanion(
-            id: id,
-            serverId: serverId,
-            scenarioId: scenarioId,
-            contactId: contactId,
-            phone: phone,
-            name: name,
-            isCompleted: isCompleted,
-            completedBy: completedBy,
-            completedAt: completedAt,
-            isSynced: isSynced,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int?> serverId = const Value.absent(),
-            required int scenarioId,
-            required int contactId,
-            required String phone,
-            Value<String?> name = const Value.absent(),
-            Value<bool> isCompleted = const Value.absent(),
-            Value<int?> completedBy = const Value.absent(),
-            Value<DateTime?> completedAt = const Value.absent(),
-            Value<bool> isSynced = const Value.absent(),
-          }) =>
-              ScenarioTasksCompanion.insert(
-            id: id,
-            serverId: serverId,
-            scenarioId: scenarioId,
-            contactId: contactId,
-            phone: phone,
-            name: name,
-            isCompleted: isCompleted,
-            completedBy: completedBy,
-            completedAt: completedAt,
-            isSynced: isSynced,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> serverId = const Value.absent(),
+                Value<int> scenarioId = const Value.absent(),
+                Value<int> contactId = const Value.absent(),
+                Value<String> phone = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                Value<bool> isCompleted = const Value.absent(),
+                Value<int?> completedBy = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime?> dueDate = const Value.absent(),
+                Value<String> priority = const Value.absent(),
+              }) => ScenarioTasksCompanion(
+                id: id,
+                serverId: serverId,
+                scenarioId: scenarioId,
+                contactId: contactId,
+                phone: phone,
+                name: name,
+                isCompleted: isCompleted,
+                completedBy: completedBy,
+                completedAt: completedAt,
+                isSynced: isSynced,
+                notes: notes,
+                dueDate: dueDate,
+                priority: priority,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int?> serverId = const Value.absent(),
+                required int scenarioId,
+                required int contactId,
+                required String phone,
+                Value<String?> name = const Value.absent(),
+                Value<bool> isCompleted = const Value.absent(),
+                Value<int?> completedBy = const Value.absent(),
+                Value<DateTime?> completedAt = const Value.absent(),
+                Value<bool> isSynced = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime?> dueDate = const Value.absent(),
+                Value<String> priority = const Value.absent(),
+              }) => ScenarioTasksCompanion.insert(
+                id: id,
+                serverId: serverId,
+                scenarioId: scenarioId,
+                contactId: contactId,
+                phone: phone,
+                name: name,
+                isCompleted: isCompleted,
+                completedBy: completedBy,
+                completedAt: completedAt,
+                isSynced: isSynced,
+                notes: notes,
+                dueDate: dueDate,
+                priority: priority,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$ScenarioTasksTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $ScenarioTasksTable,
-    ScenarioTaskEntity,
-    $$ScenarioTasksTableFilterComposer,
-    $$ScenarioTasksTableOrderingComposer,
-    $$ScenarioTasksTableAnnotationComposer,
-    $$ScenarioTasksTableCreateCompanionBuilder,
-    $$ScenarioTasksTableUpdateCompanionBuilder,
-    (
+typedef $$ScenarioTasksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ScenarioTasksTable,
       ScenarioTaskEntity,
-      BaseReferences<_$AppDatabase, $ScenarioTasksTable, ScenarioTaskEntity>
-    ),
-    ScenarioTaskEntity,
-    PrefetchHooks Function()>;
-typedef $$SyncQueueTableCreateCompanionBuilder = SyncQueueCompanion Function({
-  Value<int> id,
-  required String entityType,
-  required String action,
-  required int localId,
-  Value<int?> serverId,
-  required String data,
-  Value<String> status,
-  Value<String?> errorMessage,
-  Value<int> retryCount,
-  Value<DateTime> createdAt,
-  Value<DateTime?> lastAttemptAt,
-});
-typedef $$SyncQueueTableUpdateCompanionBuilder = SyncQueueCompanion Function({
-  Value<int> id,
-  Value<String> entityType,
-  Value<String> action,
-  Value<int> localId,
-  Value<int?> serverId,
-  Value<String> data,
-  Value<String> status,
-  Value<String?> errorMessage,
-  Value<int> retryCount,
-  Value<DateTime> createdAt,
-  Value<DateTime?> lastAttemptAt,
-});
+      $$ScenarioTasksTableFilterComposer,
+      $$ScenarioTasksTableOrderingComposer,
+      $$ScenarioTasksTableAnnotationComposer,
+      $$ScenarioTasksTableCreateCompanionBuilder,
+      $$ScenarioTasksTableUpdateCompanionBuilder,
+      (
+        ScenarioTaskEntity,
+        BaseReferences<_$AppDatabase, $ScenarioTasksTable, ScenarioTaskEntity>,
+      ),
+      ScenarioTaskEntity,
+      PrefetchHooks Function()
+    >;
+typedef $$SyncQueueTableCreateCompanionBuilder =
+    SyncQueueCompanion Function({
+      Value<int> id,
+      required String entityType,
+      required String action,
+      required int localId,
+      Value<int?> serverId,
+      required String data,
+      Value<String> status,
+      Value<String?> errorMessage,
+      Value<int> retryCount,
+      Value<DateTime> createdAt,
+      Value<DateTime?> lastAttemptAt,
+    });
+typedef $$SyncQueueTableUpdateCompanionBuilder =
+    SyncQueueCompanion Function({
+      Value<int> id,
+      Value<String> entityType,
+      Value<String> action,
+      Value<int> localId,
+      Value<int?> serverId,
+      Value<String> data,
+      Value<String> status,
+      Value<String?> errorMessage,
+      Value<int> retryCount,
+      Value<DateTime> createdAt,
+      Value<DateTime?> lastAttemptAt,
+    });
 
 class $$SyncQueueTableFilterComposer
     extends Composer<_$AppDatabase, $SyncQueueTable> {
@@ -4167,37 +5220,59 @@ class $$SyncQueueTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get entityType => $composableBuilder(
-      column: $table.entityType, builder: (column) => ColumnFilters(column));
+    column: $table.entityType,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get action => $composableBuilder(
-      column: $table.action, builder: (column) => ColumnFilters(column));
+    column: $table.action,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get localId => $composableBuilder(
-      column: $table.localId, builder: (column) => ColumnFilters(column));
+    column: $table.localId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get serverId => $composableBuilder(
-      column: $table.serverId, builder: (column) => ColumnFilters(column));
+    column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get data => $composableBuilder(
-      column: $table.data, builder: (column) => ColumnFilters(column));
+    column: $table.data,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnFilters(column));
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get errorMessage => $composableBuilder(
-      column: $table.errorMessage, builder: (column) => ColumnFilters(column));
+    column: $table.errorMessage,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<int> get retryCount => $composableBuilder(
-      column: $table.retryCount, builder: (column) => ColumnFilters(column));
+    column: $table.retryCount,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get lastAttemptAt => $composableBuilder(
-      column: $table.lastAttemptAt, builder: (column) => ColumnFilters(column));
+    column: $table.lastAttemptAt,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$SyncQueueTableOrderingComposer
@@ -4210,39 +5285,59 @@ class $$SyncQueueTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get entityType => $composableBuilder(
-      column: $table.entityType, builder: (column) => ColumnOrderings(column));
+    column: $table.entityType,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get action => $composableBuilder(
-      column: $table.action, builder: (column) => ColumnOrderings(column));
+    column: $table.action,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get localId => $composableBuilder(
-      column: $table.localId, builder: (column) => ColumnOrderings(column));
+    column: $table.localId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get serverId => $composableBuilder(
-      column: $table.serverId, builder: (column) => ColumnOrderings(column));
+    column: $table.serverId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get data => $composableBuilder(
-      column: $table.data, builder: (column) => ColumnOrderings(column));
+    column: $table.data,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnOrderings(column));
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get errorMessage => $composableBuilder(
-      column: $table.errorMessage,
-      builder: (column) => ColumnOrderings(column));
+    column: $table.errorMessage,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<int> get retryCount => $composableBuilder(
-      column: $table.retryCount, builder: (column) => ColumnOrderings(column));
+    column: $table.retryCount,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get lastAttemptAt => $composableBuilder(
-      column: $table.lastAttemptAt,
-      builder: (column) => ColumnOrderings(column));
+    column: $table.lastAttemptAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SyncQueueTableAnnotationComposer
@@ -4258,7 +5353,9 @@ class $$SyncQueueTableAnnotationComposer
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get entityType => $composableBuilder(
-      column: $table.entityType, builder: (column) => column);
+    column: $table.entityType,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get action =>
       $composableBuilder(column: $table.action, builder: (column) => column);
@@ -4276,35 +5373,45 @@ class $$SyncQueueTableAnnotationComposer
       $composableBuilder(column: $table.status, builder: (column) => column);
 
   GeneratedColumn<String> get errorMessage => $composableBuilder(
-      column: $table.errorMessage, builder: (column) => column);
+    column: $table.errorMessage,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get retryCount => $composableBuilder(
-      column: $table.retryCount, builder: (column) => column);
+    column: $table.retryCount,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
   GeneratedColumn<DateTime> get lastAttemptAt => $composableBuilder(
-      column: $table.lastAttemptAt, builder: (column) => column);
+    column: $table.lastAttemptAt,
+    builder: (column) => column,
+  );
 }
 
-class $$SyncQueueTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $SyncQueueTable,
-    SyncQueueEntity,
-    $$SyncQueueTableFilterComposer,
-    $$SyncQueueTableOrderingComposer,
-    $$SyncQueueTableAnnotationComposer,
-    $$SyncQueueTableCreateCompanionBuilder,
-    $$SyncQueueTableUpdateCompanionBuilder,
-    (
-      SyncQueueEntity,
-      BaseReferences<_$AppDatabase, $SyncQueueTable, SyncQueueEntity>
-    ),
-    SyncQueueEntity,
-    PrefetchHooks Function()> {
+class $$SyncQueueTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SyncQueueTable,
+          SyncQueueEntity,
+          $$SyncQueueTableFilterComposer,
+          $$SyncQueueTableOrderingComposer,
+          $$SyncQueueTableAnnotationComposer,
+          $$SyncQueueTableCreateCompanionBuilder,
+          $$SyncQueueTableUpdateCompanionBuilder,
+          (
+            SyncQueueEntity,
+            BaseReferences<_$AppDatabase, $SyncQueueTable, SyncQueueEntity>,
+          ),
+          SyncQueueEntity,
+          PrefetchHooks Function()
+        > {
   $$SyncQueueTableTableManager(_$AppDatabase db, $SyncQueueTable table)
-      : super(TableManagerState(
+    : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -4313,80 +5420,83 @@ class $$SyncQueueTableTableManager extends RootTableManager<
               $$SyncQueueTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$SyncQueueTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<String> entityType = const Value.absent(),
-            Value<String> action = const Value.absent(),
-            Value<int> localId = const Value.absent(),
-            Value<int?> serverId = const Value.absent(),
-            Value<String> data = const Value.absent(),
-            Value<String> status = const Value.absent(),
-            Value<String?> errorMessage = const Value.absent(),
-            Value<int> retryCount = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime?> lastAttemptAt = const Value.absent(),
-          }) =>
-              SyncQueueCompanion(
-            id: id,
-            entityType: entityType,
-            action: action,
-            localId: localId,
-            serverId: serverId,
-            data: data,
-            status: status,
-            errorMessage: errorMessage,
-            retryCount: retryCount,
-            createdAt: createdAt,
-            lastAttemptAt: lastAttemptAt,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            required String entityType,
-            required String action,
-            required int localId,
-            Value<int?> serverId = const Value.absent(),
-            required String data,
-            Value<String> status = const Value.absent(),
-            Value<String?> errorMessage = const Value.absent(),
-            Value<int> retryCount = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime?> lastAttemptAt = const Value.absent(),
-          }) =>
-              SyncQueueCompanion.insert(
-            id: id,
-            entityType: entityType,
-            action: action,
-            localId: localId,
-            serverId: serverId,
-            data: data,
-            status: status,
-            errorMessage: errorMessage,
-            retryCount: retryCount,
-            createdAt: createdAt,
-            lastAttemptAt: lastAttemptAt,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> entityType = const Value.absent(),
+                Value<String> action = const Value.absent(),
+                Value<int> localId = const Value.absent(),
+                Value<int?> serverId = const Value.absent(),
+                Value<String> data = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String?> errorMessage = const Value.absent(),
+                Value<int> retryCount = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> lastAttemptAt = const Value.absent(),
+              }) => SyncQueueCompanion(
+                id: id,
+                entityType: entityType,
+                action: action,
+                localId: localId,
+                serverId: serverId,
+                data: data,
+                status: status,
+                errorMessage: errorMessage,
+                retryCount: retryCount,
+                createdAt: createdAt,
+                lastAttemptAt: lastAttemptAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String entityType,
+                required String action,
+                required int localId,
+                Value<int?> serverId = const Value.absent(),
+                required String data,
+                Value<String> status = const Value.absent(),
+                Value<String?> errorMessage = const Value.absent(),
+                Value<int> retryCount = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> lastAttemptAt = const Value.absent(),
+              }) => SyncQueueCompanion.insert(
+                id: id,
+                entityType: entityType,
+                action: action,
+                localId: localId,
+                serverId: serverId,
+                data: data,
+                status: status,
+                errorMessage: errorMessage,
+                retryCount: retryCount,
+                createdAt: createdAt,
+                lastAttemptAt: lastAttemptAt,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$SyncQueueTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $SyncQueueTable,
-    SyncQueueEntity,
-    $$SyncQueueTableFilterComposer,
-    $$SyncQueueTableOrderingComposer,
-    $$SyncQueueTableAnnotationComposer,
-    $$SyncQueueTableCreateCompanionBuilder,
-    $$SyncQueueTableUpdateCompanionBuilder,
-    (
+typedef $$SyncQueueTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SyncQueueTable,
       SyncQueueEntity,
-      BaseReferences<_$AppDatabase, $SyncQueueTable, SyncQueueEntity>
-    ),
-    SyncQueueEntity,
-    PrefetchHooks Function()>;
+      $$SyncQueueTableFilterComposer,
+      $$SyncQueueTableOrderingComposer,
+      $$SyncQueueTableAnnotationComposer,
+      $$SyncQueueTableCreateCompanionBuilder,
+      $$SyncQueueTableUpdateCompanionBuilder,
+      (
+        SyncQueueEntity,
+        BaseReferences<_$AppDatabase, $SyncQueueTable, SyncQueueEntity>,
+      ),
+      SyncQueueEntity,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;

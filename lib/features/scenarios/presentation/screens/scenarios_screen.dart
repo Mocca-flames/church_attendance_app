@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/scenario_status.dart';
+import 'package:church_attendance_app/features/scenarios/presentation/screens/scenario_detail_screen.dart';
 import 'package:church_attendance_app/features/scenarios/domain/models/scenario.dart';
 import 'package:church_attendance_app/features/scenarios/presentation/providers/scenario_provider.dart';
 
@@ -98,74 +99,15 @@ class _ScenariosScreenState extends ConsumerState<ScenariosScreen> {
   }
 
   void _navigateToScenarioDetail(Scenario scenario) {
-    // Navigate to scenario detail screen
-    // For now, show a simple info dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(scenario.name),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (scenario.description?.isNotEmpty == true) ...[
-              Text(
-                scenario.description ?? '',
-                style: TextStyle(color: Theme.of(context).colorScheme.secondary),
-              ),
-              const SizedBox(height: AppDimens.paddingM),
-            ],
-            _buildInfoRow(
-              'Status',
-              scenario.status.displayName,
-              scenario.status.color,
-            ),
-            const SizedBox(height: AppDimens.paddingS),
-            _buildInfoRow(
-              'Created',
-              _formatDate(scenario.createdAt),
-            Theme.of(context).colorScheme.secondary,
-            ),
-            const SizedBox(height: AppDimens.paddingS),
-            _buildInfoRow(
-              'Synced',
-              scenario.isSynced ? 'Yes' : 'No',
-              scenario.isSynced ? AppColors.success : AppColors.warning,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScenarioDetailScreen(scenarioId: scenario.id),
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value, Color valueColor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            color: Theme.of(context).colorScheme.secondary,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(color: valueColor),
-        ),
-      ],
-    );
-  }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
 
   @override
   Widget build(BuildContext context) {

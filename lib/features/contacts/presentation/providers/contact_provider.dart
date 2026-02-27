@@ -582,3 +582,9 @@ final contactsByTagProvider = FutureProvider.family<List<Contact>, String>((ref,
   final repository = ref.watch(contactRepositoryProvider);
   return repository.getContactsByTag(tag);
 });
+
+/// Filtered contacts WITHOUT a specific tag (e.g., non-members/visitors)
+final contactsWithoutTagProvider = FutureProvider.family<List<Contact>, String>((ref, tag) async {
+  final repository = ref.watch(contactRepositoryProvider);
+  return repository.getContactsWithoutTag(tag);
+});

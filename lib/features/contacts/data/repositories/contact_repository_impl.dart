@@ -54,6 +54,11 @@ class ContactRepositoryImpl implements ContactRepository {
   }
 
   @override
+  Future<List<Contact>> getContactsWithoutTag(String tag) async {
+    return _localDataSource.getContactsWithoutTag(tag);
+  }
+
+  @override
   Future<Contact> createContact(Contact contact) async {
     // Create locally first
     final createdContact = await _localDataSource.createContact(

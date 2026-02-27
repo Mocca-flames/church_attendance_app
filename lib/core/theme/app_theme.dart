@@ -5,219 +5,193 @@ import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
 
+
 class AppTheme {
   AppTheme._();
-
-  // ═══════════════════════════════════════════════════
-  // DARK THEME COLORS (Private for theme consistency)
-  // ═══════════════════════════════════════════════════
-
-  // Dark background colors
-  static const Color _darkBackgroundPrimary = Color(0xFF202020);
-  static const Color _darkBackgroundSecondary = Color(0xFF2C2C2C);
-  static const Color _darkSurface = Color(0xFF2C2C2C);
-  static const Color _darkSurfaceElevated = Color(0xFF383838);
-
-  // Dark text colors
-  static const Color _darkTextPrimary = Color(0xFFFFFFFF);
-  static const Color _darkTextSecondary = Color(0xFFC8C8C8);
-  static const Color _darkTextMuted = Color(0xFF8A8A8A);
-
-  // Dark border/divider
-  static const Color _darkBorder = Color(0xFF404040);
-  static const Color _darkDivider = Color(0xFF505050);
-
-  // Dark input background
-  static const Color _darkInputBackground = Color(0xFF1C1C1C);
 
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
 
-      // Color Scheme
       colorScheme: const ColorScheme(
         brightness: Brightness.light,
-        primary: AppColors.primary,
-        onPrimary: AppColors.onPrimary,
-        primaryContainer: AppColors.primaryContainer,
-        onPrimaryContainer: AppColors.primaryDark,
-        secondary: AppColors.secondary,
-        onSecondary: AppColors.onSecondary,
-        secondaryContainer: AppColors.secondaryContainer,
-        onSecondaryContainer: AppColors.secondaryDark,
-        surface: AppColors.surface,
-        onSurface: AppColors.neutral800,
-        surfaceContainerHighest: AppColors.backgroundSecondary,
-        onSurfaceVariant: AppColors.neutral600,
-        outline: AppColors.neutral300,
-        outlineVariant: AppColors.neutral200,
-        error: AppColors.error,
+        primary: Color(0xFF06B6D4), // Cyan 500
+        onPrimary: Colors.white,
+        primaryContainer: Color(0xFFCFFAFE), // Cyan 100
+        onPrimaryContainer: Color(0xFF164E63), // Cyan 900
+        secondary: Color(0xFF14B8A6), // Teal 500
+        onSecondary: Colors.white,
+        secondaryContainer: Color(0xFFCCFBF1), // Teal 100
+        onSecondaryContainer: Color(0xFF134E4A), // Teal 900
+        tertiary: Color(0xFF22C55E), // Green 500 - Success
+        onTertiary: Colors.white,
+        tertiaryContainer: Color(0xFFDCFCE7), // Green 100
+        onTertiaryContainer: Color(0xFF14532D), // Green 900
+        surface: Colors.white,
+        onSurface: Color(0xFF1F2937),
+        surfaceContainerHighest: Color(0xFFF1F5F9),
+        onSurfaceVariant: Color(0xFF64748B),
+        outline: Color(0xFFCBD5E1),
+        outlineVariant: Color(0xFFE2E8F0),
+        error: Color(0xFFEF4444),
         onError: Colors.white,
-        errorContainer: AppColors.errorLight,
-        onErrorContainer: AppColors.error,
+        errorContainer: Color(0xFFFEE2E2),
+        onErrorContainer: Color(0xFF991B1B),
         shadow: Color(0x1F000000),
         scrim: Color(0x99000000),
       ),
 
-      // Scaffold Background - Dynamic subtle gradient feel
-      scaffoldBackgroundColor: AppColors.backgroundPrimary,
+      // Scaffold with gradient background capability
+      scaffoldBackgroundColor: AppColors.backgroundGradientLight[0],
 
-      // App Bar
-      appBarTheme: const AppBarTheme(
+      // App Bar with cyan-tinted gradient
+      appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.backgroundPrimary,
-        foregroundColor: AppColors.neutral800,
+        backgroundColor: Colors.transparent,
+        foregroundColor: const Color(0xFF1F2937),
         centerTitle: false,
-        titleTextStyle: AppTypography.h3,
+        titleTextStyle: AppTypography.h3.copyWith(
+          color: const Color(0xFF0E7490), // Cyan 700
+        ),
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
 
-      // Cards - Soft, elevated, friendly
+      // Cards with subtle cyan-white gradient
       cardTheme: CardThemeData(
         elevation: 0,
-        color: AppColors.surface,
+        color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         margin: EdgeInsets.zero,
+        // Use Container with gradient in your widget:
+        // decoration: BoxDecoration(
+        //   gradient: LinearGradient(colors: AppColors.surfaceGradientLight),
+        //   borderRadius: BorderRadius.circular(20),
+        // ),
       ),
 
-      // Buttons
+      // Buttons with cyan gradients
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.onPrimary,
+          backgroundColor: const Color(0xFF06B6D4), // Cyan 500
+          foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: AppTypography.button,
+        ).copyWith(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return const Color(0xFF0891B2); // Cyan 600
+            }
+            return const Color(0xFF06B6D4);
+          }),
         ),
       ),
 
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.onPrimary,
+          backgroundColor: const Color(0xFF06B6D4),
+          foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.primary, width: 1.5),
+          foregroundColor: const Color(0xFF0891B2),
+          side: const BorderSide(color: Color(0xFF22D3EE), width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
 
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          textStyle: AppTypography.button.copyWith(fontWeight: FontWeight.w600),
-        ),
-      ),
-
-      // Input Decoration
+      // Input with cyan focus
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.neutral50,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(color: Color(0xFF06B6D4), width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: AppColors.errorBorderLight,
-            width: 1,
-          ),
+          borderSide: const BorderSide(color: Color(0xFFFCA5A5), width: 1),
         ),
-        hintStyle: AppTypography.bodyMedium.copyWith(
-          color: AppColors.neutral400,
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
         ),
+        hintStyle: AppTypography.bodyMedium.copyWith(color: const Color(0xFF94A3B8)),
       ),
 
-      // Chips
+      // Chips with cyan accent
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.neutral100,
-        selectedColor: AppColors.primaryContainer,
+        backgroundColor: const Color(0xFFF1F5F9),
+        selectedColor: const Color(0xFFCFFAFE),
         labelStyle: AppTypography.labelMedium,
+        secondaryLabelStyle: AppTypography.labelMedium.copyWith(
+          color: const Color(0xFF0891B2),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
 
-      // Dividers
-      dividerTheme: const DividerThemeData(
-        color: AppColors.neutral200,
-        thickness: 1,
-        space: 1,
-      ),
-
-      // Progress Indicators
+      // Progress with cyan gradient capability
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.primary,
-        linearTrackColor: AppColors.neutral200,
-        circularTrackColor: AppColors.neutral200,
+        color: Color(0xFF06B6D4),
+        linearTrackColor: Color(0xFFE2E8F0),
+        circularTrackColor: Color(0xFFE2E8F0),
       ),
 
-      // Sliders
+      // Sliders with cyan
       sliderTheme: SliderThemeData(
-        activeTrackColor: AppColors.primary,
-        inactiveTrackColor: AppColors.neutral200,
-        thumbColor: AppColors.primary,
-        overlayColor: AppColors.primary.withValues(alpha: 0.1),
+        activeTrackColor: const Color(0xFF06B6D4),
+        inactiveTrackColor: const Color(0xFFE2E8F0),
+        thumbColor: const Color(0xFF06B6D4),
+        overlayColor: const Color(0xFF06B6D4).withValues(alpha: 0.1),
         trackHeight: 4,
       ),
 
-      // Switches
+      // Switches with cyan
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary;
+            return const Color(0xFF06B6D4);
           }
-          return AppColors.neutral400;
+          return const Color(0xFF94A3B8);
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primaryContainer;
+            return const Color(0xFFCFFAFE);
           }
-          return AppColors.neutral200;
+          return const Color(0xFFE2E8F0);
         }),
       ),
 
-      // Bottom Navigation
+      // Bottom Navigation with cyan accent
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.neutral400,
+        backgroundColor: Colors.white,
+        selectedItemColor: Color(0xFF06B6D4),
+        unselectedItemColor: Color(0xFF94A3B8),
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
 
-      // Floating Action Button
+      // FAB with mint accent (matching AppColors.accentMint)
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.secondary,
+        backgroundColor: Color(0xFF10B981), // Mint
         foregroundColor: Colors.white,
         elevation: 4,
         shape: RoundedRectangleBorder(
@@ -225,61 +199,58 @@ class AppTheme {
         ),
       ),
 
-      // Dialogs
+      // Dialogs with gradient capability
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.white,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
 
-      // Bottom Sheets
+      // Bottom Sheets with cyan tint
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.white,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
       ),
 
-      // Snackbars
+      // Snackbars with cyan-dark
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.neutral800,
-        contentTextStyle: AppTypography.bodyMedium.copyWith(
-          color: Colors.white,
-        ),
+        backgroundColor: const Color(0xFF164E63),
+        contentTextStyle: AppTypography.bodyMedium.copyWith(color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════
-  // DARK THEME
-  // ═══════════════════════════════════════════════════
-
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
 
-      // Color Scheme - Dark appropriate colors
       colorScheme: const ColorScheme(
         brightness: Brightness.dark,
-        primary: AppColors.primary, // Keep vibrant for contrast
-        onPrimary: Colors.white,
-        primaryContainer: Color.fromARGB(255, 39, 39, 39), // Darker primary container
-        onPrimaryContainer: Color(0xFFE0F2FE), // Light text on dark
-        secondary: AppColors.secondary, // Keep vibrant
-        onSecondary: Colors.white,
-        secondaryContainer: Color(0xFF7C2D12), // Darker secondary container
-        onSecondaryContainer: Color(0xFFFFEDD5),
-        surface: _darkSurface,
-        onSurface: _darkTextPrimary,
-        surfaceContainerHighest: _darkBackgroundSecondary,
-        onSurfaceVariant: _darkTextSecondary,
-        outline: _darkBorder,
-        outlineVariant: _darkDivider,
-        error: AppColors.error,
+        primary: Color(0xFF22D3EE), // Cyan 400 (brighter for dark)
+        onPrimary: Color(0xFF082F49),
+        primaryContainer: Color(0xFF164E63), // Cyan 900
+        onPrimaryContainer: Color(0xFFCFFAFE),
+        secondary: Color(0xFF2DD4BF), // Teal 400
+        onSecondary: Color(0xFF042F2E),
+        secondaryContainer: Color(0xFF134E4A), // Teal 900
+        onSecondaryContainer: Color(0xFFCCFBF1),
+        tertiary: Color(0xFF4ADE80), // Green 400 - Success (brighter for dark)
+        onTertiary: Color(0xFF052E16),
+        tertiaryContainer: Color(0xFF14532D), // Green 900
+        onTertiaryContainer: Color(0xFFBBF7D0), // Green 200
+        surface: Color(0xFF2C2C2C),
+        onSurface: Colors.white,
+        surfaceContainerHighest: Color(0xFF383838),
+        onSurfaceVariant: Color(0xFFC8C8C8),
+        outline: Color(0xFF404040),
+        outlineVariant: Color(0xFF505050),
+        error: Color(0xFFEF4444),
         onError: Colors.white,
         errorContainer: Color(0xFF7F1D1D),
         onErrorContainer: Color(0xFFFEE2E2),
@@ -287,168 +258,155 @@ class AppTheme {
         scrim: Color(0xFF000000),
       ),
 
-      // Scaffold Background
-      scaffoldBackgroundColor: _darkBackgroundPrimary,
+      // Scaffold with dark cyan-grey gradient
+      scaffoldBackgroundColor: AppColors.backgroundGradientDark[0],
 
-      // App Bar
+      // App Bar with Win11 + cyan depth
       appBarTheme: const AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: _darkBackgroundPrimary,
-        foregroundColor: _darkTextPrimary,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
         centerTitle: false,
         titleTextStyle: TextStyle(
           fontFamily: AppTypography.fontFamily,
           fontSize: 20,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.2,
-          color: _darkTextPrimary,
+          color: Color(0xFF22D3EE), // Cyan 400
         ),
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
 
-      // Cards
+      // Cards with dark cyan-grey elevation
       cardTheme: CardThemeData(
         elevation: 0,
-        color: _darkSurface,
+        color: const Color(0xFF2C2C2C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         margin: EdgeInsets.zero,
       ),
 
-      // Buttons
+      // Buttons with electric cyan
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: AppColors.primary,
+          backgroundColor: const Color(0xFF06B6D4),
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: AppTypography.button,
+        ).copyWith(
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return const Color(0xFF0891B2);
+            }
+            return const Color(0xFF06B6D4);
+          }),
         ),
       ),
 
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: const Color(0xFF06B6D4),
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.primary, width: 1.5),
+          foregroundColor: const Color(0xFF22D3EE),
+          side: const BorderSide(color: Color(0xFF22D3EE), width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
 
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          textStyle: AppTypography.button.copyWith(fontWeight: FontWeight.w600),
-        ),
-      ),
-
-      // Input Decoration
+      // Input with cyan glow
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: _darkInputBackground,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
+        fillColor: const Color(0xFF1C1C1C),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.neutral300, width: 1.5)
+          borderSide: const BorderSide(color: Color(0xFF404040), width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.neutral300, width: 0.5)
+          borderSide: const BorderSide(color: Color(0xFF404040), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(color: Color(0xFF22D3EE), width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: AppColors.errorBorderDark,
-            width: 1,
-          ),
+          borderSide: const BorderSide(color: Color(0xFFF87171), width: 1),
         ),
-        hintStyle: AppTypography.bodyMedium.copyWith(color: _darkTextMuted),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
+        ),
+        hintStyle: AppTypography.bodyMedium.copyWith(color: const Color(0xFF8A8A8A)),
       ),
 
-      // Chips
+      // Chips with cyan container
       chipTheme: ChipThemeData(
-        backgroundColor: _darkSurfaceElevated,
-        selectedColor: const Color(0xFF0C4A6E),
-        labelStyle: AppTypography.labelMedium.copyWith(color: _darkTextPrimary),
+        backgroundColor: const Color(0xFF383838),
+        selectedColor: const Color(0xFF164E63),
+        labelStyle: AppTypography.labelMedium.copyWith(color: Colors.white),
+        secondaryLabelStyle: AppTypography.labelMedium.copyWith(
+          color: const Color(0xFF22D3EE),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
 
-      // Dividers
-      dividerTheme: const DividerThemeData(
-        color: _darkDivider,
-        thickness: 1,
-        space: 1,
-      ),
-
-      // Progress Indicators
+      // Progress with cyan
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.primary,
-        linearTrackColor: _darkBorder,
-        circularTrackColor: _darkBorder,
+        color: Color(0xFF22D3EE),
+        linearTrackColor: Color(0xFF404040),
+        circularTrackColor: Color(0xFF404040),
       ),
 
-      // Sliders
+      // Sliders with cyan
       sliderTheme: SliderThemeData(
-        activeTrackColor: AppColors.primary,
-        inactiveTrackColor: _darkBorder,
-        thumbColor: AppColors.primary,
-        overlayColor: AppColors.primary.withValues(alpha: 0.1),
+        activeTrackColor: const Color(0xFF22D3EE),
+        inactiveTrackColor: const Color(0xFF404040),
+        thumbColor: const Color(0xFF22D3EE),
+        overlayColor: const Color(0xFF22D3EE).withValues(alpha: 0.1),
         trackHeight: 4,
       ),
 
-      // Switches
+      // Switches with cyan
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary;
+            return const Color(0xFF22D3EE);
           }
-          return _darkTextMuted;
+          return const Color(0xFF8A8A8A);
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const Color(0xFF0C4A6E);
+            return const Color(0xFF164E63);
           }
-          return _darkBorder;
+          return const Color(0xFF404040);
         }),
       ),
 
-      // Bottom Navigation
+      // Bottom Navigation with cyan
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: _darkSurface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: _darkTextMuted,
+        backgroundColor: Color(0xFF2C2C2C),
+        selectedItemColor: Color(0xFF22D3EE),
+        unselectedItemColor: Color(0xFF8A8A8A),
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
 
-      // Floating Action Button
+      // FAB with mint accent (brighter for dark mode)
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.secondary,
+        backgroundColor: Color(0xFF34D399), // Mint 400 (brighter for dark)
         foregroundColor: Colors.white,
         elevation: 4,
         shape: RoundedRectangleBorder(
@@ -456,28 +414,26 @@ class AppTheme {
         ),
       ),
 
-      // Dialogs
+      // Dialogs with dark cyan-grey
       dialogTheme: DialogThemeData(
-        backgroundColor: _darkSurface,
+        backgroundColor: const Color(0xFF2C2C2C),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
 
-      // Bottom Sheets
+      // Bottom Sheets with cyan tint
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: _darkSurface,
+        backgroundColor: Color(0xFF2C2C2C),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
       ),
 
-      // Snackbars
+      // Snackbars with cyan-dark
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: _darkSurfaceElevated,
-        contentTextStyle: AppTypography.bodyMedium.copyWith(
-          color: _darkTextPrimary,
-        ),
+        backgroundColor: const Color(0xFF383838),
+        contentTextStyle: AppTypography.bodyMedium.copyWith(color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),

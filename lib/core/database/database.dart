@@ -76,6 +76,9 @@ class ScenarioTasks extends Table {
   IntColumn get completedBy => integer().nullable()();
   DateTimeColumn get completedAt => dateTime().nullable()();
   BoolColumn get isSynced => boolean().withDefault(const Constant(false))();
+  TextColumn get notes => text().nullable()();
+  DateTimeColumn get dueDate => dateTime().nullable()();
+  TextColumn get priority => text().withDefault(const Constant('medium'))();
 }
 
 @DataClassName('SyncQueueEntity')
@@ -168,6 +171,30 @@ class AppDatabase extends _$AppDatabase {
           ..where((t) =>
               t.metadata.contains('"$tag"') & t.isDeleted.equals(false)))
         .get();
+  }
+
+  /// Get contacts that do NOT have a specific tag (e.g., non-members/visitors)
+  /// Uses a custom SQL query to find contacts without the specified tag in their metadata JSON
+  Future<List<ContactEntity>> getContactsWithoutTag(String tag) {
+    final tagPattern = '%"$tag"%';
+    // This query finds contacts where metadata is NULL, empty, or doesn't contain the tag
+    return customSelect(
+      "SELECT * FROM contacts WHERE is_deleted = 0 AND (metadata IS NULL OR metadata = '' OR metadata NOT LIKE ?",
+      variables: [Variable.withString(tagPattern)],
+      readsFrom: {contacts},
+    ).map((row) => ContactEntity(
+      id: row.read<int>('id'),
+      serverId: row.readNullable<int>('server_id'),
+      name: row.readNullable<String>('name'),
+      phone: row.read<String>('phone'),
+      status: row.read<String>('status'),
+      optOutSms: row.read<bool>('opt_out_sms'),
+      optOutWhatsapp: row.read<bool>('opt_out_whatsapp'),
+      metadata: row.readNullable<String>('metadata'),
+      createdAt: row.read<DateTime>('created_at'),
+      isSynced: row.read<bool>('is_synced'),
+      isDeleted: row.read<bool>('is_deleted'),
+    )).get();
   }
 
   /// Searches contacts by name or phone number.
@@ -429,6 +456,9 @@ class AppDatabase extends _$AppDatabase {
 
   Future<bool> updateScenarioTask(ScenarioTasksCompanion task) =>
       update(scenarioTasks).replace(task);
+
+  Future<int> deleteScenarioTask(int taskId) =>
+      (delete(scenarioTasks)..where((t) => t.id.equals(taskId))).go();
 
   Future<int> completeTask(int taskId, int completedBy) {
     return (update(scenarioTasks)..where((t) => t.id.equals(taskId))).write(

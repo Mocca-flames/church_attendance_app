@@ -225,13 +225,29 @@ class ScenarioRepositoryImpl implements ScenarioRepository {
     required int contactId,
     required String phone,
     String? name,
+    String? notes,
+    DateTime? dueDate,
+    String priority = 'medium',
   }) async {
     return _localDataSource.createTask(
       scenarioId: scenarioId,
       contactId: contactId,
       phone: phone,
       name: name,
+      notes: notes,
+      dueDate: dueDate,
+      priority: priority,
     );
+  }
+
+  @override
+  Future<ScenarioTask> updateTask(ScenarioTask task) async {
+    return _localDataSource.updateTask(task);
+  }
+
+  @override
+  Future<void> deleteTask(int taskId) async {
+    await _localDataSource.deleteTask(taskId);
   }
 
   @override

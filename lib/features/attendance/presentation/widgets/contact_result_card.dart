@@ -156,19 +156,19 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(bottom: 8),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50,
+                      color: Theme.of(context).colorScheme.tertiaryContainer,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.green.shade200),
+                      border: Border.all(color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.location_on, color: Colors.green.shade700, size: 20),
+                        Icon(Icons.location_on, color: Theme.of(context).colorScheme.tertiary, size: 20),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Location: $_location',
                             style: TextStyle(
-                              color: Colors.green.shade700,
+                              color: Theme.of(context).colorScheme.tertiary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -211,9 +211,9 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
                   Navigator.pop(context, true);
                 } else {
                   logger.d('Form validation failed, showing snackbar');
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Please enter a valid name.'),
-                    backgroundColor: Colors.red,
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: const Text('Please enter a valid name.'),
+                    backgroundColor: Theme.of(context).colorScheme.error,
                   ));
                 }
                 logger.d('=== FilledButton onPressed END ===');
@@ -246,12 +246,9 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
         logger.d('Calling createContactAndRecordAttendance...');
         // ✅ FIRST: Optimistically update UI SYNCHRONOUSLY before async work
         ref.read(markedContactIdsProvider.notifier).add(_contact.id);
-        try{
-          await HapticFeedback.mediumImpact();
-          logger.d('Haptic feedback successful');
-        } catch (e) {
-          logger.w('Haptic feedback failed: $e');
-        }
+        
+        await HapticFeedback.mediumImpact();
+       
         
         // Then perform the actual database operation
         final updateResult = await ref
@@ -277,20 +274,20 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
         if (updateResult.error != null) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Error: ${updateResult.error}'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ));
         } else {
           HapticFeedback.mediumImpact();
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Row(children: [
-              const Icon(Icons.check_circle, color: Colors.white),
+              Icon(Icons.check_circle, color: Theme.of(context).colorScheme.onTertiary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text('Updated & Marked: $name',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onTertiary)),
               ),
             ]),
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ));
@@ -305,7 +302,7 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Failed to update: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ));
         }
       }
@@ -369,14 +366,14 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Row(children: [
-              const Icon(Icons.check_circle, color: Colors.white),
+              Icon(Icons.check_circle, color: Theme.of(context).colorScheme.onTertiary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text('Marked: $_displayName',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onTertiary)),
               ),
             ]),
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ));
@@ -396,11 +393,11 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Row(children: [
-            const Icon(Icons.error, color: Colors.white),
+            Icon(Icons.error, color: Theme.of(context).colorScheme.onError),
             const SizedBox(width: 8),
             Expanded(child: Text(e.message)),
           ]),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
         ));
@@ -417,7 +414,7 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Failed to mark attendance: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ));
       }
     }
@@ -433,26 +430,26 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
       margin: const EdgeInsets.symmetric(
           horizontal: AppDimens.paddingM, vertical: AppDimens.paddingS),
       decoration: BoxDecoration(
-        color: isAlreadyMarked ? Colors.green.shade50 : null,
+        color: isAlreadyMarked ? Theme.of(context).colorScheme.tertiaryContainer : null,
         borderRadius: BorderRadius.circular(12),
         border: isAlreadyMarked
-            ? Border.all(color: Colors.green.shade200, width: 1.5)
+            ? Border.all(color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.3), width: 1.5)
             : null,
       ),
       child: Card(
         margin: EdgeInsets.zero,
-        color: isAlreadyMarked ? Colors.green.shade50 : null,
+        color: isAlreadyMarked ? Theme.of(context).colorScheme.tertiaryContainer : null,
         child: ListTile(
           leading: CircleAvatar(
             backgroundColor: isAlreadyMarked
-                ? Colors.green.withValues(alpha: 0.2)
+                ? Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.15)
                 : _isMember
                     ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
-                    : Colors.grey.withValues(alpha: 0.1),
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
             child: isAlreadyMarked
-                ? const Icon(Icons.check, color: Colors.green)
+                ? Icon(Icons.check, color: Theme.of(context).colorScheme.tertiary)
                 : Icon(Icons.person,
-                    color: _isMember ? Theme.of(context).colorScheme.primary : Colors.grey),
+                    color: _isMember ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           title: Row(
             children: [
@@ -463,7 +460,7 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
                     fontWeight: _isMember ? FontWeight.bold : FontWeight.normal,
                     decoration:
                         isAlreadyMarked ? TextDecoration.lineThrough : null,
-                    color: isAlreadyMarked ? Colors.grey.shade600 : null,
+                    color: isAlreadyMarked ? Theme.of(context).colorScheme.onSurfaceVariant : null,
                   ),
                 ),
               ),
@@ -476,11 +473,11 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
                     color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
+                  child: Text(
                     'MEMBER',
                     style: TextStyle(
                         fontSize: 10,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onPrimary,
                         fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -491,11 +488,11 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
             _contact.phone,
             style: TextStyle(
                 decoration: isAlreadyMarked ? TextDecoration.lineThrough : null,
-                color: isAlreadyMarked ? Colors.grey.shade500 : null),
+                color: isAlreadyMarked ? Theme.of(context).colorScheme.onSurfaceVariant : null),
           ),
           trailing: isAlreadyMarked
-              ? const Icon(Icons.check_circle, color: Colors.green, size: 28)
-              : const Icon(Icons.touch_app, color: Colors.grey),
+              ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.tertiary, size: 28)
+              : Icon(Icons.touch_app, color: Theme.of(context).colorScheme.onSurfaceVariant),
           onTap: isAlreadyMarked
               ? null
               : _needsUpdate
@@ -513,23 +510,30 @@ class ContactResultCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Use theme-aware skeleton colors that work in both light and dark modes
+    final skeletonColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08);
+    final skeletonSubtleColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05);
+    
     return Card(
       margin: const EdgeInsets.symmetric(
           horizontal: AppDimens.paddingM, vertical: AppDimens.paddingS),
       child: ListTile(
-        leading: const CircleAvatar(child: Icon(Icons.person)),
+        leading: CircleAvatar(
+          backgroundColor: skeletonSubtleColor,
+          child: Icon(Icons.person, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ),
         title: Container(
           height: 16,
           width: 120,
           decoration: BoxDecoration(
-              color: Colors.grey[300], borderRadius: BorderRadius.circular(4)),
+              color: skeletonColor, borderRadius: BorderRadius.circular(4)),
         ),
         subtitle: Container(
           height: 12,
           width: 80,
           margin: const EdgeInsets.only(top: 4),
           decoration: BoxDecoration(
-              color: Colors.grey[200], borderRadius: BorderRadius.circular(4)),
+              color: skeletonSubtleColor, borderRadius: BorderRadius.circular(4)),
         ),
       ),
     );
