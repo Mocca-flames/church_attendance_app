@@ -10,6 +10,8 @@ import 'package:church_attendance_app/features/scenarios/presentation/widgets/ad
 import 'package:church_attendance_app/features/scenarios/presentation/widgets/task_detail_sheet.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 
+import '../../../../core/widgets/gradient_background.dart';
+
 enum TaskFilter { all, pending, completed }
 
 class ScenarioDetailScreen extends ConsumerStatefulWidget {
@@ -73,45 +75,48 @@ class _ScenarioDetailScreenState extends ConsumerState<ScenarioDetailScreen> {
     final totalCount = tasks.length;
     final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(scenario?.name ?? 'Scenario'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        actions: [
-          if (scenario != null)
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'delete') {
-                  _confirmDelete(scenario);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete Scenario'),
-                    ],
+    return DynamicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text(scenario?.name ?? 'Scenario'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+          actions: [
+            if (scenario != null)
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'delete') {
+                    _confirmDelete(scenario);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Delete Scenario'),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-        ],
+                ],
+              ),
+          ],
+        ),
+        body: scenarioState.isLoading && scenario == null
+            ? const Center(child: CircularProgressIndicator())
+            : _buildBody(scenario, filteredTasks, completedCount, totalCount, progress),
+        floatingActionButton: scenario != null
+            ? FloatingActionButton(
+                onPressed: () => _showAddTaskDialog(scenario),
+                backgroundColor: AppColors.scenariosColor,
+                foregroundColor: Colors.white,
+                child: const Icon(Icons.add),
+              )
+            : null,
       ),
-      body: scenarioState.isLoading && scenario == null
-          ? const Center(child: CircularProgressIndicator())
-          : _buildBody(scenario, filteredTasks, completedCount, totalCount, progress),
-      floatingActionButton: scenario != null
-          ? FloatingActionButton(
-              onPressed: () => _showAddTaskDialog(scenario),
-              backgroundColor: AppColors.scenariosColor,
-              foregroundColor: Colors.white,
-              child: const Icon(Icons.add),
-            )
-          : null,
     );
   }
   

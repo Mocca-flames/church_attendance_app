@@ -179,10 +179,11 @@ class AppColors {
   // LIGHT THEME GRADIENTS (Modern light grey + Cyan)
   // ═══════════════════════════════════════════════════
 
-  /// Primary background gradient - Soft cool grey to subtle cyan tint
+  /// Primary background gradient - Soft white to subtle cyan tint
+  /// More distinct colors for visible gradient effect
   static const List<Color> backgroundGradientLight = [
-    Color(0xFFF8FAFC), // Cool grey base
-    Color(0xFFF0F9FF), // Subtle cyan tint
+    Color(0xFFFFFFFF), // Pure white at top
+    Color(0xFFECFDF5), // Very subtle mint-cyan tint at bottom
   ];
 
   /// Header/AppBar gradient - Light grey to soft cyan

@@ -10,6 +10,8 @@ import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf
 import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/widgets/gradient_background.dart';
+import 'package:church_attendance_app/core/widgets/lottie_loading_widget.dart';
 
 /// Static debug log manager - stores last 100 log lines globally
 class DebugLogManager {
@@ -127,118 +129,76 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final user = ref.watch(currentUserProvider);
     final syncStatus = ref.watch(syncStatusProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title:  Text(AppStrings.appName, style: Theme.of(context).textTheme.titleLarge),
-        backgroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.5),
-        foregroundColor: Colors.white,
-        actions: [
-          // Sync status indicator in app bar
-          const Padding(
-            padding: EdgeInsets.only(right: AppDimens.paddingS),
-            child: SyncStatusIndicatorCompact(),
-          ),
-          // User avatar with role badge
-          if (user != null)
-            Padding(
-              padding: const EdgeInsets.only(right: AppDimens.paddingS),
-              child: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Text(
-                  user.email.isNotEmpty ? user.email[0].toUpperCase() : '?',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+    return DynamicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title:  Text(AppStrings.appName, style: Theme.of(context).textTheme.titleLarge),
+          backgroundColor: Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.5),
+          foregroundColor: Colors.white,
+          actions: [
+            // Sync status indicator in app bar
+            const Padding(
+              padding: EdgeInsets.only(right: AppDimens.paddingS),
+              child: SyncStatusIndicatorCompact(),
             ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimens.paddingM),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Welcome card
-                _buildWelcomeCard(context, user),
-                const SizedBox(height: AppDimens.paddingL),
-
-                // Offline data status card
-                _buildOfflineDataCard(context, ref),
-                const SizedBox(height: AppDimens.paddingL),
-
-                // Debug log viewer - shows VCF and other logs
-                _buildDebugLogViewer(context, ref),
-              ],
-            ),
-          ),
-          // Sync overlay - shown while syncing
-          // But VCF Import Overlay should take priority
-          if (syncStatus.isSyncing)
-            Container(
-              color: Colors.black38,  // More transparent so VCF overlay shows through
-              child: Center(
-                child: Card(
-                  margin: const EdgeInsets.all(AppDimens.paddingXL),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimens.paddingXL),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (syncStatus.totalProgress > 0) ...[
-                          // Show progress bar for known total
-                          SizedBox(
-                            width: 200,
-                            child: LinearProgressIndicator(
-                              value: syncStatus.progressPercent / 100,
-                              minHeight: 8,
-                            ),
-                          ),
-                          const SizedBox(height: AppDimens.paddingM),
-                          Text(
-                            '${syncStatus.currentProgress} / ${syncStatus.totalProgress}',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          if (syncStatus.progressMessage != null) ...[
-                            const SizedBox(height: AppDimens.paddingS),
-                            Text(
-                              syncStatus.progressMessage!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSecondaryFixed.withValues(alpha: 0.3)),textAlign: TextAlign.center,
-                              ),
-                              
-                            
-                          ],
-                        ] else ...[
-                          // Show indeterminate progress
-                          const CircularProgressIndicator(),
-                          const SizedBox(height: AppDimens.paddingM),
-                          Text(
-                            'Syncing contacts...',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ],
-                        const SizedBox(height: AppDimens.paddingS),
-                        Text(
-                          'Please wait',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSecondary.withValues(alpha: 0.3),
-                          ),
-                        ),
-                      ],
+            // User avatar with role badge
+            if (user != null)
+              Padding(
+                padding: const EdgeInsets.only(right: AppDimens.paddingS),
+                child: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    user.email.isNotEmpty ? user.email[0].toUpperCase() : '?',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+            
+              padding: const EdgeInsets.all(AppDimens.paddingM),
+              child: Column(
+            
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Welcome card
+                  _buildWelcomeCard(context, user),
+                  const SizedBox(height: AppDimens.paddingL),
+      
+                  // Offline data status card
+                  _buildOfflineDataCard(context, ref),
+                  const SizedBox(height: AppDimens.paddingL),
+      
+                  // Debug log viewer - shows VCF and other logs
+                  _buildDebugLogViewer(context, ref),
+                ],
+              ),
             ),
-          // VCF Import Overlay - ALWAYS on top, even during sync
-          const VcfImportOverlay(),
-          // VCF Import Status Card - shows progress/results on home screen
-          const VcfImportStatusCard(),
-        ],
+            // Sync overlay - shown while syncing
+            // But VCF Import Overlay should take priority
+            if (syncStatus.isSyncing)
+              LottieLoadingOverlay(
+                message: 'Syncing contacts...',
+                progressText: syncStatus.totalProgress > 0
+                    ? '${syncStatus.currentProgress} / ${syncStatus.totalProgress}'
+                    : null,
+                progressValue: syncStatus.totalProgress > 0
+                    ? syncStatus.progressPercent / 100
+                    : null,
+              ),
+            // VCF Import Overlay - ALWAYS on top, even during sync
+            const VcfImportOverlay(),
+            // VCF Import Status Card - shows progress/results on home screen
+            const VcfImportStatusCard(),
+          ],
+        ),
       ),
     );
   }

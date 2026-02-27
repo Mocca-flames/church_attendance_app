@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/gradient_background.dart';
 
 /// Contact List Screen with search, filter, and CRUD operations.
 class ContactListScreen extends ConsumerStatefulWidget {
@@ -250,126 +251,128 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
     final tagFilterState = ref.watch(contactTagFilterProvider);
     final contactsAsync = ref.watch(contactListProvider);
 
-    return Scaffold(
-      
-      appBar: AppBar(
-      
-        shape: const Border(bottom: BorderSide(color: Colors.white10, width: 1)),
-        title: _isSearchExpanded
-            ? TextField(
-                controller: _searchController,
-                focusNode: _searchFocusNode,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-                decoration: InputDecoration(
-                  hintText: 'Search contacts...',
-                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
-                  
-                  contentPadding: EdgeInsets.zero,
-                  isDense: true,
-                  
-                ).applyDefaults(Theme.of(context).inputDecorationTheme.copyWith(
-                  border: InputBorder.none,
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(width: 1.2, color: Colors.white.withValues(alpha: 0.2)),
-                  ),
-                  focusedBorder: InputBorder.none,
-                )),
-                onChanged: _onSearchChanged,
-              )
-            : const Text(
-                'Contacts',
-                style: TextStyle(fontWeight: FontWeight.w600),
+    return DynamicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+        
+          shape: const Border(bottom: BorderSide(color: Colors.white10, width: 1)),
+          title: _isSearchExpanded
+              ? TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  decoration: InputDecoration(
+                    hintText: 'Search contacts...',
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                    
+                    contentPadding: EdgeInsets.zero,
+                    isDense: true,
+                    
+                  ).applyDefaults(Theme.of(context).inputDecorationTheme.copyWith(
+                    border: InputBorder.none,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(width: 1.2, color: Colors.white.withValues(alpha: 0.2)),
+                    ),
+                    focusedBorder: InputBorder.none,
+                  )),
+                  onChanged: _onSearchChanged,
+                )
+              : const Text(
+                  'Contacts',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+          centerTitle: false,
+          foregroundColor: Colors.white,
+          actions: [
+            if (!_isSearchExpanded)
+              IconButton(
+                icon: const Icon(Icons.search),
+                tooltip: 'Search',
+                onPressed: () {
+                  if (_searchController.text.isNotEmpty) {
+                    _clearSearch();
+                  }
+                  setState(() {
+                    _isSearchExpanded = true;
+                  });
+                  _searchFocusNode.requestFocus();
+                },
               ),
-        centerTitle: false,
-        foregroundColor: Colors.white,
-        actions: [
-          if (!_isSearchExpanded)
-            IconButton(
-              icon: const Icon(Icons.search),
-              tooltip: 'Search',
-              onPressed: () {
-                if (_searchController.text.isNotEmpty) {
+            if (_isSearchExpanded)
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    _isSearchExpanded = false;
+                  });
+                  _searchFocusNode.unfocus();
                   _clearSearch();
+                },
+              ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+              ),
+              color: Theme.of(context).colorScheme.onPrimary,
+              onSelected: (value) {
+                if (value == 'import_vcf') {
+                  _importVcfFile();
                 }
-                setState(() {
-                  _isSearchExpanded = true;
-                });
-                _searchFocusNode.requestFocus();
               },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'import_vcf',
+                  child: Row(
+                    children: [
+                      Icon(Icons.upload_file_outlined, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 12),
+                      Text('Import VCF File', style: TextStyle(color: Theme.of(context).colorScheme.surfaceBright)),
+                    ],
+                  ),  
+                ),
+              ],
             ),
-          if (_isSearchExpanded)
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                setState(() {
-                  _isSearchExpanded = false;
-                });
-                _searchFocusNode.unfocus();
-                _clearSearch();
-              },
-            ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
-            ),
-            color: Theme.of(context).colorScheme.onPrimary,
-            onSelected: (value) {
-              if (value == 'import_vcf') {
-                _importVcfFile();
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'import_vcf',
-                child: Row(
-                  children: [
-                    Icon(Icons.upload_file_outlined, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 12),
-                    Text('Import VCF File', style: TextStyle(color: Theme.of(context).colorScheme.surfaceBright)),
-                  ],
-                ),  
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Filter Chips Section
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              border: Border(
-                bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
-              ),
-            ),
-            child: _buildFilterChips(tagFilterState.selectedTag),
-          ),
-          
-          // Contact List
-          Expanded(
-            child: _buildContactList(
-              contactsAsync: contactsAsync,
-              searchState: searchState,
-              selectedTag: tagFilterState.selectedTag,
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'contacts_fab',
-        onPressed: _navigateToCreate,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.neutral500,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.deviceActive, width: 1.5),
+          ],
         ),
-        child: const Icon(Icons.add),
+        body: Column(
+          children: [
+            // Filter Chips Section
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+                ),
+              ),
+              child: _buildFilterChips(tagFilterState.selectedTag),
+            ),
+            
+            // Contact List
+            Expanded(
+              child: _buildContactList(
+                contactsAsync: contactsAsync,
+                searchState: searchState,
+                selectedTag: tagFilterState.selectedTag,
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          heroTag: 'contacts_fab',
+          onPressed: _navigateToCreate,
+          elevation: 0,
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.neutral500,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: AppColors.deviceActive, width: 1.5),
+          ),
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

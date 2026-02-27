@@ -7,6 +7,7 @@ import 'package:church_attendance_app/features/auth/presentation/providers/auth_
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/widgets/gradient_background.dart';
 import '../../../attendance/presentation/screens/attendance_history_screen.dart';
 
 /// More screen with navigation options for Scenarios and Settings.
@@ -23,91 +24,94 @@ class MoreScreen extends ConsumerWidget {
     );
   }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.more)),
-
-      body: ListView(
-        children: [
-          const SizedBox(height: AppDimens.paddingM),
-          // Dark Mode toggle
-          SwitchListTile(
-            secondary: Icon(
-              isDarkMode ? Icons.dark_mode : Icons.light_mode,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            title: const Text('Dark Mode'),
-            subtitle: Text(isDarkMode ? 'Enabled' : 'Disabled'),
-            value: isDarkMode,
-            onChanged: (value) {
-              ref.read(themeModeProvider.notifier).toggleThemeMode();
-            },
-          ),
-          // Attendance History navigation option
-          const Divider(),
-          // Scenarios navigation option
-          ListTile(
-            leading: Icon(
-              Icons.lock_clock,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            title: const Text(AppStrings.scenarios),
-            subtitle: const Text('Manage tasks and follow-ups'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              AppRoute.scenarios.navigate(context);
-            },
-          ),
-          const Divider(),
-          // Scenarios navigation option
-          ListTile(
-            leading: Icon(
-              Icons.checklist,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            title: const Text(AppStrings.scenarios),
-            subtitle: const Text('Manage tasks and follow-ups'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              AppRoute.scenarios.navigate(context);
-            },
-          ),
-          const Divider(),
-          // Settings navigation option
-          ListTile(
-            leading: const Icon(Icons.settings, color: AppColors.primary),
-            title: const Text('History'),
-            subtitle: const Text('View attendance history'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              navigateToHistory();
-            },
-          ),
-          const Divider(),
-          const SizedBox(height: AppDimens.paddingXL),
-          // Logout button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                await ref.read(authProvider.notifier).logout();
-                if (context.mounted) {
-                  AppRoute.login.navigateAndRemoveUntil(context);
-                }
+    return DynamicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(title: const Text(AppStrings.more)),
+      
+        body: ListView(
+          children: [
+            const SizedBox(height: AppDimens.paddingM),
+            // Dark Mode toggle
+            SwitchListTile(
+              secondary: Icon(
+                isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: const Text('Dark Mode'),
+              subtitle: Text(isDarkMode ? 'Enabled' : 'Disabled'),
+              value: isDarkMode,
+              onChanged: (value) {
+                ref.read(themeModeProvider.notifier).toggleThemeMode();
               },
-              icon: const Icon(Icons.logout),
-              label: const Text(AppStrings.logout),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimens.paddingL,
-                  vertical: AppDimens.paddingM,
+            ),
+            // Attendance History navigation option
+            const Divider(),
+            // Scenarios navigation option
+            ListTile(
+              leading: Icon(
+                Icons.lock_clock,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: const Text(AppStrings.scenarios),
+              subtitle: const Text('Manage tasks and follow-ups'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                AppRoute.scenarios.navigate(context);
+              },
+            ),
+            const Divider(),
+            // Scenarios navigation option
+            ListTile(
+              leading: Icon(
+                Icons.checklist,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: const Text(AppStrings.scenarios),
+              subtitle: const Text('Manage tasks and follow-ups'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                AppRoute.scenarios.navigate(context);
+              },
+            ),
+            const Divider(),
+            // Settings navigation option
+            ListTile(
+              leading: const Icon(Icons.settings, color: AppColors.primary),
+              title: const Text('History'),
+              subtitle: const Text('View attendance history'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                navigateToHistory();
+              },
+            ),
+            const Divider(),
+            const SizedBox(height: AppDimens.paddingXL),
+            // Logout button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.paddingM),
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await ref.read(authProvider.notifier).logout();
+                  if (context.mounted) {
+                    AppRoute.login.navigateAndRemoveUntil(context);
+                  }
+                },
+                icon: const Icon(Icons.logout),
+                label: const Text(AppStrings.logout),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.paddingL,
+                    vertical: AppDimens.paddingM,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: AppDimens.paddingXL),
-        ],
+            const SizedBox(height: AppDimens.paddingXL),
+          ],
+        ),
       ),
     );
   }

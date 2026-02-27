@@ -4,6 +4,8 @@ import 'package:church_attendance_app/features/attendance/presentation/providers
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/widgets/gradient_background.dart';
+
 /// Attendance history screen showing past attendance records.
 ///
 /// Features:
@@ -118,52 +120,55 @@ class _AttendanceHistoryScreenState
       }
     });
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Attendance History'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showServiceTypeFilter,
-            tooltip: 'Filter by service type',
-          ),
-          IconButton(
-            icon: state.isDownloadingPdf 
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Icon(Icons.download),
-            onPressed: state.isDownloadingPdf
-                ? null
-                : () => ref.read(attendanceHistoryProvider.notifier).downloadPdf(),
-            tooltip: 'Export to PDF',
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Date range selector
-          _buildDateRangeSelector(state),
-
-          // Summary cards
-          if (!state.isLoading) _buildSummaryCards(state),
-
-          // Attendance list
-          Expanded(
-            child: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : state.attendances.isEmpty
-                    ? _buildEmptyState()
-                    : _buildAttendanceList(state),
-          ),
-        ],
+    return DynamicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text('Attendance History'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.filter_list),
+              onPressed: _showServiceTypeFilter,
+              tooltip: 'Filter by service type',
+            ),
+            IconButton(
+              icon: state.isDownloadingPdf 
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.download),
+              onPressed: state.isDownloadingPdf
+                  ? null
+                  : () => ref.read(attendanceHistoryProvider.notifier).downloadPdf(),
+              tooltip: 'Export to PDF',
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            // Date range selector
+            _buildDateRangeSelector(state),
+      
+            // Summary cards
+            if (!state.isLoading) _buildSummaryCards(state),
+      
+            // Attendance list
+            Expanded(
+              child: state.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : state.attendances.isEmpty
+                      ? _buildEmptyState()
+                      : _buildAttendanceList(state),
+            ),
+          ],
+        ),
       ),
     );
   }

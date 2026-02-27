@@ -10,6 +10,7 @@ import 'package:church_attendance_app/features/scenarios/presentation/providers/
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/widgets/gradient_background.dart';
 
 /// Scenarios screen with list view, pull-to-refresh, and create functionality.
 class ScenariosScreen extends ConsumerStatefulWidget {
@@ -113,18 +114,21 @@ class _ScenariosScreenState extends ConsumerState<ScenariosScreen> {
   Widget build(BuildContext context) {
     final scenarioState = ref.watch(scenarioNotifierProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.scenarios),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: _buildBody(scenarioState),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showCreateScenarioDialog,
-        backgroundColor: AppColors.scenariosColor,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
+    return DynamicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text(AppStrings.scenarios),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+        ),
+        body: _buildBody(scenarioState),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _showCreateScenarioDialog,
+          backgroundColor: AppColors.scenariosColor,
+          foregroundColor: Colors.white,
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

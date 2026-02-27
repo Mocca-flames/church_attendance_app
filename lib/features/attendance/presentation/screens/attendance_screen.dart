@@ -1,4 +1,5 @@
 import 'package:church_attendance_app/core/constants/app_constants.dart';
+import 'package:church_attendance_app/core/widgets/gradient_background.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_date_provider.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/contact_search_provider.dart';
@@ -179,8 +180,9 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   Widget build(BuildContext context) {
     final searchState = ref.watch(contactSearchProvider);
 
-    return Scaffold(
-      
+    return DynamicBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
@@ -298,6 +300,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         onPressed: _navigateToScanner,
         icon: const Icon(Icons.qr_code_scanner),
         label: const Text('Scan QR'),
+      ),
       ),
     );
   }

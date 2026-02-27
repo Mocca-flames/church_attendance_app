@@ -46,6 +46,7 @@ dependencies:
   logger: ^2.0.2
   file_picker: ^8.0.0+1
   vcf_dart: ^1.0.3
+  lottie: ^3.3.2
 
 dev_dependencies:
   flutter_test:
@@ -63,3 +64,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/
+    - assets/lottie/
