@@ -37,6 +37,7 @@ dependencies:
   # UI
   flutter_svg: ^2.0.10
   intl: ^0.20.2
+  fl_chart: ^0.69.0
 
   # Storage
   shared_preferences: ^2.5.4        # latest shared_preferences :contentReference[oaicite:6]{index=6}

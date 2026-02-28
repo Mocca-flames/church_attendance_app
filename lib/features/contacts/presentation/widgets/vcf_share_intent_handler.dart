@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/vcf_share_intent_provider.dart';
-import 'package:church_attendance_app/features/home/presentation/screens/home_screen.dart' show DebugLogManager;
+import 'package:church_attendance_app/core/utils/debug_log_manager.dart';
 
 /// Widget that listens for VCF share intents and tracks state.
 /// UI is now handled by VcfImportOverlay in home_screen.dart

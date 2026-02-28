@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/vcf_share_intent_provider.dart';
-import 'package:church_attendance_app/features/home/presentation/screens/home_screen.dart' show DebugLogManager;
+import 'package:church_attendance_app/core/utils/debug_log_manager.dart';
 
 /// Full-screen VCF import overlay that shows when a VCF is received.
 /// This avoids conflicts with other dialogs like the sync overlay.
