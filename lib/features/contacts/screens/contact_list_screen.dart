@@ -249,7 +249,8 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
   Widget build(BuildContext context) {
     final searchState = ref.watch(contactSearchProvider);
     final tagFilterState = ref.watch(contactTagFilterProvider);
-    final contactsAsync = ref.watch(contactListProvider);
+    final contacts = ref.watch(contactsListProvider);
+    final contactState = ref.watch(contactNotifierProvider);
 
     return DynamicBackground(
       child: Scaffold(
@@ -354,7 +355,8 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
             // Contact List
             Expanded(
               child: _buildContactList(
-                contactsAsync: contactsAsync,
+                contacts: contacts,
+                contactState: contactState,
                 searchState: searchState,
                 selectedTag: tagFilterState.selectedTag,
               ),
@@ -456,7 +458,8 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
   }
 
   Widget _buildContactList({
-    required AsyncValue<List<Contact>> contactsAsync,
+    required List<Contact> contacts,
+    required ContactState contactState,
     required ContactSearchState searchState,
     String? selectedTag,
   }) {
@@ -465,44 +468,48 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
       return _buildSearchResults(searchState);
     }
 
-    return contactsAsync.when(
-      data: (contacts) {
-        final filteredContacts = selectedTag != null
-            ? contacts.where((c) => c.hasTag(selectedTag) && !c.isDeleted).toList()
-            : contacts.where((c) => !c.isDeleted).toList();
-
-        if (filteredContacts.isEmpty) {
-          return _buildEmptyState(selectedTag != null);
-        }
-
-        return RefreshIndicator(
-          key: _refreshKey,
-          onRefresh: _handleRefresh,
-          color: AppColors.primary,
-          backgroundColor: Colors.white,
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimens.paddingS, 
-              AppDimens.paddingS, 
-              AppDimens.paddingS, 
-              40
-            ),
-            itemCount: filteredContacts.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final contact = filteredContacts[index];
-              return ContactCard(
-                contact: contact,
-                onTap: () => _navigateToDetail(contact),
-              );
-            },
-          ),
-        );
-      },
-      loading: () => const Center(
+    // Check for loading state from ContactNotifier
+    if (contactState.isLoading && contacts.isEmpty) {
+      return const Center(
         child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+
+    // Check for error state
+    if (contactState.error != null && contacts.isEmpty) {
+      return _buildErrorState(contactState.error!);
+    }
+
+    final filteredContacts = selectedTag != null
+        ? contacts.where((c) => c.hasTag(selectedTag) && !c.isDeleted).toList()
+        : contacts.where((c) => !c.isDeleted).toList();
+
+    if (filteredContacts.isEmpty) {
+      return _buildEmptyState(selectedTag != null);
+    }
+
+    return RefreshIndicator(
+      key: _refreshKey,
+      onRefresh: _handleRefresh,
+      color: AppColors.primary,
+      backgroundColor: Colors.white,
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimens.paddingS, 
+          AppDimens.paddingS, 
+          AppDimens.paddingS, 
+          40
+        ),
+        itemCount: filteredContacts.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 8),
+        itemBuilder: (context, index) {
+          final contact = filteredContacts[index];
+          return ContactCard(
+            contact: contact,
+            onTap: () => _navigateToDetail(contact),
+          );
+        },
       ),
-      error: (error, stack) => _buildErrorState(error.toString()),
     );
   }
 

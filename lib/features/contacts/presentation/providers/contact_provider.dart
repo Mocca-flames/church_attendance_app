@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:church_attendance_app/features/contacts/data/datasources/contact_local_datasource.dart';
 import 'package:church_attendance_app/features/contacts/data/datasources/contact_remote_datasource.dart';
@@ -100,6 +101,11 @@ class ContactNotifier extends Notifier<ContactState> {
     return const ContactState();
   }
 
+  /// Trigger haptic feedback for successful operations.
+  void _triggerSuccessHaptic() {
+    HapticFeedback.mediumImpact();
+  }
+
   /// Load a contact by ID
   Future<Contact?> loadContact(int id) async {
     state = state.copyWith(isLoading: true, clearError: true);
@@ -157,6 +163,9 @@ class ContactNotifier extends Notifier<ContactState> {
       clearError: true,
     );
 
+    // Trigger haptic feedback for instant tactile confirmation
+    _triggerSuccessHaptic();
+
     // Run actual repository call in background
     _repository.createContact(optimisticContact).then((created) {
       // On success: replace optimistic contact with actual data from DB
@@ -174,9 +183,10 @@ class ContactNotifier extends Notifier<ContactState> {
       );
     }).catchError((error) {
       // On error: show subtle sync error but keep optimistic data in UI
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
         isSyncing: false,
-        syncError: 'Sync pending: $error',
+        syncError: 'Sync pending: $errorMessage',
       );
     });
 
@@ -206,6 +216,9 @@ class ContactNotifier extends Notifier<ContactState> {
       clearError: true,
     );
 
+    // Trigger haptic feedback for instant tactile confirmation
+    _triggerSuccessHaptic();
+
     // Run repository call in background
     _repository.updateContact(contact).then((updated) {
       // On success: update with actual data from DB
@@ -224,9 +237,10 @@ class ContactNotifier extends Notifier<ContactState> {
     }).catchError((error) {
       // On error: show subtle sync error but keep optimistic data in UI
       // Optionally: rollback to previous contact
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
         isSyncing: false,
-        syncError: 'Sync pending: $error',
+        syncError: 'Sync pending: $errorMessage',
         selectedContact: previousContact,
         recentContacts: previousContacts,
       );
@@ -252,6 +266,9 @@ class ContactNotifier extends Notifier<ContactState> {
       clearError: true,
     );
 
+    // Trigger haptic feedback for instant tactile confirmation
+    _triggerSuccessHaptic();
+
     // Run repository call in background
     final completer = Completer<bool>();
     
@@ -263,9 +280,10 @@ class ContactNotifier extends Notifier<ContactState> {
       completer.complete(true);
     }).catchError((error) {
       // On error: show subtle sync error and restore the contact
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
         isSyncing: false,
-        syncError: 'Sync pending: $error',
+        syncError: 'Sync pending: $errorMessage',
         recentContacts: deletedContact != null 
             ? [...previousContacts] 
             : state.recentContacts,
@@ -314,6 +332,9 @@ class ContactNotifier extends Notifier<ContactState> {
       clearError: true,
     );
 
+    // Trigger haptic feedback for instant tactile confirmation
+    _triggerSuccessHaptic();
+
     // Run repository call in background
     _repository.addTagsToContact(contactId, tags).then((updated) {
       // On success: update with actual data from DB
@@ -331,9 +352,10 @@ class ContactNotifier extends Notifier<ContactState> {
       );
     }).catchError((error) {
       // On error: show subtle sync error but keep optimistic data in UI
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
         isSyncing: false,
-        syncError: 'Sync pending: $error',
+        syncError: 'Sync pending: $errorMessage',
         selectedContact: previousContact,
       );
     });
@@ -378,6 +400,9 @@ class ContactNotifier extends Notifier<ContactState> {
       clearError: true,
     );
 
+    // Trigger haptic feedback for instant tactile confirmation
+    _triggerSuccessHaptic();
+
     // Run repository call in background
     _repository.removeTagsFromContact(contactId, tags).then((updated) {
       // On success: update with actual data from DB
@@ -395,9 +420,10 @@ class ContactNotifier extends Notifier<ContactState> {
       );
     }).catchError((error) {
       // On error: show subtle sync error but keep optimistic data in UI
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
         isSyncing: false,
-        syncError: 'Sync pending: $error',
+        syncError: 'Sync pending: $errorMessage',
         selectedContact: previousContact,
       );
     });
@@ -405,25 +431,37 @@ class ContactNotifier extends Notifier<ContactState> {
     return optimisticContact;
   }
 
-  /// Import contacts from a VCF file
+  /// Import contacts from a VCF file with Optimistic UI
+  /// Returns immediately with optimistic progress state while processing in background
   Future<Map<String, dynamic>?> importVcfFile(String filePath) async {
-    state = state.copyWith(isImportingVcf: true, clearError: true, clearVcfImportResult: true);
-    
-    try {
-      final result = await _repository.importVcfFile(filePath);
-      
+    // Immediately update UI with optimistic importing state
+    state = state.copyWith(
+      isImportingVcf: true,
+      clearError: true,
+      clearVcfImportResult: true,
+    );
+
+    // Trigger haptic feedback for instant tactile confirmation
+    _triggerSuccessHaptic();
+
+    // Run actual import in background
+    _repository.importVcfFile(filePath).then((result) {
+      // On success: update with actual result
       state = state.copyWith(
         isImportingVcf: false,
         vcfImportResult: result,
       );
-      return result;
-    } catch (e) {
+    }).catchError((error) {
+      // On error: show subtle sync error but keep UI responsive
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
         isImportingVcf: false,
-        error: e.toString(),
+        syncError: 'Sync pending: $errorMessage',
       );
-      return null;
-    }
+    });
+
+    // Return null immediately (import continues in background)
+    return null;
   }
 
   /// Clear error
@@ -451,6 +489,25 @@ final contactNotifierProvider = NotifierProvider<ContactNotifier, ContactState>(
 final contactListProvider = FutureProvider<List<Contact>>((ref) async {
   final repository = ref.watch(contactRepositoryProvider);
   return repository.getAllContacts();
+});
+
+/// Reactive provider that watches ContactNotifier for instant UI updates
+/// This ensures the UI updates immediately when contacts are created/updated/deleted
+final contactsListProvider = Provider<List<Contact>>((ref) {
+  final contactState = ref.watch(contactNotifierProvider);
+  final contactsAsync = ref.watch(contactListProvider);
+  
+  // If we have recentContacts from ContactNotifier, use them (instant updates)
+  if (contactState.recentContacts.isNotEmpty) {
+    return contactState.recentContacts;
+  }
+  
+  // Otherwise fall back to the async list
+  return contactsAsync.when(
+    data: (contacts) => contacts,
+    loading: () => <Contact>[],
+    error: (_, _) => <Contact>[],
+  );
 });
 
 /// Contact by ID provider

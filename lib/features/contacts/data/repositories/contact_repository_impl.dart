@@ -138,9 +138,12 @@ class ContactRepositoryImpl implements ContactRepository {
         }
       } catch (e) {
         // Add to sync queue for later retry
+        // Fetch current serverId from contact
+        final contact = await _localDataSource.getContactById(updatedContact.id);
         await _localDataSource.addToSyncQueue(
           contactId: updatedContact.id,
           action: 'update',
+          serverId: contact?.serverId, // Pass serverId for proper sync
           data: {
             'name': updatedContact.name,
             'phone': updatedContact.phone,
@@ -150,9 +153,12 @@ class ContactRepositoryImpl implements ContactRepository {
       }
     } else {
       // Offline - add to sync queue
+      // Fetch current serverId from contact
+      final contact = await _localDataSource.getContactById(updatedContact.id);
       await _localDataSource.addToSyncQueue(
         contactId: updatedContact.id,
         action: 'update',
+        serverId: contact?.serverId, // Pass serverId for proper sync
         data: {
           'name': updatedContact.name,
           'phone': updatedContact.phone,
@@ -183,6 +189,7 @@ class ContactRepositoryImpl implements ContactRepository {
         await _localDataSource.addToSyncQueue(
           contactId: id,
           action: 'delete',
+          serverId: contact?.serverId, // Pass serverId for proper sync
           data: {},
         );
       }
@@ -191,6 +198,7 @@ class ContactRepositoryImpl implements ContactRepository {
       await _localDataSource.addToSyncQueue(
         contactId: id,
         action: 'delete',
+        serverId: contact?.serverId, // Pass serverId for proper sync
         data: {},
       );
     }
@@ -217,17 +225,21 @@ class ContactRepositoryImpl implements ContactRepository {
         }
       } catch (e) {
         // Add to sync queue for later retry
+        final contact = await _localDataSource.getContactById(contactId);
         await _localDataSource.addToSyncQueue(
           contactId: contactId,
           action: 'add_tags',
+          serverId: contact?.serverId,
           data: {'tags': tags},
         );
       }
     } else {
       // Offline - add to sync queue
+      final contact = await _localDataSource.getContactById(contactId);
       await _localDataSource.addToSyncQueue(
         contactId: contactId,
         action: 'add_tags',
+        serverId: contact?.serverId,
         data: {'tags': tags},
       );
     }
@@ -251,17 +263,21 @@ class ContactRepositoryImpl implements ContactRepository {
         }
       } catch (e) {
         // Add to sync queue for later retry
+        final contact = await _localDataSource.getContactById(contactId);
         await _localDataSource.addToSyncQueue(
           contactId: contactId,
           action: 'remove_tags',
+          serverId: contact?.serverId,
           data: {'tags': tags},
         );
       }
     } else {
       // Offline - add to sync queue
+      final contact = await _localDataSource.getContactById(contactId);
       await _localDataSource.addToSyncQueue(
         contactId: contactId,
         action: 'remove_tags',
+        serverId: contact?.serverId,
         data: {'tags': tags},
       );
     }

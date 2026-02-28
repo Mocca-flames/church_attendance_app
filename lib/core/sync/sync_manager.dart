@@ -105,6 +105,9 @@ class SyncManager {
   Future<void> _syncItem(SyncQueueEntity item) async {
     Map<String, dynamic> data;
     
+    // DEBUG: Log the sync item details for debugging null ID issue
+    _logger.d('DEBUG SYNC: Processing item - entityType=${item.entityType}, action=${item.action}, localId=${item.localId}, serverId=${item.serverId}');
+    
     try {
       data = _parseJsonData(item.data);
     } catch (e) {
@@ -202,6 +205,23 @@ class SyncManager {
     int? serverId,
     Map<String, dynamic> data,
   ) async {
+    // DEBUG: Log serverId handling for debugging null ID issue
+    _logger.d('DEBUG SYNC CONTACT: action=$action, localId=$localId, serverId=$serverId (type: ${serverId?.runtimeType})');
+    
+    // Validate serverId is not null for update/delete operations
+    if ((action == 'update' || action == 'delete') && serverId == null) {
+      _logger.e('BUG DETECTED: Attempting to $action contact with null serverId! localId=$localId. Fetching serverId from database...');
+      // Try to recover by fetching serverId from the contact table
+      final contact = await _db.getContactById(localId);
+      if (contact != null && contact.serverId != null) {
+        _logger.i('Recovered serverId=${contact.serverId} from local database for contact $localId');
+        serverId = contact.serverId;
+      } else {
+        _logger.e('CRITICAL: Cannot recover serverId for contact $localId. Skipping sync.');
+        return;
+      }
+    }
+    
     switch (action) {
       case 'create':
         // Check if contact with same phone already exists
@@ -293,8 +313,11 @@ class SyncManager {
         break;
 
       case 'update':
+        // DEBUG: Log the URL being constructed
+        final updateUrl = ApiConstants.contactById.replaceAll('{id}', serverId.toString());
+        _logger.d('DEBUG: Sending PUT to $updateUrl with data: $data');
         await _dioClient.put(
-          ApiConstants.contactById.replaceAll('{id}', serverId.toString()),
+          updateUrl,
           data: data,
         );
         await _db.updateContactFields(
@@ -304,8 +327,11 @@ class SyncManager {
         break;
 
       case 'delete':
+        // DEBUG: Log the URL being constructed
+        final deleteUrl = ApiConstants.contactById.replaceAll('{id}', serverId.toString());
+        _logger.d('DEBUG: Sending DELETE to $deleteUrl');
         await _dioClient.delete(
-          ApiConstants.contactById.replaceAll('{id}', serverId.toString()),
+          deleteUrl,
         );
         await _db.deleteContact(localId);
         break;

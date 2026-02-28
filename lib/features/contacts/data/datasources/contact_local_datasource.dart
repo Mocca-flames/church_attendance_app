@@ -238,15 +238,18 @@ class ContactLocalDataSource {
   }
 
   /// Add contact to sync queue for server sync
+  /// [serverId] is required for update/delete actions to know which server record to update
   Future<void> addToSyncQueue({
     required int contactId,
     required String action,
     Map<String, dynamic>? data,
+    int? serverId, // NEW: Include serverId for update/delete operations
   }) async {
     final companion = SyncQueueCompanion(
       entityType: const drift.Value('contact'),
       action: drift.Value(action),
       localId: drift.Value(contactId),
+      serverId: serverId != null ? drift.Value(serverId) : const drift.Value.absent(),
       data: drift.Value(jsonEncode(data ?? {})),
       status: const drift.Value('pending'),
     );
