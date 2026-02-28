@@ -350,18 +350,37 @@ class SyncManager {
   ) async {
     // Attendance is create-only
     if (action == 'create') {
-      final response = await _dioClient.post(
-        ApiConstants.attendanceRecord,
-        data: data,
-      );
-      final newServerId = response.data['id'];
-      await _db.updateAttendance(
-        localId,
-        AttendancesCompanion(
-          serverId: Value(newServerId),
-          isSynced: const Value(true),
-        ),
-      );
+      try {
+        final response = await _dioClient.post(
+          ApiConstants.attendanceRecord,
+          data: data,
+        );
+        final newServerId = response.data['id'];
+        await _db.updateAttendance(
+          localId,
+          AttendancesCompanion(
+            serverId: Value(newServerId),
+            isSynced: const Value(true),
+          ),
+        );
+      } on ApiException catch (e) {
+        // If server returns 400 with "already recorded", mark as synced
+        // since the record already exists on the server
+        final message = e.message.toLowerCase();
+        if (message.contains('already recorded') || 
+            message.contains('already exists') || 
+            message.contains('duplicate')) {
+          _logger.w('Attendance already exists on server for localId=$localId, marking as synced');
+          await _db.updateAttendance(
+            localId,
+            const AttendancesCompanion(
+              isSynced: Value(true),
+            ),
+          );
+          return; // Don't rethrow - this is a successful resolution
+        }
+        rethrow; // Re-throw other errors
+      }
     }
   }
 

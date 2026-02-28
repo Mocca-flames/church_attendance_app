@@ -24,6 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  GradientButtonState _buttonState = GradientButtonState.idle;
 
   @override
   void dispose() {
@@ -52,6 +53,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (success && mounted) {
         AppRoute.main.navigateReplacement(context);
+      } else if (!success && mounted) {
+        // Login failed - show error state
+        setState(() {
+          _buttonState = GradientButtonState.error;
+        });
+        // Revert to idle after 2 seconds
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            setState(() {
+              _buttonState = GradientButtonState.idle;
+            });
+          }
+        });
       }
     }
   }
@@ -67,6 +81,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authError = ref.watch(authErrorProvider);
     final isLoading = ref.watch(authLoadingProvider);
     final isAuthenticated = ref.watch(authProvider).isAuthenticated;
+    
+    // Determine button state
+    GradientButtonState buttonState;
+    if (_buttonState == GradientButtonState.error) {
+      buttonState = GradientButtonState.error;
+    } else if (isAuthenticated) {
+      buttonState = GradientButtonState.success;
+    } else if (isLoading) {
+      buttonState = GradientButtonState.loading;
+    } else {
+      buttonState = GradientButtonState.idle;
+    }
     
 
     // Listen for auth state changes and navigate to home if authenticated
@@ -133,31 +159,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: AppDimens.paddingL),
 
                   // Login button
-                  if (isAuthenticated)
-                    Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Colors.green, Colors.green],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    )
-                  else
-                    GradientButton(
-                      onPressed: _handleLogin,
-                      isLoading: isLoading,
-                      isFullWidth: true,
-                      text: AppStrings.signIn,
-                    ),
+                  GradientButton(
+                    onPressed: _handleLogin,
+                    state: buttonState,
+                    isFullWidth: true,
+                    text: AppStrings.signIn,
+                    errorText: 'Login Failed',
+                  ),
                   const SizedBox(height: AppDimens.paddingL),
 
                   // Register link

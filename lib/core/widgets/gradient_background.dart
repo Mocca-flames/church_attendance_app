@@ -104,10 +104,10 @@ class DynamicBackground extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: RadialGradient(
-                  center: const Alignment(1.0, -0.9), // top-right
+                  center: const Alignment(0.3, -0.2), // top-right
                   radius: 0.8,
                   colors: [
-                    const Color(0xFFF0F9FF).withValues(alpha:0.5), // Very light cyan
+                    const Color.fromARGB(255, 213, 235, 250).withValues(alpha:0.5), // Very light cyan
                     Colors.transparent,
                   ],
                   stops: const [0.0, 1.0],

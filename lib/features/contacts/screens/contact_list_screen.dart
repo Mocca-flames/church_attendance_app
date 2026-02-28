@@ -262,18 +262,18 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
               ? TextField(
                   controller: _searchController,
                   focusNode: _searchFocusNode,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                   decoration: InputDecoration(
                     hintText: 'Search contacts...',
-                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                    hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
                     
                     contentPadding: EdgeInsets.zero,
                     isDense: true,
                     
                   ).applyDefaults(Theme.of(context).inputDecorationTheme.copyWith(
                     border: InputBorder.none,
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(width: 1.2, color: Colors.white.withValues(alpha: 0.2)),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide(width: 1.2, color: Colors.transparent),
                     ),
                     focusedBorder: InputBorder.none,
                   )),
@@ -284,7 +284,7 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
           centerTitle: false,
-          foregroundColor: Colors.white,
+          foregroundColor: Theme.of(context).colorScheme.onSurface,
           actions: [
             if (!_isSearchExpanded)
               IconButton(

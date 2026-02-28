@@ -497,4 +497,19 @@ class AttendanceLocalDataSource {
     }
     return counts;
   }
+
+  /// Marks all unsynced attendance records as synced.
+  /// This is useful for fixing records that got stuck due to duplicate sync errors.
+  Future<int> markAllAsSynced() async {
+    // Get all unsynced attendances
+    final unsynced = await getUnsyncedAttendances();
+    
+    int updated = 0;
+    for (final record in unsynced) {
+      await markAsSynced(record.id, 0);
+      updated++;
+    }
+    
+    return updated;
+  }
 }

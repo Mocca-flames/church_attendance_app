@@ -83,6 +83,13 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
         if (e.isNetworkError) {
           await _localDataSource.addToSyncQueue(attendance);
         }
+        // Check if server indicates attendance already exists - this means
+        // the record was already synced, so mark as synced locally
+        else if (_isDuplicateAttendanceError(e.message)) {
+          // Server already has this record - mark as synced with server ID 0
+          // (we don't have the actual server ID, but that's OK since it exists)
+          await _localDataSource.markAsSynced(attendance.id, 0);
+        }
         // Return local record anyway
         return attendance;
       } catch (e) {
@@ -359,6 +366,14 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
           record.id,
           serverRecord.serverId ?? 0,
         );
+      } on AttendanceRemoteException catch (e) {
+        // If server indicates attendance already exists, mark as synced
+        if (_isDuplicateAttendanceError(e.message)) {
+          await _localDataSource.markAsSynced(record.id, 0);
+          continue;
+        }
+        // Skip this record if it fails, will retry next time
+        continue;
       } catch (e) {
         // Skip this record if it fails, will retry next time
         continue;
@@ -426,5 +441,14 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     } catch (e) {
       return false;
     }
+  }
+
+  /// Checks if the error message indicates attendance was already recorded.
+  /// Server returns 400 with message like "Attendance already recorded for this contact on 2026-02-27 for specialEvent"
+  bool _isDuplicateAttendanceError(String message) {
+    final lowerMessage = message.toLowerCase();
+    return lowerMessage.contains('already recorded') ||
+           lowerMessage.contains('already exists') ||
+           lowerMessage.contains('duplicate');
   }
 }
