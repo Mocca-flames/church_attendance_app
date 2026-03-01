@@ -4,8 +4,11 @@ import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/theme/app_theme.dart';
 import 'package:church_attendance_app/core/navigation/app_navigator.dart';
 import 'package:church_attendance_app/core/presentation/providers/theme_mode_provider.dart';
+import 'package:church_attendance_app/core/services/location_service.dart';
+import 'package:church_attendance_app/core/services/location_preferences_service.dart';
 import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf_share_intent_handler.dart';
 import 'package:church_attendance_app/features/splash/presentation/screens/splash_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,10 +16,14 @@ void main() async {
   // Initialize database
   final database = AppDatabase();
   
+  // Initialize shared preferences
+  final prefs = await SharedPreferences.getInstance();
+  
   runApp(
     ProviderScope(
       overrides: [
         databaseProvider.overrideWithValue(database),
+        sharedPreferencesProvider.overrideWithValue(prefs),
       ],
       child: const ChurchAttendanceApp(),
     ),
@@ -26,6 +33,23 @@ void main() async {
 // Global database provider
 final databaseProvider = Provider<AppDatabase>((ref) {
   throw UnimplementedError('Database must be overridden in main()');
+});
+
+// Shared preferences provider
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError('SharedPreferences must be overridden in main()');
+});
+
+// Location service provider
+final locationServiceProvider = Provider<LocationService>((ref) {
+  final database = ref.watch(databaseProvider);
+  return LocationService(database);
+});
+
+// Location preferences service provider
+final locationPreferencesProvider = Provider<LocationPreferencesService>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return LocationPreferencesService(prefs);
 });
 
 /// Main application widget.

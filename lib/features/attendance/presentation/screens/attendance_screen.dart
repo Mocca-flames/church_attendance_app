@@ -42,6 +42,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   /// Queries the DB and writes results into [markedContactIdsProvider].
   /// Every widget watching that provider rebuilds automatically — no manual
   /// setState juggling needed.
+  /// 
+  /// Also refreshes search results if there's an active search query.
   Future<void> _loadMarkedContacts() async {
     final database = ref.read(databaseProvider);
     
@@ -61,6 +63,12 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         .toSet();
 
     ref.read(markedContactIdsProvider.notifier).setAll(markedIds);
+    
+    // Also refresh search results if there's an active search query
+    final currentQuery = ref.read(contactSearchProvider).query;
+    if (currentQuery.isNotEmpty) {
+      ref.read(contactSearchProvider.notifier).search(currentQuery);
+    }
   }
 
   void _navigateToScanner() {
@@ -101,6 +109,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Contact saved and attendance recorded!')));
       }
+      // Reload marked contacts and refresh search results
       _loadMarkedContacts();
     }
   }

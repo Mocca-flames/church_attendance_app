@@ -96,6 +96,19 @@ class SyncQueue extends Table {
   DateTimeColumn get lastAttemptAt => dateTime().nullable()();
 }
 
+/// Table for storing church locations/areas
+/// Allows dynamic addition of locations without code changes
+@DataClassName('LocationEntity')
+class Locations extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get value => text().withLength(min: 1, max: 50)(); // Unique identifier (e.g., 'kanana')
+  TextColumn get displayName => text().withLength(min: 1, max: 100)(); // Display name (e.g., 'Kanana')
+  IntColumn get colorValue => integer().withDefault(const Constant(0xFFF44336))(); // Color as int
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))(); // For manual sorting
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
 // ==============================================================================
 // DATABASE CLASS
 // ==============================================================================
@@ -121,12 +134,13 @@ class AttendanceWithContact {
   Scenarios,
   ScenarioTasks,
   SyncQueue,
+  Locations,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
@@ -137,16 +151,35 @@ class AppDatabase extends _$AppDatabase {
         await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts(name)');
         await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_phone ON contacts(phone)');
         await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_is_deleted ON contacts(is_deleted)');
+        // Seed default locations
+        await _seedDefaultLocations();
       },
       onUpgrade: (Migrator m, int from, int to) async {
         // Add indexes on upgrade if they don't exist
         if (from < 2) {
+          await m.create(locations);
           await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts(name)');
           await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_phone ON contacts(phone)');
           await customStatement('CREATE INDEX IF NOT EXISTS idx_contacts_is_deleted ON contacts(is_deleted)');
+          await _seedDefaultLocations();
         }
       },
     );
+  }
+
+  /// Seed default locations on first run
+  Future<void> _seedDefaultLocations() async {
+    final defaultLocations = [
+      LocationsCompanion.insert(value: 'kanana', displayName: 'Kanana', colorValue: const Value(0xFFF44336), sortOrder: const Value(1)),
+      LocationsCompanion.insert(value: 'majaneng', displayName: 'Majaneng', colorValue: const Value(0xFFE91E63), sortOrder: const Value(2)),
+      LocationsCompanion.insert(value: 'mashemong', displayName: 'Mashemong', colorValue: const Value(0xFF9C27B0), sortOrder: const Value(3)),
+      LocationsCompanion.insert(value: 'soshanguve', displayName: 'Soshanguve', colorValue: const Value(0xFF3F51B5), sortOrder: const Value(4)),
+      LocationsCompanion.insert(value: 'kekana', displayName: 'Kekana', colorValue: const Value(0xFF2196F3), sortOrder: const Value(5)),
+    ];
+
+    for (final location in defaultLocations) {
+      await into(locations).insert(location, mode: InsertMode.insertOrIgnore);
+    }
   }
 
   // ==========================================================================
@@ -202,15 +235,31 @@ class AppDatabase extends _$AppDatabase {
   Future<List<ContactEntity>> searchContacts(String query) {
     final trimmedQuery = query.trim();
     
-    // Normalize phone number if it looks like a South African number
+    // Normalize phone number if it looks like a complete South African number
     final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(trimmedQuery);
+    
+    // Extract all digits from query for partial phone matching
+    final digitsOnly = trimmedQuery.replaceAll(RegExp(r'\D'), '');
+    
+    // Handle prefix variations: +27, 27, 0 - strip those prefixes for partial matching
+    String searchDigits = digitsOnly;
+    if (searchDigits.startsWith('27')) {
+      searchDigits = searchDigits.substring(2); // Remove 27 prefix
+    } else if (searchDigits.startsWith('0')) {
+      searchDigits = searchDigits.substring(1); // Remove 0 prefix
+    }
     
     return (select(contacts)
           ..where((t) {
             if (normalizedPhone != null) {
-              // If query is a valid phone number, search by normalized phone
+              // If query is a valid complete phone number, search by normalized phone
               // Also search by name for partial matches
               return (t.name.contains(trimmedQuery) | t.phone.contains(normalizedPhone)) &
+                  t.isDeleted.equals(false);
+            } else if (searchDigits.isNotEmpty) {
+              // Partial phone number search - search by name or digits in phone field
+              // This handles queries like 082, 27, +27123, etc.
+              return (t.name.contains(trimmedQuery) | t.phone.contains(searchDigits)) &
                   t.isDeleted.equals(false);
             } else {
               // Regular search by name or phone
@@ -520,6 +569,51 @@ class AppDatabase extends _$AppDatabase {
   Future<int> insertUser(UsersCompanion user) => into(users).insert(user);
 
   Future<int> clearUsers() => delete(users).go();
+
+  // ==========================================================================
+  // LOCATION QUERIES
+  // ==========================================================================
+
+  /// Get all active locations ordered by sort order
+  Future<List<LocationEntity>> getAllLocations() {
+    return (select(locations)
+          ..where((t) => t.isActive.equals(true))
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .get();
+  }
+
+  /// Get location by value (e.g., 'kanana')
+  Future<LocationEntity?> getLocationByValue(String value) {
+    return (select(locations)..where((t) => t.value.equals(value)))
+        .getSingleOrNull();
+  }
+
+  /// Get location by ID
+  Future<LocationEntity?> getLocationById(int id) {
+    return (select(locations)..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  /// Insert a new location
+  Future<int> insertLocation(LocationsCompanion location) {
+    return into(locations).insert(location);
+  }
+
+  /// Update a location
+  Future<bool> updateLocation(LocationEntity location) {
+    return update(locations).replace(location);
+  }
+
+  /// Delete (deactivate) a location
+  Future<int> deactivateLocation(int id) {
+    return (update(locations)..where((t) => t.id.equals(id)))
+        .write(const LocationsCompanion(isActive: Value(false)));
+  }
+
+  /// Check if location exists by value
+  Future<bool> locationExists(String value) async {
+    final location = await getLocationByValue(value);
+    return location != null;
+  }
 }
 
 // ==============================================================================

@@ -257,7 +257,7 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
               phone: _contact.phone,
               name: name,
               serviceType: _serviceType,
-              serviceDate: DateTime.now(),
+              serviceDate: _serviceDate,
               recordedBy: _recordedBy,
               isMember: isMember,
               location: location,
