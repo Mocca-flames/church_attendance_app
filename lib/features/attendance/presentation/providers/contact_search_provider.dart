@@ -82,6 +82,25 @@ class ContactSearchNotifier extends Notifier<ContactSearchState> {
     _debounceTimer?.cancel();
     state = const ContactSearchState();
   }
+
+  /// Adds a contact to search results optimistically.
+  /// Used when a new contact is created to update UI immediately.
+  void addOptimisticContact(ContactEntity contact) {
+    // Check if contact already exists in results
+    final exists = state.results.any((c) => c.id == contact.id);
+    if (!exists) {
+      state = state.copyWith(
+        results: [contact, ...state.results],
+      );
+    }
+  }
+
+  /// Removes an optimistic contact from search results on error.
+  void removeOptimisticContact(int contactId) {
+    state = state.copyWith(
+      results: state.results.where((c) => c.id != contactId).toList(),
+    );
+  }
 }
 
 /// Provider for contact search functionality.

@@ -27,10 +27,12 @@ final contactRepositoryProvider = Provider<ContactRepository>((ref) {
   final localDataSource = ref.watch(contactLocalDataSourceProvider);
   final remoteDataSource = ref.watch(contactRemoteDataSourceProvider);
   final dioClient = ref.watch(dioClientProvider);
+  final locationService = ref.watch(locationServiceProvider);
   return ContactRepositoryImpl(
     localDataSource: localDataSource,
     remoteDataSource: remoteDataSource,
     dioClient: dioClient,
+    locationService: locationService,
   );
 });
 

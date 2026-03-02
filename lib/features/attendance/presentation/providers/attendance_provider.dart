@@ -80,12 +80,16 @@ class CreateContactAttendanceResult {
   final bool contactSaved;
   final bool alreadyMarked;
   final String? error;
+  final String? createdPhone;
+  final String? createdName;
 
   CreateContactAttendanceResult({
     this.attendance,
     this.contactSaved = false,
     this.alreadyMarked = false,
     this.error,
+    this.createdPhone,
+    this.createdName,
   });
 }
 
@@ -288,10 +292,12 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     // Trigger haptic feedback for instant tactile confirmation
     _triggerSuccessHaptic();
 
-    // Return optimistic result immediately
+    // Return optimistic result immediately with contact info
     final optimisticResult = CreateContactAttendanceResult(
       attendance: optimisticAttendance,
       contactSaved: true,
+      createdPhone: phone,
+      createdName: name,
     );
 
     // Run actual operations in background

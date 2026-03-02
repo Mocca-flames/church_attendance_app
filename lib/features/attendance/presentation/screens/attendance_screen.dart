@@ -83,7 +83,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   }
 
   
-  void _handleNewContact(String scannedPhone) async {
+  Future<void> _handleNewContact(String scannedPhone) async {
     final currentUser = ref.read(currentUserProvider);
     final userId = currentUser?.id ?? 1;
 
@@ -105,7 +105,34 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           content: Text('Error: ${result.error}'),
           backgroundColor: Theme.of(context).colorScheme.error,
         ));
+        // Remove optimistic contact if it was added
+        if (result.createdPhone != null) {
+          final database = ref.read(databaseProvider);
+          final contact = await database.getContactByPhone(result.createdPhone!);
+          if (contact != null) {
+            ref.read(contactSearchProvider.notifier).removeOptimisticContact(contact.id);
+          }
+        }
       } else {
+        // Success - contact saved and attendance recorded!
+        // Add the new contact to search results optimistically for instant UI update
+        if (result.createdPhone != null && result.createdName != null) {
+          // Get the contact from database to get the real ID
+          final database = ref.read(databaseProvider);
+          final savedContact = await database.getContactByPhone(result.createdPhone!);
+          
+          if (savedContact != null) {
+            // Add contact to search results optimistically
+            ref.read(contactSearchProvider.notifier).addOptimisticContact(savedContact);
+            
+            // Mark as attended using the version counter pattern for immediate UI rebuild
+            ref.read(markedContactIdsProvider.notifier).add(savedContact.id);
+          }
+        }
+        
+        // Check if widget is still mounted before using context
+        if (!mounted) return;
+        
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Contact saved and attendance recorded!')));
       }
