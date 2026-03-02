@@ -46,9 +46,10 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   /// Queries the DB and writes results into [markedContactIdsProvider].
   /// Every widget watching that provider rebuilds automatically — no manual
   /// setState juggling needed.
-  /// 
-  /// Also refreshes search results if there's an active search query.
-  Future<void> _loadMarkedContacts() async {
+  ///
+  /// Also refreshes search results if there's an active search query,
+  /// unless [refreshSearch] is set to false.
+  Future<void> _loadMarkedContacts({bool refreshSearch = true}) async {
     final database = ref.read(databaseProvider);
     
     // Use the effective service date for loading marked contacts
@@ -69,9 +70,12 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     ref.read(markedContactIdsProvider.notifier).setAll(markedIds);
     
     // Also refresh search results if there's an active search query
-    final currentQuery = ref.read(contactSearchProvider).query;
-    if (currentQuery.isNotEmpty) {
-      ref.read(contactSearchProvider.notifier).search(currentQuery);
+    // Skip if refreshSearch is false (e.g., when marking attendance)
+    if (refreshSearch) {
+      final currentQuery = ref.read(contactSearchProvider).query;
+      if (currentQuery.isNotEmpty) {
+        ref.read(contactSearchProvider.notifier).search(currentQuery);
+      }
     }
   }
 
@@ -473,7 +477,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           serviceType: _currentServiceType,
           serviceDate: _currentServiceDate,
           recordedBy: userId, // Use the authenticated user's ID
-          onAttendanceMarked: _loadMarkedContacts,
+          // Don't refresh search when marking attendance to prevent UI flicker
+          onAttendanceMarked: () => _loadMarkedContacts(refreshSearch: false),
         );
       },
     );
