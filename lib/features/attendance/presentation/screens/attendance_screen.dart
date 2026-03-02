@@ -1,4 +1,5 @@
 import 'package:church_attendance_app/core/constants/app_constants.dart';
+import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 import 'package:church_attendance_app/core/widgets/gradient_background.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_date_provider.dart';
@@ -34,8 +35,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   @override
   void initState() {
     super.initState();
-    // Defer so ref is ready
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadMarkedContacts());
+    // Set smart sync to active mode for faster sync during attendance marking
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(smartSyncProvider.notifier).setActiveMode();
+      _loadMarkedContacts();
+    });
     _searchFocusNode.addListener(() => setState(() {}));
   }
 
@@ -143,6 +147,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
   @override
   void dispose() {
+    // Restore normal sync mode when leaving attendance screen
+    ref.read(smartSyncProvider.notifier).setNormalMode();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();

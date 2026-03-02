@@ -1,4 +1,6 @@
 import 'package:church_attendance_app/core/enums/service_type.dart';
+import 'package:church_attendance_app/core/services/haptic_service.dart';
+import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 import 'package:church_attendance_app/features/attendance/domain/models/attendance.dart';
 import 'package:church_attendance_app/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_provider.dart';
@@ -6,7 +8,6 @@ import 'package:church_attendance_app/features/attendance/presentation/widgets/q
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -119,6 +120,10 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
 
       if (attendance != null && mounted) {
         _showSuccess(attendance, contactName: contact.name ?? phone);
+        // Trigger immediate sync to push attendance to server
+        Future.microtask(() {
+          ref.read(smartSyncProvider.notifier).triggerImmediateSync();
+        });
       }
     } on AttendanceException catch (e) {
       if (e.type == AttendanceExceptionType.alreadyMarked) {
@@ -134,7 +139,7 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
 
   void _showSuccess(Attendance attendance, {required String contactName}) {
     // Haptic feedback
-    HapticFeedback.mediumImpact();
+    HapticService.medium();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -159,7 +164,7 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
 
   void _showError(String message) {
     // Haptic feedback for error
-    HapticFeedback.heavyImpact();
+    HapticService.heavy();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -179,7 +184,7 @@ class _QRScannerScreenState extends ConsumerState<QRScannerScreen> {
 
   void _showWarning(String message) {
     // Haptic feedback for warning
-    HapticFeedback.mediumImpact();
+    HapticService.medium();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

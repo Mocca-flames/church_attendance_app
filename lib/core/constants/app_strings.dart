@@ -57,4 +57,22 @@ abstract final class AppStrings {
   // Splash
   static const String signInToContinue = 'Sign in to continue';
   static const String createYourAccount = 'Create your account to get started';
+
+  // About Screen
+  static const String about = 'About';
+  static const String appVersion = 'Version 1.0.0';
+  static const String developedBy = 'Developed by';
+  static const String developerName = 'Maurice Junior Sitwala';
+  static const String developerTitle = 'Software Engineer';
+  static const String appDescription = 'A comprehensive church attendance management solution designed for modern churches. Track attendance, manage contacts, organize follow-ups, and generate reports—all with offline-first capabilities.';
+  static const String keyFeatures = 'Key Features';
+  static const String featureAttendance = '• Offline-first attendance tracking';
+  static const String featureContacts = '• Contact management with QR codes';
+  static const String featureScenarios = '• Task and follow-up management';
+  static const String featureSync = '• Automatic data synchronization';
+  static const String featureReports = '• Detailed attendance reports';
+  static const String support = 'Support';
+  static const String contactSupport = 'Contact Support';
+  static const String privacyPolicy = 'Privacy Policy';
+  static const String termsOfService = 'Terms of Service';
 }

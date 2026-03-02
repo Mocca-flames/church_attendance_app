@@ -27,7 +27,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  UserRole _selectedRole = UserRole.servant;
+  final UserRole _selectedRole = UserRole.servant;
+  GradientButtonState _buttonState = GradientButtonState.idle;
+  bool _loginInitiated = false;
 
   @override
   void dispose() {
@@ -57,14 +59,29 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     ref.read(authProvider.notifier).clearError();
 
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _loginInitiated = true;
+        _buttonState = GradientButtonState.idle;
+      });
+
       final success = await ref.read(authProvider.notifier).register(
             email: _emailController.text.trim(),
             password: _passwordController.text,
             role: _selectedRole.backendValue,
           );
 
-      if (success && mounted) {
-        AppRoute.main.navigateAndRemoveUntil(context);
+      if (!success && mounted) {
+        setState(() {
+          _loginInitiated = false;
+          _buttonState = GradientButtonState.error;
+        });
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            setState(() {
+              _buttonState = GradientButtonState.idle;
+            });
+          }
+        });
       }
     }
   }
@@ -78,6 +95,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   Widget build(BuildContext context) {
     ref.watch(authProvider);
     final authError = ref.watch(authErrorProvider);
+    final isLoading = ref.watch(authLoadingProvider);
+
+    // Determine button state - keep loading if login was initiated
+    GradientButtonState buttonState;
+    if (_buttonState == GradientButtonState.error) {
+      buttonState = GradientButtonState.error;
+    } else if (isLoading || _loginInitiated) {
+      buttonState = GradientButtonState.loading;
+    } else {
+      buttonState = GradientButtonState.idle;
+    }
 
     // Listen for auth state changes
     ref.listen<AuthState>(authProvider, (previous, next) {
@@ -96,124 +124,99 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppDimens.paddingL),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // App Logo/Title
-                  const AppLogo(
-                    icon: Icons.person_add,
-                    title: AppStrings.register,
-                    subtitle: AppStrings.createYourAccount,
-                  ),
-                  const SizedBox(height: AppDimens.paddingXL),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // App Logo/Title
+                const AppLogo(
+                  icon: Icons.person_add,
+                  title: AppStrings.register,
+                  subtitle: AppStrings.createYourAccount,
+                ),
+                const SizedBox(height: AppDimens.paddingXL),
 
-                  // Email field
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: AppStrings.email,
-                      hintText: AppStrings.enterEmail,
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ).applyDefaults(Theme.of(context).inputDecorationTheme),
-                    validator: FormValidators.email,
-                  ),
-                  const SizedBox(height: AppDimens.paddingM),
-
-                  // Role dropdown
-                  DropdownButtonFormField<UserRole>(
-                    initialValue: _selectedRole,
-                    decoration: const InputDecoration(
-                      labelText: AppStrings.role,
-                      prefixIcon: Icon(Icons.badge_outlined),
-                    ).applyDefaults(Theme.of(context).inputDecorationTheme),
-                    items: UserRole.values.map((role) {
-                      return DropdownMenuItem(
-                        value: role,
-                        child: Row(
-                          children: [
-                            Icon(role.icon, size: AppDimens.iconM, color: role.color),
-                            const SizedBox(width: AppDimens.paddingS),
-                            Text(role.displayName),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedRole = value;
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(height: AppDimens.paddingS),
-                  Text(
-                    AppStrings.selectRole,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                  ),
-                  const SizedBox(height: AppDimens.paddingM),
-
-                  // Password field
-                  PasswordField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    onToggleVisibility: _togglePasswordVisibility,
-                    validator: FormValidators.password,
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: AppDimens.paddingM),
-
-                  // Confirm Password field
-                  PasswordField(
-                    controller: _confirmPasswordController,
-                    obscureText: _obscureConfirmPassword,
-                    onToggleVisibility: _toggleConfirmPasswordVisibility,
-                    validator: (value) => FormValidators.confirmPassword(
-                      value,
-                      _passwordController.text,
-                    ),
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _handleRegister(),
-                    labelText: AppStrings.confirmPassword,
-                    hintText: AppStrings.reEnterPassword,
-                  ),
-                  const SizedBox(height: AppDimens.paddingS),
-
-                  // Error message
-                  if (authError != null) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppDimens.paddingM),
-                      child: AppErrorContainer(
-                        message: authError,
-                        onDismiss: () =>
-                            ref.read(authProvider.notifier).clearError(),
+                // Form fields
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Email field
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: AppStrings.email,
+                          hintText: AppStrings.enterEmail,
+                          prefixIcon: Icon(Icons.email_outlined),
+                        ).applyDefaults(Theme.of(context).inputDecorationTheme),
+                        validator: FormValidators.email,
                       ),
-                    ),
-                  ],
-                  const SizedBox(height: AppDimens.paddingL),
+                      const SizedBox(height: AppDimens.paddingM),
 
-                  // Register button
-                  GradientButton(
-                    onPressed: _handleRegister,
-                   text: AppStrings.register,
-                  ),
-                  const SizedBox(height: AppDimens.paddingL),
+                      // Password field
+                      PasswordField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        onToggleVisibility: _togglePasswordVisibility,
+                        validator: FormValidators.password,
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: AppDimens.paddingM),
 
-                  // Login link
-                  AuthLinkRow(
-                    questionText: AppStrings.alreadyHaveAccount,
-                    linkText: AppStrings.signInLink,
-                    onLinkPressed: _navigateToLogin,
+                      // Confirm Password field
+                      PasswordField(
+                        controller: _confirmPasswordController,
+                        obscureText: _obscureConfirmPassword,
+                        onToggleVisibility: _toggleConfirmPasswordVisibility,
+                        validator: (value) => FormValidators.confirmPassword(
+                          value,
+                          _passwordController.text,
+                        ),
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _handleRegister(),
+                        labelText: AppStrings.confirmPassword,
+                        hintText: AppStrings.reEnterPassword,
+                      ),
+                      const SizedBox(height: AppDimens.paddingS),
+
+                      // Error message
+                      if (authError != null) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppDimens.paddingM),
+                          child: AppErrorContainer(
+                            message: authError,
+                            onDismiss: () =>
+                                ref.read(authProvider.notifier).clearError(),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: AppDimens.paddingXL),
+                const SizedBox(height: AppDimens.paddingXL),
+
+                // Register button - outside of Form for visual separation
+                GradientButton(
+                  onPressed: _handleRegister,
+                  state: buttonState,
+                  isFullWidth: true,
+                  text: AppStrings.register,
+                  errorText: 'Registration Failed',
+                ),
+                const SizedBox(height: AppDimens.paddingL),
+
+                // Login link
+                AuthLinkRow(
+                  questionText: AppStrings.alreadyHaveAccount,
+                  linkText: AppStrings.signInLink,
+                  onLinkPressed: _navigateToLogin,
+                ),
+              ],
             ),
           ),
         ),

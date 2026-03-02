@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:church_attendance_app/core/services/haptic_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:church_attendance_app/features/contacts/data/datasources/contact_local_datasource.dart';
 import 'package:church_attendance_app/features/contacts/data/datasources/contact_remote_datasource.dart';
@@ -104,8 +104,8 @@ class ContactNotifier extends Notifier<ContactState> {
   }
 
   /// Trigger haptic feedback for successful operations.
-  void _triggerSuccessHaptic() {
-    HapticFeedback.mediumImpact();
+  Future<void> _triggerSuccessHaptic() async {
+    await HapticService.medium();
   }
 
   /// Load a contact by ID
@@ -166,7 +166,7 @@ class ContactNotifier extends Notifier<ContactState> {
     );
 
     // Trigger haptic feedback for instant tactile confirmation
-    _triggerSuccessHaptic();
+    await _triggerSuccessHaptic();
 
     // Run actual repository call in background
     _repository.createContact(optimisticContact).then((created) {
@@ -219,7 +219,7 @@ class ContactNotifier extends Notifier<ContactState> {
     );
 
     // Trigger haptic feedback for instant tactile confirmation
-    _triggerSuccessHaptic();
+    await _triggerSuccessHaptic();
 
     // Run repository call in background
     _repository.updateContact(contact).then((updated) {
@@ -269,7 +269,7 @@ class ContactNotifier extends Notifier<ContactState> {
     );
 
     // Trigger haptic feedback for instant tactile confirmation
-    _triggerSuccessHaptic();
+    await _triggerSuccessHaptic();
 
     // Run repository call in background
     final completer = Completer<bool>();
@@ -335,7 +335,7 @@ class ContactNotifier extends Notifier<ContactState> {
     );
 
     // Trigger haptic feedback for instant tactile confirmation
-    _triggerSuccessHaptic();
+    await _triggerSuccessHaptic();
 
     // Run repository call in background
     _repository.addTagsToContact(contactId, tags).then((updated) {
@@ -403,7 +403,7 @@ class ContactNotifier extends Notifier<ContactState> {
     );
 
     // Trigger haptic feedback for instant tactile confirmation
-    _triggerSuccessHaptic();
+    await _triggerSuccessHaptic();
 
     // Run repository call in background
     _repository.removeTagsFromContact(contactId, tags).then((updated) {
@@ -444,7 +444,7 @@ class ContactNotifier extends Notifier<ContactState> {
     );
 
     // Trigger haptic feedback for instant tactile confirmation
-    _triggerSuccessHaptic();
+    await _triggerSuccessHaptic();
 
     // Run actual import in background
     _repository.importVcfFile(filePath).then((result) {

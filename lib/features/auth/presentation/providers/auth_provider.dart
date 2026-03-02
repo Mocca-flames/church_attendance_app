@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/main.dart';
 import 'package:church_attendance_app/core/network/dio_client.dart';
@@ -132,7 +133,8 @@ class AuthNotifier extends Notifier<AuthState> {
       Future.microtask(() async {
         try {
           await ref.read(syncStatusProvider.notifier).pullContacts();
-          ref.read(periodicSyncProvider.notifier).startPeriodicSync();
+          // Initialize smart sync with normal mode
+          ref.read(smartSyncProvider.notifier).setNormalMode();
         } catch (_) {
           // Ignore sync errors - UI can show sync status elsewhere
         }
@@ -187,7 +189,8 @@ class AuthNotifier extends Notifier<AuthState> {
       Future.microtask(() async {
         try {
           await ref.read(syncStatusProvider.notifier).pullContacts();
-          ref.read(periodicSyncProvider.notifier).startPeriodicSync();
+          // Initialize smart sync with normal mode
+          ref.read(smartSyncProvider.notifier).setNormalMode();
         } catch (_) {}
         // Update isSyncing flag when background sync completes
         // Use state directly (not ref.read) to avoid circular dependency
@@ -211,20 +214,27 @@ class AuthNotifier extends Notifier<AuthState> {
   /// Logout the current user.
   /// Implements Optimistic UI: immediately clear auth state, run cleanup in background.
   Future<void> logout() async {
+    debugPrint('[AUTH_DEBUG] Starting logout in AuthNotifier');
     // OPTIMISTIC UI: Immediately clear auth state
     // Stop periodic sync first (synchronous, no await needed)
     ref.read(periodicSyncProvider.notifier).stopPeriodicSync();
+    debugPrint('[AUTH_DEBUG] Stopped periodic sync');
     
     state = const AuthState(isAuthenticated: false, isLoading: false);
+    debugPrint('[AUTH_DEBUG] Auth state cleared (isAuthenticated = false)');
     
     // Run logout server call in background if needed
     Future.microtask(() async {
       try {
+        debugPrint('[AUTH_DEBUG] Starting background logout server call');
         await _repository.logout();
+        debugPrint('[AUTH_DEBUG] Background logout server call completed');
       } catch (e) {
+        debugPrint('[AUTH_DEBUG] Background logout error: $e');
         // Continue with logout even if server call fails
       }
     });
+    debugPrint('[AUTH_DEBUG] Logout method returning (async background task running)');
   }
 
   /// Clear any error message.

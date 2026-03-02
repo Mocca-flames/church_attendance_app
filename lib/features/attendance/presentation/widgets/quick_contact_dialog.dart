@@ -1,8 +1,10 @@
 import 'package:church_attendance_app/core/enums/service_type.dart';
+import 'package:church_attendance_app/core/services/haptic_service.dart';
+import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
+import 'package:church_attendance_app/core/widgets/gradient_button.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_provider.dart';
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/main.dart';
 
@@ -54,10 +56,18 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
   late final TextEditingController _phoneController;
   late final TextEditingController _locationController;
   
+  
   bool _isMember = false;
   bool _isLoading = false;
   bool _showLocationField = true;
   Contact? _existingContact;
+  
+  GradientButtonState get buttonState {
+    if (_isLoading) {
+      return GradientButtonState.loading;
+    }
+    return GradientButtonState.idle;
+  }
 
   @override
   void initState() {
@@ -117,6 +127,7 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
     // Capture context-dependent objects BEFORE async gap
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    
 
     setState(() => _isLoading = true);
 
@@ -143,13 +154,19 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
       if (result.alreadyMarked) {
         // Contact saved but already marked for today
         scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('Contact saved! Already marked for this service today.'),
+          SnackBar(
+            content: const Text('Contact saved! Already marked for this service today.'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.orange,
+            backgroundColor: Theme.of(context).colorScheme.errorContainer,
           ),
         );
-        await HapticFeedback.mediumImpact();
+        await HapticService.medium();
+        
+        // Trigger immediate sync to push new contact to server
+        Future.microtask(() {
+          ref.read(smartSyncProvider.notifier).triggerImmediateSync();
+        });
+        
         navigator.pop(result);
       } else if (result.error != null) {
         // Show error
@@ -157,10 +174,10 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
           SnackBar(
             content: Text('Error: ${result.error}'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red.shade600,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-        await HapticFeedback.heavyImpact();
+        await HapticService.heavy();
       } else {
         // Success - contact saved and attendance recorded
         final contactName = _nameController.text.trim();
@@ -168,10 +185,16 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
           SnackBar(
             content: Text('Contact saved and attendance recorded for $contactName!'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
-        await HapticFeedback.mediumImpact();
+        await HapticService.medium();
+        
+        // Trigger immediate sync to push new contact and attendance to server
+        Future.microtask(() {
+          ref.read(smartSyncProvider.notifier).triggerImmediateSync();
+        });
+        
         navigator.pop(result);
       }
     } catch (e) {
@@ -193,10 +216,10 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(friendlyMessage),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
-      await HapticFeedback.heavyImpact();
+      await HapticService.heavy();
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -236,16 +259,16 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
                       Text(
                         'Record attendance details',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close, color: Colors.grey[600]),
+                    icon: Icon(Icons.close, color: theme.colorScheme.onSurfaceVariant),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.grey.shade100,
+                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     ),
                   ),
                 ],
@@ -294,19 +317,19 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade50,
+                    color: Theme.of(context).colorScheme.tertiaryContainer,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.green.shade200),
+                    border: Border.all(color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.location_on, color: Colors.green.shade700, size: 20),
+                      Icon(Icons.location_on, color: Theme.of(context).colorScheme.onTertiaryContainer, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Location: ${_existingContact!.location}',
                           style: TextStyle(
-                            color: Colors.green.shade700,
+                            color: Theme.of(context).colorScheme.onTertiaryContainer,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -324,33 +347,14 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
               const SizedBox(height: 32),
 
               // Submit Button
-              SizedBox(
-                height: 56,
-                child: FilledButton(
+              
+              GradientButton(
                   onPressed: _isLoading ? null : _submit,
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'Save & Mark Attendance',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                  state: buttonState,
+                  isFullWidth: true,
+                  text: 'Save & Mark',
+                  errorText: 'Error saving contact',
                 ),
-              ),
             ],
           ),
         ),
@@ -382,6 +386,8 @@ class _ModernTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -390,9 +396,9 @@ class _ModernTextField extends StatelessWidget {
       style: const TextStyle(fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, size: 22, color: Colors.grey[600]),
+        prefixIcon: Icon(icon, size: 22, color: theme.colorScheme.onSurfaceVariant),
         filled: true,
-        fillColor: Colors.grey.shade100,
+        fillColor: theme.colorScheme.surfaceContainerHighest,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -404,19 +410,19 @@ class _ModernTextField extends StatelessWidget {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: Theme.of(context).primaryColor, 
+            color: theme.primaryColor,
             width: 1.5
           ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.error, 
+            color: theme.colorScheme.error,
             width: 1.5
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20, 
+          horizontal: 20,
           vertical: 18
         ),
       ),
@@ -437,6 +443,7 @@ class _ModernMembershipSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final activeColor = theme.primaryColor;
 
     return GestureDetector(
@@ -446,14 +453,14 @@ class _ModernMembershipSelector extends StatelessWidget {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isMember 
-              ? activeColor.withValues(alpha: 0.8) 
-              : Colors.white,
+          color: isMember
+              ? activeColor.withValues(alpha: 0.8)
+              : colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isMember 
-                ? activeColor 
-                : Colors.grey.shade300,
+            color: isMember
+                ? colorScheme.secondary
+                : colorScheme.outlineVariant,
             width: isMember ? 1.5 : 1.0,
           ),
         ),
@@ -462,14 +469,14 @@ class _ModernMembershipSelector extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isMember 
-                    ? activeColor.withValues(alpha:0.15) 
-                    : Colors.grey.shade100,
+                color: isMember
+                    ? activeColor.withValues(alpha:0.15)
+                    : colorScheme.surfaceContainerHighest,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.card_membership_rounded,
-                color: isMember ? activeColor : Colors.grey[600],
+                color: isMember ? colorScheme.secondary : colorScheme.onSurfaceVariant,
                 size: 24,
               ),
             ),
@@ -483,7 +490,7 @@ class _ModernMembershipSelector extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
-                      color: isMember ? activeColor : Colors.black87,
+                      color: isMember ? colorScheme.secondary : colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -491,7 +498,7 @@ class _ModernMembershipSelector extends StatelessWidget {
                     'Is this person a registered member?',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -502,16 +509,16 @@ class _ModernMembershipSelector extends StatelessWidget {
               height: 24,
               width: 24,
               decoration: BoxDecoration(
-                color: isMember ? activeColor : Colors.transparent,
+                color: isMember ? colorScheme.secondary : colorScheme.surfaceContainerHighest,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isMember ? activeColor : Colors.grey.shade400,
+                  color: isMember ? colorScheme.secondary : colorScheme.outline,
                   width: 2,
                 ),
               ),
               child: isMember
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
-                  : null,
+                  ? Icon(Icons.check, size: 16, color: colorScheme.onSecondary)
+                  : Icon(Icons.check, size: 16, color: colorScheme.onPrimary),
             ),
           ],
         ),

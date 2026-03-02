@@ -1,5 +1,5 @@
+import 'package:church_attendance_app/core/services/haptic_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/vcf_share_intent_provider.dart';
 import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf_import_dialog.dart';
@@ -54,7 +54,7 @@ class _VcfImportStatusCardState extends ConsumerState<VcfImportStatusCard> {
   }
   
   void _showResultDialog(BuildContext context, Map<String, dynamic> result) {
-    HapticFeedback.mediumImpact();
+    HapticService.medium();
     showDialog(
       context: context,
       builder: (ctx) => VcfImportResultDialog(
@@ -196,7 +196,7 @@ class _ResultCard extends ConsumerWidget {
   const _ResultCard({required this.result, required this.success});
 
   void _showDetails(BuildContext context, WidgetRef ref) {
-    HapticFeedback.mediumImpact();
+    HapticService.medium();
     showDialog(
       context: context,
       builder: (ctx) => VcfImportResultDialog(

@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'dart:async';
+
+import 'package:church_attendance_app/core/services/haptic_service.dart';
 import 'package:church_attendance_app/core/services/vcf_sharing_service.dart';
+import 'package:flutter/material.dart';
 
 
 /// Reusable dialog for showing VCF import results.
@@ -24,9 +26,9 @@ class VcfImportResultDialog extends StatelessWidget {
 
     // Trigger haptic feedback based on result
     if (success) {
-      HapticFeedback.heavyImpact();
+      unawaited(HapticService.heavy());
     } else {
-      HapticFeedback.vibrate();
+      unawaited(HapticService.soft());
     }
 
     return AlertDialog(
@@ -87,9 +89,11 @@ class VcfImportResultDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            Navigator.of(context).pop();
+          onPressed: () async {
+            await HapticService.medium();
+            if (context.mounted) {
+              Navigator.of(context).pop();
+            }
             onDismiss?.call();
           },
           style: TextButton.styleFrom(
@@ -312,8 +316,8 @@ class VcfShareConfirmDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            HapticFeedback.mediumImpact();
+          onPressed: () async {
+            await HapticService.medium();
             onCancel();
           },
           style: TextButton.styleFrom(
@@ -323,8 +327,8 @@ class VcfShareConfirmDialog extends StatelessWidget {
         ),
         ElevatedButton(
           onPressed: parseResult.success
-              ? () {
-                  HapticFeedback.mediumImpact();
+              ? () async {
+                  await HapticService.medium();
                   onImport();
                 }
               : null,

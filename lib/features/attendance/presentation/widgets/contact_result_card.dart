@@ -3,12 +3,13 @@ import 'dart:convert';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
+import 'package:church_attendance_app/core/services/haptic_service.dart';
+import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 import 'package:church_attendance_app/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_provider.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/contact_search_provider.dart';
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
@@ -247,7 +248,7 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
         // ✅ FIRST: Optimistically update UI SYNCHRONOUSLY before async work
         ref.read(markedContactIdsProvider.notifier).add(_contact.id);
         
-        await HapticFeedback.mediumImpact();
+        await HapticService.heavy();
        
         
         // Then perform the actual database operation
@@ -277,7 +278,11 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
             backgroundColor: Theme.of(context).colorScheme.error,
           ));
         } else {
-          HapticFeedback.mediumImpact();
+          await HapticService.medium();
+          if (!context.mounted) {
+            logger.d('Context not mounted after haptic, returning');
+            return;
+          }
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Row(children: [
               Icon(Icons.check_circle, color: Theme.of(context).colorScheme.onTertiary),
@@ -311,6 +316,7 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
 
   Future<void> _markAttendance(BuildContext context, WidgetRef ref) async {
     final Logger logger = Logger();
+    await HapticService.canVibrate();
     logger.d('=== _markAttendance START ===');
     logger.d('contact.id: ${_contact.id} (type: ${_contact.id.runtimeType})');
     logger.d(
@@ -343,7 +349,8 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
       
       // Trigger haptic feedback immediately for tactile confirmation
       try {
-        await HapticFeedback.heavyImpact();
+        logger.w('Start haptic feedback...');
+        await HapticService.success();
       } catch (e) {
         logger.w('Haptic feedback failed: $e');
       }
@@ -362,6 +369,12 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
 
       if (attendance != null) {
         logger.i('Attendance recorded for $_displayName');
+
+        // Trigger immediate sync of pending items
+        // This ensures attendance is synced to server quickly
+        Future.microtask(() {
+          ref.read(smartSyncProvider.notifier).triggerImmediateSync();
+        });
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(

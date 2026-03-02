@@ -25,6 +25,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   GradientButtonState _buttonState = GradientButtonState.idle;
+  bool _loginInitiated = false;
 
   @override
   void dispose() {
@@ -46,19 +47,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.read(authProvider.notifier).clearError();
 
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _loginInitiated = true;
+        _buttonState = GradientButtonState.idle;
+      });
+
       final success = await ref.read(authProvider.notifier).login(
             _emailController.text.trim(),
             _passwordController.text,
           );
 
-      if (success && mounted) {
-        AppRoute.main.navigateReplacement(context);
-      } else if (!success && mounted) {
-        // Login failed - show error state
+      if (!success && mounted) {
         setState(() {
+          _loginInitiated = false;
           _buttonState = GradientButtonState.error;
         });
-        // Revert to idle after 2 seconds
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
             setState(() {
@@ -80,15 +83,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.watch(authProvider);
     final authError = ref.watch(authErrorProvider);
     final isLoading = ref.watch(authLoadingProvider);
-    final isAuthenticated = ref.watch(authProvider).isAuthenticated;
     
-    // Determine button state
+    // Determine button state - keep loading if login was initiated
     GradientButtonState buttonState;
     if (_buttonState == GradientButtonState.error) {
       buttonState = GradientButtonState.error;
-    } else if (isAuthenticated) {
-      buttonState = GradientButtonState.success;
-    } else if (isLoading) {
+    } else if (isLoading || _loginInitiated) {
       buttonState = GradientButtonState.loading;
     } else {
       buttonState = GradientButtonState.idle;
@@ -107,75 +107,83 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppDimens.paddingL),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // App Logo/Title
-                  const AppLogo(
-                    title: AppStrings.appName,
-                    subtitle: AppStrings.signInToContinue,
-                    iconSize: AppDimens.iconXXL,
-                  ),
-                  const SizedBox(height: AppDimens.paddingXL),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // App Logo/Title
+                const AppLogo(
+                  title: AppStrings.appName,
+                  subtitle: AppStrings.signInToContinue,
+                  iconSize: AppDimens.iconXXL,
+                ),
+                const SizedBox(height: AppDimens.paddingXL),
 
-                  // Email field
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: AppStrings.email,
-                      hintText: AppStrings.enterEmail,
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ).applyDefaults(Theme.of(context).inputDecorationTheme),
-                    validator: FormValidators.email,
-                  ),
-                  const SizedBox(height: AppDimens.paddingM),
-
-                  // Password field
-                  PasswordField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    onToggleVisibility: _togglePasswordVisibility,
-                    validator: FormValidators.password,
-                    onFieldSubmitted: (_) => _handleLogin(),
-                  ),
-                  const SizedBox(height: AppDimens.paddingS),
-
-                  // Error message
-                  if (authError != null) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppDimens.paddingM),
-                      child: AppErrorContainer(
-                        message: authError,
-                        onDismiss: () =>
-                            ref.read(authProvider.notifier).clearError(),
+                // Form fields
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Email field
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: AppStrings.email,
+                          hintText: AppStrings.enterEmail,
+                          prefixIcon: Icon(Icons.email_outlined),
+                        ).applyDefaults(Theme.of(context).inputDecorationTheme),
+                        validator: FormValidators.email,
                       ),
-                    ),
-                  ],
-                  const SizedBox(height: AppDimens.paddingL),
+                      const SizedBox(height: AppDimens.paddingM),
 
-                  // Login button
-                  GradientButton(
-                    onPressed: _handleLogin,
-                    state: buttonState,
-                    isFullWidth: true,
-                    text: AppStrings.signIn,
-                    errorText: 'Login Failed',
-                  ),
-                  const SizedBox(height: AppDimens.paddingL),
+                      // Password field
+                      PasswordField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        onToggleVisibility: _togglePasswordVisibility,
+                        validator: FormValidators.password,
+                        onFieldSubmitted: (_) => _handleLogin(),
+                      ),
+                      const SizedBox(height: AppDimens.paddingS),
 
-                  // Register link
-                  AuthLinkRow(
-                    questionText: AppStrings.dontHaveAccount,
-                    linkText: AppStrings.signUpLink,
-                    onLinkPressed: _navigateToSignUp,
+                      // Error message
+                      if (authError != null) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppDimens.paddingM),
+                          child: AppErrorContainer(
+                            message: authError,
+                            onDismiss: () =>
+                                ref.read(authProvider.notifier).clearError(),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: AppDimens.paddingXL),
+                const SizedBox(height: AppDimens.paddingXL),
+
+                // Login button - outside of Form for visual separation
+                GradientButton(
+                  onPressed: _handleLogin,
+                  state: buttonState,
+                  isFullWidth: true,
+                  text: AppStrings.signIn,
+                  errorText: 'Login Failed',
+                ),
+                const SizedBox(height: AppDimens.paddingL),
+
+                // Register link
+                AuthLinkRow(
+                  questionText: AppStrings.dontHaveAccount,
+                  linkText: AppStrings.signUpLink,
+                  onLinkPressed: _navigateToSignUp,
+                ),
+              ],
             ),
           ),
         ),

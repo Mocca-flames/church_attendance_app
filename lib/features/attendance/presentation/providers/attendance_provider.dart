@@ -1,4 +1,5 @@
 import 'package:church_attendance_app/core/enums/service_type.dart';
+import 'package:church_attendance_app/core/services/haptic_service.dart';
 import 'package:church_attendance_app/features/attendance/data/datasources/attendance_local_datasource.dart';
 import 'package:church_attendance_app/features/attendance/data/datasources/attendance_remote_datasource.dart';
 import 'package:church_attendance_app/features/attendance/data/repositories/attendance_repository_impl.dart';
@@ -8,7 +9,6 @@ import 'package:church_attendance_app/features/auth/presentation/providers/auth_
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:church_attendance_app/main.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 
 /// Attendance state to track recording status and data.
 class AttendanceState {
@@ -104,8 +104,8 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
   }
 
   /// Triggers haptic feedback for successful attendance recording.
-  void _triggerSuccessHaptic() {
-    HapticFeedback.mediumImpact();
+  Future<void> _triggerSuccessHaptic() async {
+    await HapticService.medium();
   }
 
   /// Records attendance for a contact with Optimistic UI.
@@ -140,7 +140,7 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     );
 
     // Trigger haptic feedback for instant tactile confirmation
-    _triggerSuccessHaptic();
+    await _triggerSuccessHaptic();
 
     // Run actual repository call in background
     _repository.recordAttendance(
@@ -214,7 +214,7 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     );
 
     // Trigger haptic feedback for instant tactile confirmation
-    _triggerSuccessHaptic();
+    await _triggerSuccessHaptic();
 
     // Run actual repository call in background
     _repository.recordAttendanceByPhone(
@@ -290,7 +290,7 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     );
 
     // Trigger haptic feedback for instant tactile confirmation
-    _triggerSuccessHaptic();
+    await _triggerSuccessHaptic();
 
     // Return optimistic result immediately with contact info
     final optimisticResult = CreateContactAttendanceResult(
