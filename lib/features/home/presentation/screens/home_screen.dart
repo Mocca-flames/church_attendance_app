@@ -359,6 +359,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   _buildQuickStatsRow(context, ref),
                   const SizedBox(height: AppDimens.paddingL),
 
+                  // Quick Actions Card
+                  _buildQuickActionsCard(context, ref),
+                  const SizedBox(height: AppDimens.paddingL),
+
 
                   // Dynamic Sync Status Widgets
                   _buildSyncStatusCard(context, ref),
@@ -366,10 +370,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
 
                   // Attendance Trend Chart
                   _buildAttendanceTrendChart(context, ref),
-                  const SizedBox(height: AppDimens.paddingL),
-
-                  // Quick Actions Card
-                  _buildQuickActionsCard(context, ref),
                   const SizedBox(height: AppDimens.paddingL),
 
                   // Tag Distribution Pie Chart
