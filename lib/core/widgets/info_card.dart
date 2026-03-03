@@ -2,39 +2,52 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
+import 'glass_container.dart';
 
-
+/// A device info card with glassmorphism styling.
+/// 
+/// Displays a label-value pair with optional trailing widget.
+/// Perfect for showing device information, contact details, and
+/// other key-value pairs.
+/// 
+/// Example usage:
+/// ```dart
+/// DeviceInfoCard(
+///   label: 'Device ID',
+///   value: 'DEV-12345',
+///   isMonospace: true,
+///   trailing: IconButton(
+///     icon: Icon(Icons.copy),
+///     onPressed: () => copyToClipboard(),
+///   ),
+/// )
+/// ```
 class DeviceInfoCard extends StatelessWidget {
   final String label;
   final String value;
   final bool isMonospace;
   final Color? valueColor;
   final Widget? trailing;
-  
+
   const DeviceInfoCard({
-    
     required this.label,
     required this.value,
     this.isMonospace = false,
     this.valueColor,
-    this.trailing,super.key,
+    this.trailing,
+    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GlassContainer(
+      opacity: isDark ? 0.15 : 0.10,
+      blur: 8,
+      borderRadius: 12,
+      borderOpacity: 0.15,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.neutral200.withValues(alpha:0.5),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
       child: Row(
         children: [
           Expanded(
@@ -44,14 +57,19 @@ class DeviceInfoCard extends StatelessWidget {
                 Text(
                   label,
                   style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.neutral500,
+                    color: isDark ? AppColors.darkTextMuted : AppColors.neutral500,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: (isMonospace ? AppTypography.mono : AppTypography.bodyLarge).copyWith(
-                    color: valueColor ?? AppColors.neutral800,
+                  style: (isMonospace 
+                          ? AppTypography.mono 
+                          : AppTypography.bodyLarge)
+                      .copyWith(
+                    color: valueColor ?? (isDark 
+                        ? Colors.white 
+                        : AppColors.neutral800),
                     fontWeight: FontWeight.w600,
                   ),
                 ),

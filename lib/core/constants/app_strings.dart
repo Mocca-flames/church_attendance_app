@@ -3,7 +3,7 @@ abstract final class AppStrings {
   AppStrings._();
 
   // App info
-  static const String appName = 'Church Attendance';
+  static const String appName = 'Attendance';
   static const String appTagline = 'Offline-First Management';
 
   // Auth screens

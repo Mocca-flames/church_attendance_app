@@ -24,6 +24,9 @@ class AttendanceScreen extends ConsumerStatefulWidget {
 class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  
+  // Store the smart sync notifier to safely use in dispose()
+  late final SmartSyncNotifier _smartSyncNotifier;
 
   // Get the attendance date state from provider
   AttendanceDateState get _dateState => ref.watch(attendanceDateProvider);
@@ -35,9 +38,11 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   @override
   void initState() {
     super.initState();
+    // Store the notifier reference while ref is still valid
+    _smartSyncNotifier = ref.read(smartSyncProvider.notifier);
     // Set smart sync to active mode for faster sync during attendance marking
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(smartSyncProvider.notifier).setActiveMode();
+      _smartSyncNotifier.setActiveMode();
       _loadMarkedContacts();
     });
     _searchFocusNode.addListener(() => setState(() {}));
@@ -152,7 +157,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   @override
   void dispose() {
     // Restore normal sync mode when leaving attendance screen
-    ref.read(smartSyncProvider.notifier).setNormalMode();
+    // Use the stored notifier reference and wrap in Future to avoid modifying provider during build phase
+    Future(() => _smartSyncNotifier.setNormalMode());
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();

@@ -63,9 +63,18 @@ dev_dependencies:
   drift_dev: ^2.16.0
   custom_lint: ^0.8.1               # updated to support freezed_annotation ^3.1.0
   riverpod_lint: ^3.1.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   assets:
     - assets/
     - assets/lottie/
+
+# Launcher icon configuration
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/logo.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/logo.png"

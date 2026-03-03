@@ -131,6 +131,13 @@ class ContactRepositoryImpl implements ContactRepository {
             phone: updatedContact.phone,
           );
           
+          // Sync ALL tags to server (member, location, roles)
+          // This ensures location tags are sent to the server
+          await _remoteDataSource.setTagsOnContact(
+            id: contact.serverId!,
+            tags: updatedContact.tags,
+          );
+          
           // Mark as synced
           await _localDataSource.markAsSynced(
             updatedContact.id,

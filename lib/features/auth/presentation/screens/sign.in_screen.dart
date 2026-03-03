@@ -129,11 +129,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // App Logo/Title
-                const AppLogo(
-                  icon: Icons.person_add,
-                  title: AppStrings.register,
-                  subtitle: AppStrings.createYourAccount,
-                ),
+                Center(child: Image.asset('assets/logo.png', width: 120, height: 120)),
                 const SizedBox(height: AppDimens.paddingXL),
 
                 // Form fields

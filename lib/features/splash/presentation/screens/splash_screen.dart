@@ -52,10 +52,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.church,
-              size: AppDimens.iconSplash,
-              color: Theme.of(context).colorScheme.primary,
+            Image.asset(
+              'assets/logo.png',
+              width: 150,
+              height: 150,
+              fit: BoxFit.contain,
             ),
             const SizedBox(height: AppDimens.paddingL),
             Text(

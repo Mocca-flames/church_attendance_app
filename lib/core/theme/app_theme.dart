@@ -61,8 +61,8 @@ class AppTheme {
       // Cards with subtle cyan-white gradient
       cardTheme: CardThemeData(
         elevation: 0,
-        color: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        color: const Color.fromARGB(166, 255, 255, 255),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color.fromARGB(255, 255, 255, 255), width: 1)),
         margin: EdgeInsets.zero,
         // Use Container with gradient in your widget:
         // decoration: BoxDecoration(
@@ -146,6 +146,7 @@ class AppTheme {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        side: const BorderSide(color: Color(0xFFCBD5E1), width: 1),
       ),
 
       // Progress with cyan gradient capability
@@ -281,8 +282,9 @@ class AppTheme {
       // Cards with dark cyan-grey elevation
       cardTheme: CardThemeData(
         elevation: 0,
-        color: const Color(0xFF2C2C2C),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        color: const Color.fromARGB(61, 100, 100, 100),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side:  
+        const BorderSide(color: Color.fromARGB(190, 100, 100, 100), width: 1)),
         margin: EdgeInsets.zero,
       ),
 

@@ -87,6 +87,21 @@ class AppColors {
   static const Color accentAmber = Color(0xFFF59E0B);
 
   // ═══════════════════════════════════════════════════
+  // AVATAR COLORS (Theme-consistent palette for contact avatars)
+  // ═══════════════════════════════════════════════════
+  /// Avatar color palette that matches the app's cyan/teal design system
+  static const List<Color> avatarColors = [
+    Color(0xFF0EA5E9), // Primary cyan-blue
+    Color(0xFF14B8A6), // Teal
+    Color(0xFF8B5CF6), // Purple
+    Color(0xFF10B981), // Mint
+    Color(0xFFF97316), // Coral (secondary)
+    Color(0xFF06B6D4), // Cyan 500
+    Color(0xFF22C55E), // Success green
+    Color(0xFF3B82F6), // Info blue
+  ];
+
+  // ═══════════════════════════════════════════════════
   // SEMANTIC COLORS (Status indicators)
   // ═══════════════════════════════════════════════════
   

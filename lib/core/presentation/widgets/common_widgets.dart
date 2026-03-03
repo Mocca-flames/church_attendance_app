@@ -286,14 +286,14 @@ class AuthLinkRow extends StatelessWidget {
 class AppLogo extends StatelessWidget {
   const AppLogo({
     super.key,
-    this.icon,
+    this.showLogo = true,
     this.title,
     this.subtitle,
-    this.iconSize,
+    this.logoSize,
   });
 
-  /// Optional icon (defaults to church icon)
-  final IconData? icon;
+  /// Whether to show the logo image (defaults to true)
+  final bool showLogo;
 
   /// Optional title text
   final String? title;
@@ -301,18 +301,20 @@ class AppLogo extends StatelessWidget {
   /// Optional subtitle text
   final String? subtitle;
 
-  /// Optional icon size
-  final double? iconSize;
+  /// Optional logo size
+  final double? logoSize;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(
-          icon ?? Icons.church,
-          size: iconSize ?? AppDimens.iconXXL,
-          color: Theme.of(context).colorScheme.primary,
-        ),
+        if (showLogo)
+          Image.asset(
+            'assets/logo.png',
+            width: logoSize ?? AppDimens.iconXXL * 2,
+            height: logoSize ?? AppDimens.iconXXL * 2,
+            fit: BoxFit.contain,
+          ),
         if (title != null) ...[
           const SizedBox(height: AppDimens.paddingM),
           Text(

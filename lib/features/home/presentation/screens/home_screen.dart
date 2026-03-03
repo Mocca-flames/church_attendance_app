@@ -359,6 +359,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   _buildQuickStatsRow(context, ref),
                   const SizedBox(height: AppDimens.paddingL),
 
+
+                  // Dynamic Sync Status Widgets
+                  _buildSyncStatusCard(context, ref),
+                  const SizedBox(height: AppDimens.paddingL),
+
                   // Attendance Trend Chart
                   _buildAttendanceTrendChart(context, ref),
                   const SizedBox(height: AppDimens.paddingL),
@@ -367,16 +372,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   _buildQuickActionsCard(context, ref),
                   const SizedBox(height: AppDimens.paddingL),
 
-                  // Recent Activity Card
-                  _buildRecentActivityCard(context, ref),
-                  const SizedBox(height: AppDimens.paddingL),
-
-                  // Dynamic Sync Status Widgets
-                  _buildSyncStatusCard(context, ref),
-                  const SizedBox(height: AppDimens.paddingL),
-
                   // Tag Distribution Pie Chart
                   _buildTagDistributionChart(context, ref),
+                  const SizedBox(height: AppDimens.paddingL),
+
+                  // Recent Activity Card
+                  _buildRecentActivityCard(context, ref),
                   const SizedBox(height: AppDimens.paddingL),
                 ],
               ),
@@ -541,7 +542,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         final double chartMaxY = (maxCount * 1.18).ceilToDouble().clamp(4.0, double.infinity);
 
         return Card(
-          elevation: AppDimens.cardElevation,
+          
           child: Padding(
             padding: const EdgeInsets.all(AppDimens.paddingM),
             child: Column(
@@ -840,7 +841,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   /// Build quick actions card with action buttons
   Widget _buildQuickActionsCard(BuildContext context, WidgetRef ref) {
     return Card(
-      elevation: AppDimens.cardElevation,
+      
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.paddingM),
         child: Column(
@@ -914,7 +915,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         }
 
         return Card(
-          elevation: AppDimens.cardElevation,
           child: Padding(
             padding: const EdgeInsets.all(AppDimens.paddingM),
             child: Column(
@@ -972,9 +972,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Theme.of(context)
-                                      .colorScheme
-                                      .onSecondary
-                                      .withValues(alpha: 0.5),
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color
+                                      
                                 ),
                               ),
                             ],
@@ -1022,7 +1023,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     }
 
     return Card(
-      elevation: AppDimens.cardElevation,
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.paddingM),
         child: Column(
@@ -1030,7 +1030,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
           children: [
             // Header with online/offline indicator
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                
+                Text(
+                  isOnline ? 'Online' : 'Offline',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isOnline ? Colors.green[700] : Colors.orange[700],
+                  ),
+                ),
+               
                 Container(
                   width: 12,
                   height: 12,
@@ -1047,15 +1057,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                     ],
                   ),
                 ),
-                const SizedBox(width: AppDimens.paddingS),
-                Text(
-                  isOnline ? 'Online' : 'Offline',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isOnline ? Colors.green[700] : Colors.orange[700],
-                  ),
-                ),
-                const Spacer(),
+                
                 if (syncStatus.isSyncing)
                   const SizedBox(
                     width: 16,
@@ -1109,7 +1111,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                     size: 16,
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSecondary.withValues(alpha: 0.3),
+                    ).colorScheme.secondary.withValues(alpha: 0.9),
                   ),
                   const SizedBox(width: AppDimens.paddingXS),
                   Text(
@@ -1117,7 +1119,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(
                         context,
-                      ).colorScheme.onSecondary.withValues(alpha: 0.3),
+                      ).textTheme.bodySmall?.color?.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -1189,7 +1191,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     AsyncValue<Map<ContactTag, int>> locationData,
   ) {
     return Card(
-      elevation: AppDimens.cardElevation,
+      
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.paddingM),
         child: Column(
@@ -1241,7 +1243,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     AsyncValue<Map<ContactTag, int>> roleData,
   ) {
     return Card(
-      elevation: AppDimens.cardElevation,
+      
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.paddingM),
         child: Column(
@@ -1292,7 +1294,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     AsyncValue<Map<String, int>> membershipData,
   ) {
     return Card(
-      elevation: AppDimens.cardElevation,
+     
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.paddingM),
         child: Column(
@@ -1398,7 +1400,7 @@ class _QuickStatCard extends StatelessWidget {
               fontSize: 10,
               color: Theme.of(
                 context,
-              ).colorScheme.onSecondary.withValues(alpha: 0.5),
+              ).textTheme.bodySmall?.color?.withValues(alpha: 0.9),
             ),
           ),
         ],

@@ -1,4 +1,5 @@
 
+import 'package:church_attendance_app/core/constants/app_colors.dart';
 import 'package:church_attendance_app/core/enums/contact_tag.dart';
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/contact_provider.dart';
@@ -34,26 +35,26 @@ class ContactDetailScreen extends ConsumerWidget {
             expandedHeight: 240,
             pinned: true,
             backgroundColor: colorScheme.primary,
-            foregroundColor: Colors.white,
+            foregroundColor: colorScheme.onPrimary,
             actions: [
               IconButton(
-                icon: const Icon(Icons.edit_outlined),
+                icon: Icon(Icons.edit_outlined, color: colorScheme.onPrimary),
                 onPressed: () => _navigateToEdit(context, displayContact),
                 tooltip: 'Edit Contact',
               ),
               PopupMenuButton<String>(
                 onSelected: (value) =>
                     _handleMenuAction(context, ref, value),
-                icon: const Icon(Icons.more_vert),
+                icon: Icon(Icons.more_vert, color: colorScheme.onPrimary),
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete_outline, color: Colors.red),
-                        SizedBox(width: 12),
+                        Icon(Icons.delete_outline, color: colorScheme.error),
+                        const SizedBox(width: 12),
                         Text('Delete Contact',
-                            style: TextStyle(color: Colors.red)),
+                            style: TextStyle(color: colorScheme.error)),
                       ],
                     ),
                   ),
@@ -135,7 +136,7 @@ class ContactDetailScreen extends ConsumerWidget {
                             children: displayContact.tags.map((tag) {
                               final contactTag = ContactTag.fromValue(tag);
                               final color =
-                                  contactTag?.color ?? Colors.grey;
+                                  contactTag?.color ?? Theme.of(context).colorScheme.surface;
                               return _TagChip(
                                 label: Contact.getTagDisplayName(tag),
                                 icon: contactTag?.icon ?? Icons.label,
@@ -224,7 +225,7 @@ class ContactDetailScreen extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
               child: const Text('Delete'),
             ),
           ],
@@ -258,6 +259,7 @@ class _HeroHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final avatarColor = _getAvatarColor(contact);
     final initials = _getInitials(contact);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       decoration: BoxDecoration(
@@ -265,8 +267,8 @@ class _HeroHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+            colorScheme.primary,
+            colorScheme.primary.withValues(alpha: 0.8),
           ],
         ),
       ),
@@ -281,10 +283,10 @@ class _HeroHeader extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.6), width: 3),
+                      color: colorScheme.onPrimary.withValues(alpha: 0.6), width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
+                      color: colorScheme.shadow.withValues(alpha: 0.2),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -295,9 +297,9 @@ class _HeroHeader extends StatelessWidget {
                   backgroundColor: avatarColor,
                   child: Text(
                     initials,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 28,
-                      color: Colors.white,
+                      color: colorScheme.onPrimary,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
                     ),
@@ -314,10 +316,10 @@ class _HeroHeader extends StatelessWidget {
                   children: [
                     Text(
                       contact.displayName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: colorScheme.onPrimary,
                         letterSpacing: 0.2,
                       ),
                       maxLines: 2,
@@ -328,7 +330,7 @@ class _HeroHeader extends StatelessWidget {
                       contact.phone,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: colorScheme.onPrimary.withValues(alpha: 0.8),
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -338,22 +340,22 @@ class _HeroHeader extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
+                          color: colorScheme.onPrimary.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.5)),
+                              color: colorScheme.onPrimary.withValues(alpha: 0.5)),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.verified,
-                                size: 13, color: Colors.white),
-                            SizedBox(width: 4),
+                                size: 13, color: colorScheme.onPrimary),
+                            const SizedBox(width: 4),
                             Text(
                               'Member',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.white,
+                                color: colorScheme.onPrimary,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.3,
                               ),
@@ -385,17 +387,7 @@ class _HeroHeader extends StatelessWidget {
 
   Color _getAvatarColor(Contact contact) {
     final hash = contact.phone.hashCode;
-    final colors = [
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
-      Colors.indigo,
-      Colors.pink,
-      Colors.cyan,
-    ];
-    return colors[hash.abs() % colors.length];
+    return AppColors.avatarColors[hash.abs() % AppColors.avatarColors.length];
   }
 }
 

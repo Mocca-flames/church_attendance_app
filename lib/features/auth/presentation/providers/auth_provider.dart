@@ -128,13 +128,18 @@ class AuthNotifier extends Notifier<AuthState> {
         user: user,
       );
       
+      // Capture provider notifiers before async boundary to avoid using ref
+      // inside microtask which could cause issues
+      final syncNotifier = ref.read(syncStatusProvider.notifier);
+      final smartSyncNotifier = ref.read(smartSyncProvider.notifier);
+      
       // Run contact sync and periodic sync in BACKGROUND (fire-and-forget)
       // This allows user to access app immediately while contacts sync
       Future.microtask(() async {
         try {
-          await ref.read(syncStatusProvider.notifier).pullContacts();
+          await syncNotifier.pullContacts();
           // Initialize smart sync with normal mode
-          ref.read(smartSyncProvider.notifier).setNormalMode();
+          smartSyncNotifier.setNormalMode();
         } catch (_) {
           // Ignore sync errors - UI can show sync status elsewhere
         }
@@ -185,12 +190,17 @@ class AuthNotifier extends Notifier<AuthState> {
         user: user,
       );
       
+      // Capture provider notifiers before async boundary to avoid using ref
+      // inside microtask which could cause issues
+      final syncNotifier = ref.read(syncStatusProvider.notifier);
+      final smartSyncNotifier = ref.read(smartSyncProvider.notifier);
+      
       // Run contact sync in BACKGROUND (fire-and-forget)
       Future.microtask(() async {
         try {
-          await ref.read(syncStatusProvider.notifier).pullContacts();
+          await syncNotifier.pullContacts();
           // Initialize smart sync with normal mode
-          ref.read(smartSyncProvider.notifier).setNormalMode();
+          smartSyncNotifier.setNormalMode();
         } catch (_) {}
         // Update isSyncing flag when background sync completes
         // Use state directly (not ref.read) to avoid circular dependency
@@ -223,11 +233,15 @@ class AuthNotifier extends Notifier<AuthState> {
     state = const AuthState(isAuthenticated: false, isLoading: false);
     debugPrint('[AUTH_DEBUG] Auth state cleared (isAuthenticated = false)');
     
+    // Capture repository reference before async boundary to avoid using ref
+    // inside microtask which could cause issues if widget is unmounted
+    final repository = _repository;
+    
     // Run logout server call in background if needed
     Future.microtask(() async {
       try {
         debugPrint('[AUTH_DEBUG] Starting background logout server call');
-        await _repository.logout();
+        await repository.logout();
         debugPrint('[AUTH_DEBUG] Background logout server call completed');
       } catch (e) {
         debugPrint('[AUTH_DEBUG] Background logout error: $e');

@@ -114,15 +114,16 @@ class SyncStatusIndicatorCompact extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final syncStatus = ref.watch(syncStatusProvider);
     final isOnline = ref.watch(isOnlineProvider);
+    final iconSize = 18.0;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (syncStatus.isSyncing)
-          const SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
+           SizedBox(
+            width: iconSize,
+            height: iconSize,
+            child: const CircularProgressIndicator(
               strokeWidth: 2,
               color: Colors.orange,
             ),
@@ -134,7 +135,7 @@ class SyncStatusIndicatorCompact extends ConsumerWidget {
                     ? Icons.cloud_done
                     : Icons.cloud_queue)
                 : Icons.cloud_off,
-            size: 14,
+            size: iconSize,
             color: isOnline
                 ? (syncStatus.lastSyncTime != null
                     ? Colors.green

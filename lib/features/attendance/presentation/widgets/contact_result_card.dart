@@ -5,6 +5,7 @@ import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/core/services/haptic_service.dart';
 import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
+import 'package:church_attendance_app/core/widgets/glass_popup_card.dart';
 import 'package:church_attendance_app/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_provider.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/contact_search_provider.dart';
@@ -122,106 +123,113 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
 
     final result = await showDialog<bool>(
       context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Update Contact'),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    hintText: 'Enter contact name',
-                  ).applyDefaults(Theme.of(context).inputDecorationTheme),
-                  validator: (value) => (value == null || value.trim().isEmpty)
-                      ? 'Name is required'
-                      : null,
-                ),
-                const SizedBox(height: AppDimens.paddingM),
-                
-                // Location field - only show if contact doesn't have location
-                if (!_hasLocation) ...[
-                  TextFormField(
-                    controller: locationController,
-                    decoration: const InputDecoration(
-                      labelText: 'Location (optional)',
-                      hintText: 'Enter location',
-                    ).applyDefaults(Theme.of(context).inputDecorationTheme),
-                  ),
-                  const SizedBox(height: AppDimens.paddingM),
-                ] else
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.tertiaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
+        builder: (context, setState) => Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: GlassPopupCard.dialog(
+            title: 'Update Contact',
+            onClose: () => Navigator.pop(context, false),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Add horizontal padding for more space on left/right
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.location_on, color: Theme.of(context).colorScheme.tertiary, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Location: $_location',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.tertiary,
-                              fontWeight: FontWeight.w500,
+                        TextFormField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Name',
+                            hintText: 'Enter contact name',
+                          ).applyDefaults(Theme.of(context).inputDecorationTheme),
+                          validator: (value) => (value == null || value.trim().isEmpty)
+                              ? 'Name is required'
+                              : null,
+                        ),
+                        const SizedBox(height: AppDimens.paddingM),
+                        
+                        // Location field - only show if contact doesn't have location
+                        if (!_hasLocation) ...[
+                          TextFormField(
+                            controller: locationController,
+                            decoration: const InputDecoration(
+                              labelText: 'Location (optional)',
+                              hintText: 'Enter location',
+                            ).applyDefaults(Theme.of(context).inputDecorationTheme),
+                          ),
+                          const SizedBox(height: AppDimens.paddingM),
+                        ] else
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.tertiaryContainer,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.location_on, color: Theme.of(context).colorScheme.tertiary, size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Location: $_location',
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.tertiary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                        
+                        SwitchListTile(
+                          title: const Text('Mark as Member'),
+                          value: isMember,
+                          onChanged: (value) => setState(() => isMember = value),
+                          contentPadding: EdgeInsets.zero,
                         ),
                       ],
                     ),
                   ),
-                
-                SwitchListTile(
-                  title: const Text('Mark as Member'),
-                  value: isMember,
-                  onChanged: (value) => setState(() => isMember = value),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ],
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Action button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: FilledButton(
+                      onPressed: () {
+                        final Logger logger = Logger();
+                        if (formKey.currentState!.validate()) {
+                          logger.d('Form validation passed, popping dialog with true');
+                          Navigator.pop(context, true);
+                        } else {
+                          logger.d('Form validation failed, showing snackbar');
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: const Text('Please enter a valid name.'),
+                            backgroundColor: Theme.of(context).colorScheme.error,
+                          ));
+                        }
+                        logger.d('=== FilledButton onPressed END ===');
+                      },
+                      child: const Text('Update & Mark'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final Logger logger = Logger();
-                logger.d('=== FilledButton onPressed START ===');
-                logger.d(
-                    'contact.id: ${_contact.id} (type: ${_contact.id.runtimeType})');
-                logger.d(
-                    'contact.phone: ${_contact.phone} (type: ${_contact.phone.runtimeType})');
-                logger.d(
-                    'contact.name: ${_contact.name} (type: ${_contact.name?.runtimeType})');
-                logger.d('serviceType: $_serviceType');
-                logger.d('recordedBy: $_recordedBy');
-                logger.d('isMember: $isMember');
-                logger.d('formKey.currentState: ${formKey.currentState}');
-
-                if (formKey.currentState!.validate()) {
-                  logger.d('Form validation passed, popping dialog with true');
-                  Navigator.pop(context, true);
-                } else {
-                  logger.d('Form validation failed, showing snackbar');
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: const Text('Please enter a valid name.'),
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                  ));
-                }
-                logger.d('=== FilledButton onPressed END ===');
-              },
-              child: const Text('Update & Mark'),
-            ),
-          ],
         ),
       ),
     );
