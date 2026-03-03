@@ -18,7 +18,7 @@ enum ContactTag {
   servant('servant', 'Servant', Icons.handshake, Color(0xFF3F51B5)),
   
   // Membership status
-  member('member', 'Member', Icons.card_membership, Color(0xFF8BC34A)),
+  member('member', 'Member', Icons.ontact_phone, Color(0xFF8BC34A)),
   
   // Location tags (geographic areas)
   kanana('kanana', 'Kanana', Icons.location_on, Color(0xFFF44336)),

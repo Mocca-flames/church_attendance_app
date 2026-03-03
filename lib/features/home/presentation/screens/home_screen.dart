@@ -440,19 +440,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         Expanded(
           child: contactStoreInfo.when(
             data: (info) => _QuickStatCard(
-              icon: Icons.card_membership,
+              icon: Icons.contact_phone,
               label: 'Members',
               value: info.memberCount.toString(),
               color: ContactTag.member.color,
             ),
             loading: () => _QuickStatCard(
-              icon: Icons.card_membership,
+              icon: Icons.contact_phone,
               label: 'Members',
               value: '...',
               color: ContactTag.member.color,
             ),
             error: (_, _) => _QuickStatCard(
-              icon: Icons.card_membership,
+              icon: Icons.contact_phone,
               label: 'Members',
               value: '-',
               color: ContactTag.member.color,
@@ -1302,7 +1302,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
           children: [
             Row(
               children: [
-                Icon(Icons.card_membership, size: 20, color: Colors.green.shade700),
+                Icon(Icons.contact_phone, size: 20, color: Colors.green.shade700),
                 const SizedBox(width: AppDimens.paddingS),
                 Text(
                   'Membership',

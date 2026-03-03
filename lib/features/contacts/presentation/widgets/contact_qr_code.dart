@@ -140,7 +140,7 @@ class ContactQRCode extends StatelessWidget {
               ),
             if (contact.isMember)
               _buildBadge(
-                icon: Icons.card_membership,
+                icon: Icons.contact_phone,
                 label: 'Member',
                 color: Colors.green,
               ),

@@ -403,7 +403,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
             _buildSectionCard(
               context: context,
               title: 'Membership',
-              icon: Icons.card_membership_outlined,
+              icon: Icons.contact_phone_outlined,
               child: _buildStyledSwitch(
                 title: 'Member',
                 subtitle: 'Mark as church member',

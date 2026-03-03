@@ -39,8 +39,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       label: AppStrings.attendance,
     ),
     BottomNavigationBarItem(
-      icon: Icon(Icons.card_membership_outlined),
-      activeIcon: Icon(Icons.card_membership),
+      icon: Icon(Icons.contact_phone_outlined),
+      activeIcon: Icon(Icons.contact_phone),
       label: AppStrings.contacts,
     ),
     

@@ -475,7 +475,7 @@ class _ModernMembershipSelector extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.card_membership_rounded,
+                Icons.contact_phone_rounded,
                 color: isMember ? colorScheme.secondary : colorScheme.onSurfaceVariant,
                 size: 24,
               ),
