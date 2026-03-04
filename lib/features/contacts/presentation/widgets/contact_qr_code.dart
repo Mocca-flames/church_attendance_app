@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element_parameter
+
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';

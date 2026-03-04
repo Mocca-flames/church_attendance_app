@@ -4,6 +4,10 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/sync/sync_manager.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:church_attendance_app/features/contacts/presentation/providers/contact_count_provider.dart';
+import 'package:church_attendance_app/features/contacts/presentation/providers/contact_provider.dart';
+import 'package:church_attendance_app/features/contacts/presentation/providers/tag_statistics_provider.dart';
+import 'package:church_attendance_app/features/home/presentation/screens/home_screen.dart';
 import 'package:church_attendance_app/main.dart';
 
 
@@ -185,6 +189,27 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
     return const SyncStatus();
   }
 
+  /// Invalidate all data providers to trigger UI refresh after sync.
+  /// This ensures Contact List and Home Screen show updated data.
+  void _invalidateDataProviders() {
+    // Contact list providers
+    ref.invalidate(contactListProvider);
+    ref.invalidate(offlineContactCountProvider);
+    ref.invalidate(offlineContactStoreInfoProvider);
+    
+    // Tag statistics providers
+    ref.invalidate(tagDistributionProvider);
+    ref.invalidate(locationTagDistributionProvider);
+    ref.invalidate(roleTagDistributionProvider);
+    ref.invalidate(membershipDistributionProvider);
+    ref.invalidate(totalContactCountProvider);
+    
+    // Attendance providers (Home screen)
+    ref.invalidate(weeklyAttendanceCountProvider);
+    ref.invalidate(attendanceTrendProvider);
+    ref.invalidate(attendanceByServiceTypeProvider);
+  }
+
   /// Pull contacts from server and update sync status.
   /// Supports progress callbacks for UI feedback.
   Future<void> pullContacts({
@@ -214,6 +239,9 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
         progressCallback: onProgress,
       );
       
+      // Invalidate data providers to refresh UI with new data
+      _invalidateDataProviders();
+      
       state = state.copyWith(
         isSyncing: false,
         lastSyncTime: DateTime.now(),
@@ -235,6 +263,9 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
     try {
       final result = await _syncManager.syncAll();
       final pendingCount = await _syncManager.getPendingSyncCount();
+
+      // Invalidate data providers to refresh UI with synced data
+      _invalidateDataProviders();
 
       state = state.copyWith(
         isSyncing: false,
