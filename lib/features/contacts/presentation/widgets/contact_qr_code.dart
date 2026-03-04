@@ -23,13 +23,12 @@ class ContactQRCode extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── QR Code ────────────────────────────────────────────
-        // Role badge is OUTSIDE the QR container — never overlaps
+        // ── QR Code with Decorative Container ─────────────────
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white, // always white bg for max contrast
-            borderRadius: BorderRadius.circular(16),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.1),
@@ -38,64 +37,105 @@ class ContactQRCode extends StatelessWidget {
               ),
             ],
           ),
-          child: Stack(
-            alignment: Alignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              QrImageView(
-                data: contact.phone,
-                version: QrVersions.auto,
-                size: size,
-                gapless: true,
-                backgroundColor: Colors.white,
-                errorCorrectionLevel: QrErrorCorrectLevel
-                    .H, // H = 30% tolerance, needed for center overlay
-                eyeStyle: const QrEyeStyle(
-                  eyeShape: QrEyeShape.square,
-                  color: Colors.black,
-                ),
-                dataModuleStyle: const QrDataModuleStyle(
-                  dataModuleShape: QrDataModuleShape.square,
-                  color: Colors.black,
-                ),
-                errorStateBuilder: (context, error) => SizedBox(
-                  width: size,
-                  height: size,
-                  child: const Center(
-                    child: Text(
-                      'Could not generate QR code',
-                      textAlign: TextAlign.center,
-                    ),
+              // ── Role Badge at Top ──────────────────────────────
+              if (contact.primaryRoleTag != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: contact.roleColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: contact.roleColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(contact.roleIcon, color: contact.roleColor, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        contact.primaryRole?.displayName ?? contact.primaryRoleTag!,
+                        style: TextStyle(
+                          color: contact.roleColor,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
 
-              // ── Center avatar overlay (Samsung-style) ──────────────
-              Container(
-                width:
-                    size * 0.22, // ~22% of QR size — safe zone for H-level ECC
-                height: size * 0.22,
-                decoration: BoxDecoration(
-                  color: _getAvatarColor(contact),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    _getInitials(contact),
-                    style: TextStyle(
-                      fontSize: size * 0.075,
+              // ── QR Code with Decorative Frame ──────────────────
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Decorative corner markers
+                  Positioned.fill(
+                    child: _DecorativeCorners(color: contact.roleColor.withValues(alpha: 0.6)),
+                  ),
+
+                  // Main QR Code
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: QrImageView(
+                      data: contact.phone,
+                      version: QrVersions.auto,
+                      size: size,
+                      gapless: true,
+                      backgroundColor: Colors.white,
+                      errorCorrectionLevel: QrErrorCorrectLevel.H,
+                      eyeStyle: const QrEyeStyle(
+                        eyeShape: QrEyeShape.square,
+                        color: Colors.black,
+                      ),
+                      dataModuleStyle: const QrDataModuleStyle(
+                        dataModuleShape: QrDataModuleShape.square,
+                        color: Colors.black,
+                      ),
+                      errorStateBuilder: (context, error) => SizedBox(
+                        width: size,
+                        height: size,
+                        child: const Center(
+                          child: Text(
+                            'Could not generate QR code',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+
+                  // ── Center Logo Overlay ─────────────────────────────
+                  Container(
+                    width: size * 0.22,
+                    height: size * 0.22,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/logo.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -220,25 +260,118 @@ class ContactQRCode extends StatelessWidget {
   }
 }
 
-String _getInitials(Contact contact) {
-  if (contact.name != null && contact.name!.isNotEmpty) {
-    final parts = contact.name!.trim().split(' ');
-    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return contact.name![0].toUpperCase();
+/// Decorative corner markers for QR code frame
+class _DecorativeCorners extends StatelessWidget {
+  final Color color;
+  final double cornerSize;
+  final double strokeWidth;
+
+  const _DecorativeCorners({
+    required this.color,
+    this.cornerSize = 24,
+    this.strokeWidth = 3,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Top-left corner
+        Positioned(
+          left: 0,
+          top: 0,
+          child: _buildCorner(CornerPosition.topLeft),
+        ),
+        // Top-right corner
+        Positioned(
+          right: 0,
+          top: 0,
+          child: _buildCorner(CornerPosition.topRight),
+        ),
+        // Bottom-left corner
+        Positioned(
+          left: 0,
+          bottom: 0,
+          child: _buildCorner(CornerPosition.bottomLeft),
+        ),
+        // Bottom-right corner
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: _buildCorner(CornerPosition.bottomRight),
+        ),
+      ],
+    );
   }
-  return contact.phone.substring(0, 2);
+
+  Widget _buildCorner(CornerPosition position) {
+    return CustomPaint(
+      size: Size(cornerSize, cornerSize),
+      painter: _CornerPainter(
+        color: color,
+        strokeWidth: strokeWidth,
+        position: position,
+      ),
+    );
+  }
 }
 
-Color _getAvatarColor(Contact contact) {
-  final colors = [
-    Colors.blue,
-    Colors.green,
-    Colors.orange,
-    Colors.purple,
-    Colors.teal,
-    Colors.indigo,
-    Colors.pink,
-    Colors.cyan,
-  ];
-  return colors[contact.phone.hashCode.abs() % colors.length];
+enum CornerPosition { topLeft, topRight, bottomLeft, bottomRight }
+
+class _CornerPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final CornerPosition position;
+
+  _CornerPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.position,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    final double cornerSize = size.width * 0.6;
+
+    switch (position) {
+      case CornerPosition.topLeft:
+        path
+          ..moveTo(0, cornerSize)
+          ..lineTo(0, 0)
+          ..lineTo(cornerSize, 0);
+        break;
+      case CornerPosition.topRight:
+        path
+          ..moveTo(size.width - cornerSize, 0)
+          ..lineTo(size.width, 0)
+          ..lineTo(size.width, cornerSize);
+        break;
+      case CornerPosition.bottomLeft:
+        path
+          ..moveTo(0, size.height - cornerSize)
+          ..lineTo(0, size.height)
+          ..lineTo(cornerSize, size.height);
+        break;
+      case CornerPosition.bottomRight:
+        path
+          ..moveTo(size.width, size.height - cornerSize)
+          ..lineTo(size.width, size.height)
+          ..lineTo(size.width - cornerSize, size.height);
+        break;
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+

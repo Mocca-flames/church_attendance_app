@@ -31,7 +31,7 @@ class ContactCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.5),
@@ -160,15 +160,15 @@ class ContactCard extends StatelessWidget {
                         height: 44,
                         width: 44,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                           ),
                         ),
                         child: Icon(
                           Icons.qr_code_2_rounded,
-                          color: Theme.of(context).colorScheme.onSecondary,
+                          color: Theme.of(context).colorScheme.tertiary,
                           size: 24,
                         ),
                       ),
