@@ -358,14 +358,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   // Quick Stats Row
                   _buildQuickStatsRow(context, ref),
                   const SizedBox(height: AppDimens.paddingL),
+                  
+                  // Dynamic Sync Status Widgets
+                  _buildSyncStatusCard(context, ref),
+                  const SizedBox(height: AppDimens.paddingL),
 
                   // Quick Actions Card
                   _buildQuickActionsCard(context, ref),
-                  const SizedBox(height: AppDimens.paddingL),
-
-
-                  // Dynamic Sync Status Widgets
-                  _buildSyncStatusCard(context, ref),
                   const SizedBox(height: AppDimens.paddingL),
 
                   // Attendance Trend Chart
@@ -1218,7 +1217,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   return _buildEmptyState('No location data');
                 }
                 return SizedBox(
-                  height: 180,
+                  height: 100,
                   child: HorizontalBarChart(
                     data: locationCounts,
                     barColor: Colors.red,
@@ -1226,7 +1225,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                 );
               },
               loading: () => const SizedBox(
-                height: 180,
+                height: 100,
                 child: Center(child: CircularProgressIndicator()),
               ),
               error: (_, _) => _buildEmptyState('Error loading data'),
@@ -1258,7 +1257,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.purple.shade700,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -1578,7 +1577,7 @@ class HorizontalBarChart extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  
                   SizedBox(
                     width: 24,
                     child: Text(
@@ -1625,8 +1624,8 @@ class RoleRadarChart extends StatelessWidget {
       RadarChartData(
         dataSets: [
           RadarDataSet(
-            fillColor: Colors.purple.withValues(alpha: 0.3),
-            borderColor: Colors.purple,
+            fillColor: const Color.fromARGB(255, 191, 100, 207).withValues(alpha: 0.3),
+            borderColor: const Color.fromARGB(255, 221, 30, 255),
             borderWidth: 2,
             entryRadius: 3,
             dataEntries: entries.map((e) => RadarEntry(value: e.value.toDouble())).toList(),
@@ -1634,9 +1633,9 @@ class RoleRadarChart extends StatelessWidget {
         ],
         radarBackgroundColor: Colors.transparent,
         borderData: FlBorderData(show: false),
-        radarBorderData: const BorderSide(color: Colors.grey, width: 0.5),
+        radarBorderData: BorderSide(color: Theme.of(context).colorScheme.onSurfaceVariant, width: 0.5),
         titlePositionPercentageOffset: 0.2,
-        titleTextStyle: const TextStyle(fontSize: 8, color: Colors.black87),
+        titleTextStyle: TextStyle(fontSize: 10, color: Theme.of(context).textTheme.bodyLarge?.color),
         getTitle: (index, angle) {
           return RadarChartTitle(
             text: entries[index].key.displayName,
@@ -1644,9 +1643,9 @@ class RoleRadarChart extends StatelessWidget {
           );
         },
         tickCount: 3,
-        ticksTextStyle: const TextStyle(fontSize: 8, color: Colors.grey),
-        tickBorderData: const BorderSide(color: Colors.grey, width: 0.5),
-        gridBorderData: const BorderSide(color: Colors.grey, width: 0.3),
+        ticksTextStyle:  TextStyle(color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7) ),
+        tickBorderData: BorderSide(color: Theme.of(context).colorScheme.onSurfaceVariant, width: 0.5),
+        gridBorderData: BorderSide(color: Theme.of(context).colorScheme.onSurfaceVariant, width: 0.3),
       ),
     );
   }

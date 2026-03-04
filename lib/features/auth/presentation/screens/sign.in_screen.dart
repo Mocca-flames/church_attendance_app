@@ -61,7 +61,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _loginInitiated = true;
-        _buttonState = GradientButtonState.idle;
+        _buttonState = GradientButtonState.loading;
       });
 
       final success = await ref.read(authProvider.notifier).register(
@@ -82,6 +82,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             });
           }
         });
+      } else if (success && mounted) {
+        // Navigation happens directly here, no state change to avoid rebuild
+        AppRoute.main.navigateAndRemoveUntil(context);
       }
     }
   }
@@ -93,7 +96,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(authProvider);
     final authError = ref.watch(authErrorProvider);
     final isLoading = ref.watch(authLoadingProvider);
 
@@ -106,13 +108,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     } else {
       buttonState = GradientButtonState.idle;
     }
-
-    // Listen for auth state changes
-    ref.listen<AuthState>(authProvider, (previous, next) {
-      if (next.isAuthenticated && mounted) {
-        AppRoute.main.navigateAndRemoveUntil(context);
-      }
-    });
 
     return Scaffold(
       appBar: AppBar(

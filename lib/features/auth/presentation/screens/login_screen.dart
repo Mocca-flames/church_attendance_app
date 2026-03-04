@@ -49,7 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _loginInitiated = true;
-        _buttonState = GradientButtonState.idle;
+        _buttonState = GradientButtonState.loading;
       });
 
       final success = await ref.read(authProvider.notifier).login(
@@ -69,6 +69,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             });
           }
         });
+      } else if (success && mounted) {
+        // Navigation happens directly here, no state change to avoid rebuild
+        AppRoute.main.navigateReplacement(context);
       }
     }
   }
@@ -80,7 +83,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(authProvider);
     final authError = ref.watch(authErrorProvider);
     final isLoading = ref.watch(authLoadingProvider);
     
@@ -93,14 +95,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } else {
       buttonState = GradientButtonState.idle;
     }
-    
-
-    // Listen for auth state changes and navigate to home if authenticated
-    ref.listen<AuthState>(authProvider, (previous, next) {
-      if (next.isAuthenticated && mounted) {
-        AppRoute.main.navigateReplacement(context);
-      }
-    });
 
     return Scaffold(
       body: SafeArea(
