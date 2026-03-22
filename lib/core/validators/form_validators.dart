@@ -1,4 +1,7 @@
-import 'package:church_attendance_app/core/constants/app_constants.dart';
+
+
+import '../constants/app_strings.dart';
+
 
 /// Form validation utilities for authentication forms.
 /// Centralizes validation logic for reusability.

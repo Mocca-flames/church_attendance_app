@@ -1,4 +1,6 @@
 import 'dart:async';
+
+import 'package:church_attendance_app/core/services/haptic_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:church_attendance_app/features/contacts/data/datasources/contact_local_datasource.dart';
@@ -25,10 +27,12 @@ final contactRepositoryProvider = Provider<ContactRepository>((ref) {
   final localDataSource = ref.watch(contactLocalDataSourceProvider);
   final remoteDataSource = ref.watch(contactRemoteDataSourceProvider);
   final dioClient = ref.watch(dioClientProvider);
+  final locationService = ref.watch(locationServiceProvider);
   return ContactRepositoryImpl(
     localDataSource: localDataSource,
     remoteDataSource: remoteDataSource,
     dioClient: dioClient,
+    locationService: locationService,
   );
 });
 
@@ -39,8 +43,11 @@ class ContactState {
   final String? error;
   final bool isDeleting;
   final bool isSaving;
+  final bool isSyncing;
+  final String? syncError;
   final bool isImportingVcf;
   final Map<String, dynamic>? vcfImportResult;
+  final List<Contact> recentContacts;
 
   const ContactState({
     this.isLoading = false,
@@ -48,8 +55,11 @@ class ContactState {
     this.error,
     this.isDeleting = false,
     this.isSaving = false,
+    this.isSyncing = false,
+    this.syncError,
     this.isImportingVcf = false,
     this.vcfImportResult,
+    this.recentContacts = const [],
   });
 
   ContactState copyWith({
@@ -58,11 +68,15 @@ class ContactState {
     String? error,
     bool? isDeleting,
     bool? isSaving,
+    bool? isSyncing,
+    String? syncError,
     bool? isImportingVcf,
     Map<String, dynamic>? vcfImportResult,
+    List<Contact>? recentContacts,
     bool clearError = false,
     bool clearSelectedContact = false,
     bool clearVcfImportResult = false,
+    bool clearSyncError = false,
   }) {
     return ContactState(
       isLoading: isLoading ?? this.isLoading,
@@ -70,8 +84,11 @@ class ContactState {
       error: clearError ? null : (error ?? this.error),
       isDeleting: isDeleting ?? this.isDeleting,
       isSaving: isSaving ?? this.isSaving,
+      isSyncing: isSyncing ?? this.isSyncing,
+      syncError: clearSyncError ? null : (syncError ?? this.syncError),
       isImportingVcf: isImportingVcf ?? this.isImportingVcf,
       vcfImportResult: clearVcfImportResult ? null : (vcfImportResult ?? this.vcfImportResult),
+      recentContacts: recentContacts ?? this.recentContacts,
     );
   }
 }
@@ -84,6 +101,11 @@ class ContactNotifier extends Notifier<ContactState> {
   ContactState build() {
     _repository = ref.watch(contactRepositoryProvider);
     return const ContactState();
+  }
+
+  /// Trigger haptic feedback for successful operations.
+  Future<void> _triggerSuccessHaptic() async {
+    await HapticService.medium();
   }
 
   /// Load a contact by ID
@@ -106,157 +128,352 @@ class ContactNotifier extends Notifier<ContactState> {
     }
   }
 
-  /// Create a new contact
+  /// Create a new contact with Optimistic UI
+  /// Returns the optimistic contact immediately while syncing in background
   Future<Contact?> createContact({
     required String phone,
     String? name,
     bool isMember = false,
     String? location,
   }) async {
-    state = state.copyWith(isSaving: true, clearError: true);
-    
-    try {
-      // Build tags list
-      final List<String> tags = [];
-      if (isMember) {
-        tags.add('member');
-      }
-      if (location != null && location.isNotEmpty) {
-        tags.add(location.toLowerCase());
-      }
+    // Build tags list
+    final List<String> tags = [];
+    if (isMember) {
+      tags.add('member');
+    }
+    if (location != null && location.isNotEmpty) {
+      tags.add(location.toLowerCase());
+    }
 
-      final contact = Contact(
-        id: 0,
-        createdAt: DateTime.now(),
-        phone: phone,
-        name: name,
-        metadata: tags.isNotEmpty ? '{"tags":${tags.map((t) => '"$t"').toList()}}' : null,
-      );
+    // Create optimistic contact with a temporary ID (use timestamp for uniqueness)
+    final now = DateTime.now();
+    final optimisticContact = Contact(
+      id: now.millisecondsSinceEpoch, // Temporary ID for optimistic UI
+      createdAt: now,
+      phone: phone,
+      name: name,
+      metadata: tags.isNotEmpty ? '{"tags":${tags.map((t) => '"$t"').toList()}}' : null,
+      isSynced: false, // Mark as not synced for background sync
+    );
 
-      final created = await _repository.createContact(contact);
-      
+    // Immediately update UI with optimistic data (no loading state)
+    state = state.copyWith(
+      isSaving: false,
+      isSyncing: true,
+      selectedContact: optimisticContact,
+      recentContacts: [optimisticContact, ...state.recentContacts],
+      clearError: true,
+    );
+
+    // Trigger haptic feedback for instant tactile confirmation
+    await _triggerSuccessHaptic();
+
+    // Run actual repository call in background
+    _repository.createContact(optimisticContact).then((created) {
+      // On success: replace optimistic contact with actual data from DB
+      final updatedContacts = state.recentContacts.map((c) {
+        if (c.id == optimisticContact.id) {
+          return created;
+        }
+        return c;
+      }).toList();
+
       state = state.copyWith(
-        isSaving: false,
+        isSyncing: false,
         selectedContact: created,
+        recentContacts: updatedContacts,
       );
-      return created;
-    } catch (e) {
+    }).catchError((error) {
+      // On error: show subtle sync error but keep optimistic data in UI
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
-        isSaving: false,
-        error: e.toString(),
+        isSyncing: false,
+        syncError: 'Sync pending: $errorMessage',
       );
-      return null;
-    }
+    });
+
+    // Return optimistic contact immediately
+    return optimisticContact;
   }
 
-  /// Update an existing contact
+  /// Update an existing contact with Optimistic UI
+  /// Immediately updates UI with modified contact data while syncing in background
   Future<Contact?> updateContact(Contact contact) async {
-    state = state.copyWith(isSaving: true, clearError: true);
-    
-    try {
-      final updated = await _repository.updateContact(contact);
-      
+    // Store the previous contact for rollback on error
+    final previousContact = state.selectedContact;
+    final previousContacts = state.recentContacts;
+
+    // Immediately update UI with the modified contact data
+    final updatedContact = contact.copyWith(isSynced: false);
+    state = state.copyWith(
+      isSaving: false,
+      isSyncing: true,
+      selectedContact: updatedContact,
+      recentContacts: state.recentContacts.map((c) {
+        if (c.id == contact.id) {
+          return updatedContact;
+        }
+        return c;
+      }).toList(),
+      clearError: true,
+    );
+
+    // Trigger haptic feedback for instant tactile confirmation
+    await _triggerSuccessHaptic();
+
+    // Run repository call in background
+    _repository.updateContact(contact).then((updated) {
+      // On success: update with actual data from DB
+      final updatedContacts = state.recentContacts.map((c) {
+        if (c.id == contact.id) {
+          return updated;
+        }
+        return c;
+      }).toList();
+
       state = state.copyWith(
-        isSaving: false,
+        isSyncing: false,
         selectedContact: updated,
+        recentContacts: updatedContacts,
       );
-      return updated;
-    } catch (e) {
+    }).catchError((error) {
+      // On error: show subtle sync error but keep optimistic data in UI
+      // Optionally: rollback to previous contact
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
-        isSaving: false,
-        error: e.toString(),
+        isSyncing: false,
+        syncError: 'Sync pending: $errorMessage',
+        selectedContact: previousContact,
+        recentContacts: previousContacts,
       );
-      return null;
-    }
+    });
+
+    // Return optimistic contact immediately
+    return updatedContact;
   }
 
-  /// Delete a contact (soft delete)
+  /// Delete a contact (soft delete) with Optimistic UI
+  /// Immediately removes contact from UI while syncing in background
   Future<bool> deleteContact(int id) async {
-    state = state.copyWith(isDeleting: true, clearError: true);
+    // Store the deleted contact for potential restore on error
+    final deletedContact = state.recentContacts.where((c) => c.id == id).firstOrNull;
+    final previousContacts = state.recentContacts;
+
+    // Immediately remove contact from UI list
+    state = state.copyWith(
+      isDeleting: false,
+      isSyncing: true,
+      recentContacts: state.recentContacts.where((c) => c.id != id).toList(),
+      clearSelectedContact: state.selectedContact?.id == id,
+      clearError: true,
+    );
+
+    // Trigger haptic feedback for instant tactile confirmation
+    await _triggerSuccessHaptic();
+
+    // Run repository call in background
+    final completer = Completer<bool>();
     
-    try {
-      await _repository.deleteContact(id);
-      
+    _repository.deleteContact(id).then((_) {
+      // On success: complete without restoring
       state = state.copyWith(
-        isDeleting: false,
-        clearSelectedContact: true,
+        isSyncing: false,
       );
-      return true;
-    } catch (e) {
+      completer.complete(true);
+    }).catchError((error) {
+      // On error: show subtle sync error and restore the contact
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
-        isDeleting: false,
-        error: e.toString(),
+        isSyncing: false,
+        syncError: 'Sync pending: $errorMessage',
+        recentContacts: deletedContact != null 
+            ? [...previousContacts] 
+            : state.recentContacts,
+        selectedContact: deletedContact,
       );
-      return false;
-    }
+      completer.complete(false);
+    });
+
+    return true; // Return optimistic success immediately
   }
 
-  /// Add tags to a contact
+  /// Add tags to a contact with Optimistic UI
+  /// Immediately updates UI with tag changes while syncing in background
   Future<Contact?> addTags(int contactId, List<String> tags) async {
-    state = state.copyWith(isSaving: true, clearError: true);
+    // Store the previous contact for potential rollback on error
+    final previousContact = state.selectedContact;
+
+    // Get current contact from recent contacts or selected contact
+    final currentContact = state.recentContacts.where((c) => c.id == contactId).firstOrNull 
+        ?? state.selectedContact;
     
-    try {
-      final updated = await _repository.addTagsToContact(contactId, tags);
-      
+    if (currentContact == null) return null;
+
+    // Immediately update UI with optimistic tag changes
+    final existingTags = currentContact.tags;
+    final newTags = {...existingTags, ...tags}.toList();
+    final newMetadata = newTags.isNotEmpty 
+        ? '{"tags":${newTags.map((t) => '"$t"').toList()}}' 
+        : null;
+    
+    final optimisticContact = currentContact.copyWith(
+      metadata: newMetadata,
+      isSynced: false,
+    );
+
+    state = state.copyWith(
+      isSaving: false,
+      isSyncing: true,
+      selectedContact: optimisticContact,
+      recentContacts: state.recentContacts.map((c) {
+        if (c.id == contactId) {
+          return optimisticContact;
+        }
+        return c;
+      }).toList(),
+      clearError: true,
+    );
+
+    // Trigger haptic feedback for instant tactile confirmation
+    await _triggerSuccessHaptic();
+
+    // Run repository call in background
+    _repository.addTagsToContact(contactId, tags).then((updated) {
+      // On success: update with actual data from DB
+      final updatedContacts = state.recentContacts.map((c) {
+        if (c.id == contactId) {
+          return updated;
+        }
+        return c;
+      }).toList();
+
       state = state.copyWith(
-        isSaving: false,
+        isSyncing: false,
         selectedContact: updated,
+        recentContacts: updatedContacts,
       );
-      return updated;
-    } catch (e) {
+    }).catchError((error) {
+      // On error: show subtle sync error but keep optimistic data in UI
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
-        isSaving: false,
-        error: e.toString(),
+        isSyncing: false,
+        syncError: 'Sync pending: $errorMessage',
+        selectedContact: previousContact,
       );
-      return null;
-    }
+    });
+
+    return optimisticContact;
   }
 
-  /// Remove tags from a contact
+  /// Remove tags from a contact with Optimistic UI
+  /// Immediately updates UI with tag changes while syncing in background
   Future<Contact?> removeTags(int contactId, List<String> tags) async {
-    state = state.copyWith(isSaving: true, clearError: true);
+    // Store the previous contact for potential rollback on error
+    final previousContact = state.selectedContact;
+
+    // Get current contact from recent contacts or selected contact
+    final currentContact = state.recentContacts.where((c) => c.id == contactId).firstOrNull 
+        ?? state.selectedContact;
     
-    try {
-      final updated = await _repository.removeTagsFromContact(contactId, tags);
-      
+    if (currentContact == null) return null;
+
+    // Immediately update UI with optimistic tag changes
+    final existingTags = currentContact.tags;
+    final newTags = existingTags.where((t) => !tags.contains(t)).toList();
+    final newMetadata = newTags.isNotEmpty 
+        ? '{"tags":${newTags.map((t) => '"$t"').toList()}}' 
+        : null;
+    
+    final optimisticContact = currentContact.copyWith(
+      metadata: newMetadata,
+      isSynced: false,
+    );
+
+    state = state.copyWith(
+      isSaving: false,
+      isSyncing: true,
+      selectedContact: optimisticContact,
+      recentContacts: state.recentContacts.map((c) {
+        if (c.id == contactId) {
+          return optimisticContact;
+        }
+        return c;
+      }).toList(),
+      clearError: true,
+    );
+
+    // Trigger haptic feedback for instant tactile confirmation
+    await _triggerSuccessHaptic();
+
+    // Run repository call in background
+    _repository.removeTagsFromContact(contactId, tags).then((updated) {
+      // On success: update with actual data from DB
+      final updatedContacts = state.recentContacts.map((c) {
+        if (c.id == contactId) {
+          return updated;
+        }
+        return c;
+      }).toList();
+
       state = state.copyWith(
-        isSaving: false,
+        isSyncing: false,
         selectedContact: updated,
+        recentContacts: updatedContacts,
       );
-      return updated;
-    } catch (e) {
+    }).catchError((error) {
+      // On error: show subtle sync error but keep optimistic data in UI
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
-        isSaving: false,
-        error: e.toString(),
+        isSyncing: false,
+        syncError: 'Sync pending: $errorMessage',
+        selectedContact: previousContact,
       );
-      return null;
-    }
+    });
+
+    return optimisticContact;
   }
 
-  /// Import contacts from a VCF file
+  /// Import contacts from a VCF file with Optimistic UI
+  /// Returns immediately with optimistic progress state while processing in background
   Future<Map<String, dynamic>?> importVcfFile(String filePath) async {
-    state = state.copyWith(isImportingVcf: true, clearError: true, clearVcfImportResult: true);
-    
-    try {
-      final result = await _repository.importVcfFile(filePath);
-      
+    // Immediately update UI with optimistic importing state
+    state = state.copyWith(
+      isImportingVcf: true,
+      clearError: true,
+      clearVcfImportResult: true,
+    );
+
+    // Trigger haptic feedback for instant tactile confirmation
+    await _triggerSuccessHaptic();
+
+    // Run actual import in background
+    _repository.importVcfFile(filePath).then((result) {
+      // On success: update with actual result
       state = state.copyWith(
         isImportingVcf: false,
         vcfImportResult: result,
       );
-      return result;
-    } catch (e) {
+    }).catchError((error) {
+      // On error: show subtle sync error but keep UI responsive
+      final errorMessage = error is Exception ? error.toString() : error.toString();
       state = state.copyWith(
         isImportingVcf: false,
-        error: e.toString(),
+        syncError: 'Sync pending: $errorMessage',
       );
-      return null;
-    }
+    });
+
+    // Return null immediately (import continues in background)
+    return null;
   }
 
   /// Clear error
   void clearError() {
     state = state.copyWith(clearError: true);
+  }
+
+  /// Clear sync error
+  void clearSyncError() {
+    state = state.copyWith(clearSyncError: true);
   }
 
   /// Clear selected contact
@@ -274,6 +491,25 @@ final contactNotifierProvider = NotifierProvider<ContactNotifier, ContactState>(
 final contactListProvider = FutureProvider<List<Contact>>((ref) async {
   final repository = ref.watch(contactRepositoryProvider);
   return repository.getAllContacts();
+});
+
+/// Reactive provider that watches ContactNotifier for instant UI updates
+/// This ensures the UI updates immediately when contacts are created/updated/deleted
+final contactsListProvider = Provider<List<Contact>>((ref) {
+  final contactState = ref.watch(contactNotifierProvider);
+  final contactsAsync = ref.watch(contactListProvider);
+  
+  // If we have recentContacts from ContactNotifier, use them (instant updates)
+  if (contactState.recentContacts.isNotEmpty) {
+    return contactState.recentContacts;
+  }
+  
+  // Otherwise fall back to the async list
+  return contactsAsync.when(
+    data: (contacts) => contacts,
+    loading: () => <Contact>[],
+    error: (_, _) => <Contact>[],
+  );
 });
 
 /// Contact by ID provider
@@ -404,4 +640,10 @@ final contactTagFilterProvider = NotifierProvider<ContactTagFilterNotifier, Cont
 final contactsByTagProvider = FutureProvider.family<List<Contact>, String>((ref, tag) async {
   final repository = ref.watch(contactRepositoryProvider);
   return repository.getContactsByTag(tag);
+});
+
+/// Filtered contacts WITHOUT a specific tag (e.g., non-members/visitors)
+final contactsWithoutTagProvider = FutureProvider.family<List<Contact>, String>((ref, tag) async {
+  final repository = ref.watch(contactRepositoryProvider);
+  return repository.getContactsWithoutTag(tag);
 });

@@ -10,9 +10,45 @@ enum VcfIntentStatus {
   detected,       // VCF file detected, not yet parsed
   parsing,        // Currently parsing VCF file
   parsed,         // VCF parsed, ready for import
-  importing,      // Currently importing to server
+  importing,      // Currently importing to server (fire-and-forget mode)
+  backgroundProcessing, // Server processing in background
   success,        // Import completed successfully
   error,          // Error occurred
+}
+
+/// Represents background import progress state
+class VcfBackgroundImportState {
+  final bool isActive;
+  final int contactCount;
+  final DateTime? startTime;
+  final Map<String, dynamic>? result;
+  final String? error;
+
+  const VcfBackgroundImportState({
+    this.isActive = false,
+    this.contactCount = 0,
+    this.startTime,
+    this.result,
+    this.error,
+  });
+
+  VcfBackgroundImportState copyWith({
+    bool? isActive,
+    int? contactCount,
+    DateTime? startTime,
+    Map<String, dynamic>? result,
+    String? error,
+    bool clearResult = false,
+    bool clearError = false,
+  }) {
+    return VcfBackgroundImportState(
+      isActive: isActive ?? this.isActive,
+      contactCount: contactCount ?? this.contactCount,
+      startTime: startTime ?? this.startTime,
+      result: clearResult ? null : (result ?? this.result),
+      error: clearError ? null : (error ?? this.error),
+    );
+  }
 }
 
 /// State for VCF share intent handling
@@ -22,6 +58,7 @@ class VcfShareIntentState {
   final VcfParseResult? parseResult;
   final Map<String, dynamic>? importResult;
   final String? error;
+  final VcfBackgroundImportState backgroundImport;
 
   const VcfShareIntentState({
     this.status = VcfIntentStatus.idle,
@@ -29,6 +66,7 @@ class VcfShareIntentState {
     this.parseResult,
     this.importResult,
     this.error,
+    this.backgroundImport = const VcfBackgroundImportState(),
   });
 
   bool get hasPendingVcf => 
@@ -37,8 +75,9 @@ class VcfShareIntentState {
       status == VcfIntentStatus.parsed;
 
   bool get isParsing => status == VcfIntentStatus.parsing;
-  bool get isImporting => status == VcfIntentStatus.importing;
+  bool get isImporting => status == VcfIntentStatus.importing || status == VcfIntentStatus.backgroundProcessing;
   bool get isProcessing => isParsing || isImporting;
+  bool get hasActiveBackgroundImport => backgroundImport.isActive;
 
   VcfShareIntentState copyWith({
     VcfIntentStatus? status,
@@ -46,6 +85,7 @@ class VcfShareIntentState {
     VcfParseResult? parseResult,
     Map<String, dynamic>? importResult,
     String? error,
+    VcfBackgroundImportState? backgroundImport,
     bool clearVcfFilePath = false,
     bool clearParseResult = false,
     bool clearImportResult = false,
@@ -57,6 +97,7 @@ class VcfShareIntentState {
       parseResult: clearParseResult ? null : (parseResult ?? this.parseResult),
       importResult: clearImportResult ? null : (importResult ?? this.importResult),
       error: clearError ? null : (error ?? this.error),
+      backgroundImport: backgroundImport ?? this.backgroundImport,
     );
   }
 }
@@ -199,6 +240,7 @@ class VcfShareIntentNotifier extends Notifier<VcfShareIntentState> {
   }
 
   /// Import the pending VCF file using existing contact provider
+  /// This version waits for the server response (legacy behavior)
   Future<void> importVcf() async {
     final filePath = state.vcfFilePath;
     if (filePath == null) {
@@ -234,6 +276,96 @@ class VcfShareIntentNotifier extends Notifier<VcfShareIntentState> {
       );
     }
   }
+
+  /// Fire-and-forget background import
+  /// Immediately starts import and returns control to UI
+  /// Server result handled via .then() callback - no polling needed
+  Future<void> startBackgroundImport() async {
+    final filePath = state.vcfFilePath;
+    final contactCount = state.parseResult?.contactCount ?? 0;
+    
+    if (filePath == null) {
+      debugPrint('[VCF Intent Provider] No VCF file for background import');
+      state = state.copyWith(error: 'No VCF file to import');
+      return;
+    }
+
+    debugPrint('[VCF Intent Provider] Starting background import: $filePath');
+    
+    // Initialize background import state
+    state = state.copyWith(
+      status: VcfIntentStatus.backgroundProcessing,
+      backgroundImport: VcfBackgroundImportState(
+        isActive: true,
+        contactCount: contactCount,
+        startTime: DateTime.now(),
+      ),
+      clearError: true,
+    );
+
+    // Start fire-and-forget import - callback handles completion
+    _runBackgroundImport(filePath);
+  }
+
+  /// Run the actual import in background (fire-and-forget)
+  /// Uses .then() callback to handle completion without blocking UI
+  Future<void> _runBackgroundImport(String filePath) async {
+    try {
+      debugPrint('[VCF Intent Provider] Background import running for: $filePath');
+      
+      // Fire-and-forget - don't await the result
+      // Use .then() callback to handle completion
+      ref.read(contactNotifierProvider.notifier).importVcfFile(filePath).then((result) {
+        debugPrint('[VCF Intent Provider] Background import completed: $result');
+        
+        // Update state with result - this triggers UI update
+        state = state.copyWith(
+          backgroundImport: state.backgroundImport.copyWith(
+            isActive: false,
+            result: result,
+          ),
+          importResult: result,
+          status: VcfIntentStatus.success,
+        );
+        
+      }).catchError((error) {
+        debugPrint('[VCF Intent Provider] Background import failed: $error');
+        
+        state = state.copyWith(
+          backgroundImport: state.backgroundImport.copyWith(
+            isActive: false,
+            error: error.toString(),
+          ),
+          status: VcfIntentStatus.error,
+          error: error.toString(),
+        );
+      });
+      
+    } catch (e) {
+      debugPrint('[VCF Intent Provider] Background import exception: $e');
+      state = state.copyWith(
+        backgroundImport: state.backgroundImport.copyWith(
+          isActive: false,
+          error: e.toString(),
+        ),
+        status: VcfIntentStatus.error,
+        error: e.toString(),
+      );
+    }
+  }
+
+  /// Clear background import state
+  void clearBackgroundImport() {
+    debugPrint('[VCF Intent Provider] Clearing background import');
+    state = state.copyWith(
+      backgroundImport: const VcfBackgroundImportState(),
+    );
+  }
+
+  /// Check if there's a completed import result to show
+  bool get hasCompletedImportResult => 
+      state.importResult != null && 
+      !state.backgroundImport.isActive;
 
   /// Stop polling for VCF files
   void _stopPolling() {

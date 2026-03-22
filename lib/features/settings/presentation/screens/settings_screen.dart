@@ -4,6 +4,8 @@ import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/app_route.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 
+import '../../../../core/constants/app_strings.dart';
+
 /// Placeholder screen for Settings feature.
 /// Shows "Coming Soon" message and logout option until the feature is implemented.
 class SettingsScreen extends ConsumerWidget {
@@ -14,17 +16,17 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.settings),
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.settings,
               size: AppDimens.iconXXL,
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: AppDimens.paddingL),
             Text(
@@ -37,7 +39,7 @@ class SettingsScreen extends ConsumerWidget {
             Text(
               AppStrings.comingSoon,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: AppDimens.paddingXL),
@@ -52,7 +54,7 @@ class SettingsScreen extends ConsumerWidget {
               icon: const Icon(Icons.logout),
               label: const Text(AppStrings.logout),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
+                backgroundColor: Theme.of(context).colorScheme.error,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppDimens.paddingL,

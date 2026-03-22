@@ -342,6 +342,28 @@ class DioClient {
     return delete(path);
   }
 
+  /// GET /attendance/export
+  /// Downloads attendance PDF with optional filters.
+  Future<Response> downloadAttendancePdf({
+    String? dateFrom,
+    String? dateTo,
+    String? serviceType,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (dateFrom != null) queryParams['date_from'] = dateFrom;
+    if (dateTo != null) queryParams['date_to'] = dateTo;
+    if (serviceType != null) queryParams['service_type'] = serviceType;
+
+    return get(
+      ApiConstants.attendanceExport,
+      queryParameters: queryParams,
+      options: Options(
+        responseType: ResponseType.bytes,
+        contentType: 'application/pdf',
+      ),
+    );
+  }
+
   // ============================================================
   // Scenario Endpoints
   // ============================================================

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/core/network/api_constants.dart';
@@ -216,6 +218,61 @@ class AttendanceRemoteDataSource {
       await _dioClient.dio.delete(
         ApiConstants.attendanceById.replaceAll('{id}', attendanceId.toString()),
       );
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.unknown) {
+        throw const AttendanceRemoteException(
+          'Network error',
+          isNetworkError: true,
+        );
+      }
+      rethrow;
+    }
+  }
+
+  /// Downloads attendance PDF from server.
+  /// 
+  /// [dateFrom] - Start date for filtering (inclusive)
+  /// [dateTo] - End date for filtering (inclusive)
+  /// [serviceType] - Optional service type filter
+  /// [date] - Single date for export (takes priority over dateFrom/dateTo)
+  ///           Format: YYYY-MM-DD for entire day in SAST timezone
+  Future<Uint8List> downloadAttendancePdf({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    ServiceType? serviceType,
+    DateTime? date,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+
+      // If date is provided, use it (takes priority)
+      // Format: YYYY-MM-DD for entire day in SAST timezone
+      if (date != null) {
+        queryParams['date'] = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      } else {
+        // Otherwise use date_from/date_to range
+        if (dateFrom != null) {
+          queryParams['date_from'] = dateFrom.toUtc().toIso8601String();
+        }
+        if (dateTo != null) {
+          queryParams['date_to'] = dateTo.toUtc().toIso8601String();
+        }
+      }
+      
+      if (serviceType != null) {
+        queryParams['service_type'] = serviceType.backendValue;
+      }
+
+      final response = await _dioClient.dio.get(
+        ApiConstants.attendanceExport,
+        queryParameters: queryParams,
+        options: Options(
+          responseType: ResponseType.bytes,
+        ),
+      );
+
+      return Uint8List.fromList(response.data);
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.unknown) {

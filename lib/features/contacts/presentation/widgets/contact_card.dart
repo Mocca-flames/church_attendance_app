@@ -20,6 +20,7 @@ class ContactCard extends StatelessWidget {
   void _showQRCode(BuildContext context) {
     if (contact.isEligibleForQRCode) {
       showQRBottomSheet(context, contact);
+      
     }
   }
 
@@ -30,11 +31,11 @@ class ContactCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.2),
-          width: 1,
+          color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.5),
+          width: 0.3,
         ),
       ),
       child: Material(
@@ -84,7 +85,7 @@ class ContactCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
-                          color: Colors.black87,
+                          color: Theme.of(context).textTheme.titleSmall?.color?.withValues(alpha: 0.7),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -102,8 +103,7 @@ class ContactCard extends StatelessWidget {
                           Text(
                             contact.phone,
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w400,
+                              color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -160,15 +160,15 @@ class ContactCard extends StatelessWidget {
                         height: 44,
                         width: 44,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                           ),
                         ),
                         child: Icon(
                           Icons.qr_code_2_rounded,
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).colorScheme.tertiary,
                           size: 24,
                         ),
                       ),

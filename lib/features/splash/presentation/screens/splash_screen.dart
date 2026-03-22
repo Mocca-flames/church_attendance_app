@@ -4,6 +4,8 @@ import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/app_route.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 
+import '../../../../core/constants/app_strings.dart';
+
 /// Splash screen that handles initial authentication check.
 /// Uses Riverpod for auth state management.
 /// Follows Clean Architecture with separated concerns.
@@ -50,10 +52,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.church,
-              size: AppDimens.iconSplash,
-              color: Theme.of(context).colorScheme.primary,
+            Image.asset(
+              'assets/logo.png',
+              width: 150,
+              height: 150,
+              fit: BoxFit.contain,
             ),
             const SizedBox(height: AppDimens.paddingL),
             Text(
@@ -66,7 +69,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             Text(
               AppStrings.appTagline,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: AppDimens.paddingXXL),

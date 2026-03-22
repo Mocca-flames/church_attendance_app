@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:church_attendance_app/core/enums/service_type.dart';
+import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/features/attendance/domain/models/attendance.dart';
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 
@@ -101,6 +104,36 @@ abstract class AttendanceRepository {
   /// Syncs pending attendance records to the server.
   /// Called by SyncManager when online.
   Future<void> syncPendingRecords();
+
+  /// Gets attendance history with contact names for display.
+  /// 
+  /// [dateFrom] - Start date for filtering (inclusive)
+  /// [dateTo] - End date for filtering (inclusive)
+  /// [serviceType] - Optional service type filter
+  /// 
+  /// Returns list of [AttendanceWithContact] containing attendance records with contact names.
+  Future<List<AttendanceWithContact>> getAttendanceHistory({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    ServiceType? serviceType,
+  });
+
+  /// Downloads attendance report as PDF from the server.
+  /// 
+  /// [dateFrom] - Start date for filtering (inclusive)
+  /// [dateTo] - End date for filtering (inclusive)
+  /// [serviceType] - Optional service type filter
+  /// [date] - Single date for export (takes priority over dateFrom/dateTo)
+  ///           Format: YYYY-MM-DD for entire day in SAST timezone
+  /// 
+  /// Returns the PDF as bytes.
+  /// Throws [AttendanceException] if network error.
+  Future<Uint8List> downloadAttendancePdf({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    ServiceType? serviceType,
+    DateTime? date,
+  });
 }
 
 /// Exception types for attendance operations.

@@ -88,6 +88,16 @@ class ContactLocalDataSource {
         .toList();
   }
 
+  /// Get contacts that do NOT have a specific tag (e.g., non-members/visitors)
+  Future<List<Contact>> getContactsWithoutTag(String tag) async {
+    final entities = await _db.getContactsWithoutTag(tag);
+    return entities
+        .where((e) => !e.isDeleted)
+        .map(_mapEntityToContact)
+        .whereType<Contact>()
+        .toList();
+  }
+
   /// Create new contact
   Future<Contact> createContact({
     required String phone,
@@ -228,15 +238,18 @@ class ContactLocalDataSource {
   }
 
   /// Add contact to sync queue for server sync
+  /// [serverId] is required for update/delete actions to know which server record to update
   Future<void> addToSyncQueue({
     required int contactId,
     required String action,
     Map<String, dynamic>? data,
+    int? serverId, // NEW: Include serverId for update/delete operations
   }) async {
     final companion = SyncQueueCompanion(
       entityType: const drift.Value('contact'),
       action: drift.Value(action),
       localId: drift.Value(contactId),
+      serverId: serverId != null ? drift.Value(serverId) : const drift.Value.absent(),
       data: drift.Value(jsonEncode(data ?? {})),
       status: const drift.Value('pending'),
     );

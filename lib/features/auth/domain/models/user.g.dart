@@ -7,20 +7,20 @@ part of 'user.dart';
 // **************************************************************************
 
 _User _$UserFromJson(Map<String, dynamic> json) => _User(
-      email: json['email'] as String,
-      role: $enumDecode(_$UserRoleEnumMap, json['role']),
-      createdAt: DateTime.parse(json['created_at'] as String),
-      id: (json['id'] as num).toInt(),
-      isActive: json['is_active'] as bool? ?? true,
-    );
+  email: json['email'] as String,
+  role: $enumDecode(_$UserRoleEnumMap, json['role']),
+  createdAt: DateTime.parse(json['created_at'] as String),
+  id: (json['id'] as num).toInt(),
+  isActive: json['is_active'] as bool? ?? true,
+);
 
 Map<String, dynamic> _$UserToJson(_User instance) => <String, dynamic>{
-      'email': instance.email,
-      'role': _$UserRoleEnumMap[instance.role]!,
-      'created_at': instance.createdAt.toIso8601String(),
-      'id': instance.id,
-      'is_active': instance.isActive,
-    };
+  'email': instance.email,
+  'role': _$UserRoleEnumMap[instance.role]!,
+  'created_at': instance.createdAt.toIso8601String(),
+  'id': instance.id,
+  'is_active': instance.isActive,
+};
 
 const _$UserRoleEnumMap = {
   UserRole.superAdmin: 'superAdmin',

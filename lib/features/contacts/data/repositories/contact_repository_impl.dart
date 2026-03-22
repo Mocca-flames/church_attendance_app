@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:church_attendance_app/core/network/dio_client.dart';
+import 'package:church_attendance_app/core/services/location_service.dart';
 import 'package:church_attendance_app/features/contacts/data/datasources/contact_local_datasource.dart';
 import 'package:church_attendance_app/features/contacts/data/datasources/contact_remote_datasource.dart';
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart' show Contact, ContactLocations;
@@ -17,16 +18,16 @@ import 'package:church_attendance_app/features/contacts/domain/repositories/cont
 class ContactRepositoryImpl implements ContactRepository {
   final ContactLocalDataSource _localDataSource;
   final ContactRemoteDataSource _remoteDataSource;
-  // ignore: unused_field
-  final DioClient _dioClient;
+  final LocationService? _locationService;
 
   ContactRepositoryImpl({
     required ContactLocalDataSource localDataSource,
     required ContactRemoteDataSource remoteDataSource,
     required DioClient dioClient,
+    LocationService? locationService,
   })  : _localDataSource = localDataSource,
         _remoteDataSource = remoteDataSource,
-        _dioClient = dioClient;
+        _locationService = locationService;
 
   @override
   Future<List<Contact>> getAllContacts() async {
@@ -51,6 +52,11 @@ class ContactRepositoryImpl implements ContactRepository {
   @override
   Future<List<Contact>> getContactsByTag(String tag) async {
     return _localDataSource.getContactsByTag(tag);
+  }
+
+  @override
+  Future<List<Contact>> getContactsWithoutTag(String tag) async {
+    return _localDataSource.getContactsWithoutTag(tag);
   }
 
   @override
@@ -125,6 +131,13 @@ class ContactRepositoryImpl implements ContactRepository {
             phone: updatedContact.phone,
           );
           
+          // Sync ALL tags to server (member, location, roles)
+          // This ensures location tags are sent to the server
+          await _remoteDataSource.setTagsOnContact(
+            id: contact.serverId!,
+            tags: updatedContact.tags,
+          );
+          
           // Mark as synced
           await _localDataSource.markAsSynced(
             updatedContact.id,
@@ -133,9 +146,12 @@ class ContactRepositoryImpl implements ContactRepository {
         }
       } catch (e) {
         // Add to sync queue for later retry
+        // Fetch current serverId from contact
+        final contact = await _localDataSource.getContactById(updatedContact.id);
         await _localDataSource.addToSyncQueue(
           contactId: updatedContact.id,
           action: 'update',
+          serverId: contact?.serverId, // Pass serverId for proper sync
           data: {
             'name': updatedContact.name,
             'phone': updatedContact.phone,
@@ -145,9 +161,12 @@ class ContactRepositoryImpl implements ContactRepository {
       }
     } else {
       // Offline - add to sync queue
+      // Fetch current serverId from contact
+      final contact = await _localDataSource.getContactById(updatedContact.id);
       await _localDataSource.addToSyncQueue(
         contactId: updatedContact.id,
         action: 'update',
+        serverId: contact?.serverId, // Pass serverId for proper sync
         data: {
           'name': updatedContact.name,
           'phone': updatedContact.phone,
@@ -178,6 +197,7 @@ class ContactRepositoryImpl implements ContactRepository {
         await _localDataSource.addToSyncQueue(
           contactId: id,
           action: 'delete',
+          serverId: contact?.serverId, // Pass serverId for proper sync
           data: {},
         );
       }
@@ -186,6 +206,7 @@ class ContactRepositoryImpl implements ContactRepository {
       await _localDataSource.addToSyncQueue(
         contactId: id,
         action: 'delete',
+        serverId: contact?.serverId, // Pass serverId for proper sync
         data: {},
       );
     }
@@ -212,17 +233,21 @@ class ContactRepositoryImpl implements ContactRepository {
         }
       } catch (e) {
         // Add to sync queue for later retry
+        final contact = await _localDataSource.getContactById(contactId);
         await _localDataSource.addToSyncQueue(
           contactId: contactId,
           action: 'add_tags',
+          serverId: contact?.serverId,
           data: {'tags': tags},
         );
       }
     } else {
       // Offline - add to sync queue
+      final contact = await _localDataSource.getContactById(contactId);
       await _localDataSource.addToSyncQueue(
         contactId: contactId,
         action: 'add_tags',
+        serverId: contact?.serverId,
         data: {'tags': tags},
       );
     }
@@ -246,17 +271,21 @@ class ContactRepositoryImpl implements ContactRepository {
         }
       } catch (e) {
         // Add to sync queue for later retry
+        final contact = await _localDataSource.getContactById(contactId);
         await _localDataSource.addToSyncQueue(
           contactId: contactId,
           action: 'remove_tags',
+          serverId: contact?.serverId,
           data: {'tags': tags},
         );
       }
     } else {
       // Offline - add to sync queue
+      final contact = await _localDataSource.getContactById(contactId);
       await _localDataSource.addToSyncQueue(
         contactId: contactId,
         action: 'remove_tags',
+        serverId: contact?.serverId,
         data: {'tags': tags},
       );
     }
@@ -271,6 +300,10 @@ class ContactRepositoryImpl implements ContactRepository {
     // Pull contacts from server and merge with local
     try {
       final serverContacts = await _remoteDataSource.getContacts();
+      
+      // Extract and sync new locations from server contacts
+      await _syncLocationsFromServerContacts(serverContacts);
+      
       final localContacts = await _localDataSource.getAllContacts();
       
       // Merge server contacts with local contacts
@@ -278,6 +311,138 @@ class ContactRepositoryImpl implements ContactRepository {
     } catch (e) {
       // Sync failed - continue with local data
     }
+  }
+
+  /// Extracts new locations from server contacts and adds them to local database.
+  /// 
+  /// Process:
+  /// 1. Extract all tags from server contacts
+  /// 2. Filter out known role tags and 'member' tag
+  /// 3. Any remaining tags = new locations
+  /// 4. Add to local database if not already exists
+  Future<void> _syncLocationsFromServerContacts(List<Map<String, dynamic>> serverContacts) async {
+    if (_locationService == null) return;
+    
+    // Known tags to exclude (roles + member)
+    const excludedTags = {
+      'member',
+      'pastor',
+      'protocol',
+      'worshiper',
+      'usher',
+      'financier',
+      'servant',
+    };
+    
+    // Extract all unique tags from server contacts
+    final allTags = <String>{};
+    for (final contact in serverContacts) {
+      final tags = _extractTagsFromContact(contact);
+      allTags.addAll(tags);
+    }
+    
+    // Filter to get only potential new locations
+    final potentialLocations = allTags.difference(excludedTags);
+    
+    // Get existing locations to avoid duplicates
+    final existingLocations = await _locationService.getAllLocations();
+    final existingValues = existingLocations.map((loc) => loc.value.toLowerCase()).toSet();
+    final existingDisplayNames = existingLocations.map((loc) => _normalizeForComparison(loc.displayName)).toSet();
+    
+    // Add new locations that don't exist yet
+    for (final locationValue in potentialLocations) {
+      // Normalize the value for comparison
+      final normalizedValue = _normalizeLocationValue(locationValue);
+      final displayName = _capitalize(locationValue);
+      final normalizedDisplayName = _normalizeForComparison(displayName);
+      
+      // Skip if already exists (by value or display name)
+      if (existingValues.contains(normalizedValue) || 
+          existingDisplayNames.contains(normalizedDisplayName)) {
+        continue;
+      }
+      
+      try {
+        await _locationService.addLocation(
+          value: normalizedValue,
+          displayName: displayName,
+          colorValue: 0xFF9E9E9E, // Default gray color
+        );
+      } catch (e) {
+        // Location might already exist (race condition), ignore
+      }
+    }
+  }
+
+  /// Normalize a location value for consistent storage.
+  /// Converts to lowercase and replaces spaces/underscores with underscores.
+  /// Example: "Pretoria East" → "pretoria_east"
+  String _normalizeLocationValue(String value) {
+    return value
+        .toLowerCase()
+        .trim()
+        .replaceAll(RegExp(r'[\s-]+'), '_')  // Replace spaces/dashes with underscore
+        .replaceAll(RegExp(r'[^a-z0-9_]'), ''); // Remove special chars
+  }
+
+  /// Normalize a string for comparison (case-insensitive, ignore spaces/underscores).
+  String _normalizeForComparison(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[\s_-]+'), '');
+  }
+
+  /// Extract tags from a server contact's metadata
+  List<String> _extractTagsFromContact(Map<String, dynamic> contact) {
+    final tags = <String>{};
+    
+    // Try to get tags from metadata
+    final metadata = contact['metadata'];
+    if (metadata != null) {
+      if (metadata is String && metadata.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(metadata);
+          if (decoded is Map && decoded.containsKey('tags')) {
+            final tagList = decoded['tags'];
+            if (tagList is List) {
+              for (final tag in tagList) {
+                tags.add(tag.toString().toLowerCase());
+              }
+            }
+          }
+        } catch (_) {
+          // Invalid JSON, ignore
+        }
+      } else if (metadata is Map) {
+        // Direct map format
+        if (metadata.containsKey('tags')) {
+          final tagList = metadata['tags'];
+          if (tagList is List) {
+            for (final tag in tagList) {
+              tags.add(tag.toString().toLowerCase());
+            }
+          }
+        }
+      }
+    }
+    
+    // Also check for 'tags' field directly on contact
+    if (contact.containsKey('tags')) {
+      final tagList = contact['tags'];
+      if (tagList is List) {
+        for (final tag in tagList) {
+          tags.add(tag.toString().toLowerCase());
+        }
+      }
+    }
+    
+    return tags.toList();
+  }
+
+  /// Capitalize a string
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1).replaceAll('_', ' ');
   }
 
   @override

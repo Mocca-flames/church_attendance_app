@@ -4,6 +4,10 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/sync/sync_manager.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:church_attendance_app/features/contacts/presentation/providers/contact_count_provider.dart';
+import 'package:church_attendance_app/features/contacts/presentation/providers/contact_provider.dart';
+import 'package:church_attendance_app/features/contacts/presentation/providers/tag_statistics_provider.dart';
+import 'package:church_attendance_app/features/home/presentation/screens/home_screen.dart';
 import 'package:church_attendance_app/main.dart';
 
 
@@ -185,6 +189,27 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
     return const SyncStatus();
   }
 
+  /// Invalidate all data providers to trigger UI refresh after sync.
+  /// This ensures Contact List and Home Screen show updated data.
+  void _invalidateDataProviders() {
+    // Contact list providers
+    ref.invalidate(contactListProvider);
+    ref.invalidate(offlineContactCountProvider);
+    ref.invalidate(offlineContactStoreInfoProvider);
+    
+    // Tag statistics providers
+    ref.invalidate(tagDistributionProvider);
+    ref.invalidate(locationTagDistributionProvider);
+    ref.invalidate(roleTagDistributionProvider);
+    ref.invalidate(membershipDistributionProvider);
+    ref.invalidate(totalContactCountProvider);
+    
+    // Attendance providers (Home screen)
+    ref.invalidate(weeklyAttendanceCountProvider);
+    ref.invalidate(attendanceTrendProvider);
+    ref.invalidate(attendanceByServiceTypeProvider);
+  }
+
   /// Pull contacts from server and update sync status.
   /// Supports progress callbacks for UI feedback.
   Future<void> pullContacts({
@@ -214,6 +239,9 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
         progressCallback: onProgress,
       );
       
+      // Invalidate data providers to refresh UI with new data
+      _invalidateDataProviders();
+      
       state = state.copyWith(
         isSyncing: false,
         lastSyncTime: DateTime.now(),
@@ -235,6 +263,9 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
     try {
       final result = await _syncManager.syncAll();
       final pendingCount = await _syncManager.getPendingSyncCount();
+
+      // Invalidate data providers to refresh UI with synced data
+      _invalidateDataProviders();
 
       state = state.copyWith(
         isSyncing: false,
@@ -263,8 +294,170 @@ final syncStatusProvider =
   return SyncStatusNotifier();
 });
 
+/// Provider for periodic sync timer.
+final periodicSyncProvider =
+    NotifierProvider<PeriodicSyncNotifier, Timer?>(() {
+  return PeriodicSyncNotifier();
+});
+
+/// Sync mode enum for smart sync behavior
+enum SyncMode {
+  /// Active mode: User is actively marking attendance or editing contacts
+  /// Sync interval: 5 minutes
+  active,
+
+  /// Normal mode: User is logged in but not actively using sync-critical features
+  /// Sync interval: 1 hour
+  normal,
+
+  /// Background mode: App is in background or idle
+  /// Sync interval: 24 hours
+  background,
+}
+
+/// Extension to get interval duration for each sync mode
+extension SyncModeExtension on SyncMode {
+  Duration get interval {
+    switch (this) {
+      case SyncMode.active:
+        return const Duration(minutes: 5);
+      case SyncMode.normal:
+        return const Duration(hours: 1);
+      case SyncMode.background:
+        return const Duration(hours: 24);
+    }
+  }
+}
+
+/// State class for smart sync tracking
+class SmartSyncState {
+  final SyncMode mode;
+  final DateTime lastActivity;
+  final bool isImmediateSyncPending;
+
+  const SmartSyncState({
+    required this.lastActivity,
+    this.mode = SyncMode.normal,
+    this.isImmediateSyncPending = false,
+  });
+
+  SmartSyncState copyWith({
+    SyncMode? mode,
+    DateTime? lastActivity,
+    bool? isImmediateSyncPending,
+  }) {
+    return SmartSyncState(
+      mode: mode ?? this.mode,
+      lastActivity: lastActivity ?? this.lastActivity,
+      isImmediateSyncPending: isImmediateSyncPending ?? this.isImmediateSyncPending,
+    );
+  }
+}
+
+/// Notifier that tracks sync mode and manages smart sync behavior.
+///
+/// Automatically switches between:
+/// - Active mode (5 min interval): When user is on attendance screen or editing contacts
+/// - Normal mode (1 hour interval): Regular usage
+/// - Background mode (24 hour interval): App in background
+class SmartSyncNotifier extends Notifier<SmartSyncState> {
+  Timer? _inactivityTimer;
+
+  @override
+  SmartSyncState build() {
+    ref.onDispose(() {
+      _inactivityTimer?.cancel();
+    });
+    return SmartSyncState(lastActivity: DateTime.now());
+  }
+
+  /// Set sync mode to active (e.g., when on attendance screen)
+  void setActiveMode() {
+    _inactivityTimer?.cancel();
+    state = state.copyWith(mode: SyncMode.active, lastActivity: DateTime.now());
+    
+    // Restart periodic sync with new interval
+    _restartPeriodicSync();
+  }
+
+  /// Set sync mode to normal (e.g., when leaving attendance screen)
+  void setNormalMode() {
+    _inactivityTimer?.cancel();
+    state = state.copyWith(mode: SyncMode.normal, lastActivity: DateTime.now());
+    
+    // Restart periodic sync with new interval
+    _restartPeriodicSync();
+  }
+
+  /// Set sync mode to background (e.g., when app goes to background)
+  void setBackgroundMode() {
+    _inactivityTimer?.cancel();
+    state = state.copyWith(mode: SyncMode.background, lastActivity: DateTime.now());
+    
+    // Restart periodic sync with new interval
+    _restartPeriodicSync();
+  }
+
+  /// Record activity and reset inactivity timer
+  void recordActivity() {
+    state = state.copyWith(lastActivity: DateTime.now());
+    
+    // If in active mode, start timer to eventually return to normal
+    if (state.mode == SyncMode.active) {
+      _startInactivityTimer();
+    }
+  }
+
+  /// Start timer to detect inactivity and switch to normal mode
+  void _startInactivityTimer() {
+    _inactivityTimer?.cancel();
+    _inactivityTimer = Timer(const Duration(minutes: 10), () {
+      if (state.mode == SyncMode.active) {
+        setNormalMode();
+      }
+    });
+  }
+
+  /// Restart periodic sync with current mode's interval
+  void _restartPeriodicSync() {
+    final periodicSync = ref.read(periodicSyncProvider.notifier);
+    periodicSync.stopPeriodicSync();
+    periodicSync.startPeriodicSync(interval: state.mode.interval);
+  }
+
+  /// Trigger immediate sync of pending items
+  Future<void> triggerImmediateSync() async {
+    final isOnline = ref.read(isOnlineProvider);
+    if (!isOnline) {
+      // Mark for later sync when back online
+      state = state.copyWith(isImmediateSyncPending: true);
+      return;
+    }
+
+    try {
+      await ref.read(syncStatusProvider.notifier).syncAll();
+      state = state.copyWith(isImmediateSyncPending: false);
+    } catch (e) {
+      // Will retry on next periodic sync
+      state = state.copyWith(isImmediateSyncPending: true);
+    }
+  }
+
+  /// Check if immediate sync was pending while offline and retry now
+  Future<void> checkPendingImmediateSync() async {
+    if (state.isImmediateSyncPending) {
+      await triggerImmediateSync();
+    }
+  }
+}
+
+/// Provider for SmartSyncNotifier
+final smartSyncProvider = NotifierProvider<SmartSyncNotifier, SmartSyncState>(() {
+  return SmartSyncNotifier();
+});
+
 /// Provider for managing periodic background sync.
-/// This starts a 24-hour timer that syncs contacts and pending items.
+/// This starts a timer that syncs contacts and pending items based on current sync mode.
 class PeriodicSyncNotifier extends Notifier<Timer?> {
   @override
   Timer? build() {
@@ -273,12 +466,14 @@ class PeriodicSyncNotifier extends Notifier<Timer?> {
   }
 
   /// Start periodic sync. Call this after successful login.
-  void startPeriodicSync({Duration interval = const Duration(hours: 24)}) {
+  ///
+  /// If smart sync is enabled, the interval from SmartSyncState will be used.
+  void startPeriodicSync({Duration interval = const Duration(hours: 1)}) {
     // Cancel existing timer if any
     state?.cancel();
-    
+
     final syncManager = ref.read(syncManagerProvider);
-    
+
     // Start new periodic timer
     state = syncManager.startPeriodicSync(interval: interval);
   }
@@ -288,10 +483,26 @@ class PeriodicSyncNotifier extends Notifier<Timer?> {
     state?.cancel();
     state = null;
   }
+
+  /// Restart with current smart sync mode interval
+  void restartWithSmartMode() {
+    final smartSync = ref.read(smartSyncProvider);
+    stopPeriodicSync();
+    startPeriodicSync(interval: smartSync.mode.interval);
+  }
 }
 
-/// Provider for periodic sync timer.
-final periodicSyncProvider =
-    NotifierProvider<PeriodicSyncNotifier, Timer?>(() {
-  return PeriodicSyncNotifier();
+/// Provider that watches both online status and pending immediate sync
+/// to trigger sync when coming back online
+final immediateSyncOnReconnectProvider = Provider<void>((ref) {
+  final isOnline = ref.watch(isOnlineProvider);
+  final smartSync = ref.watch(smartSyncProvider);
+  
+  // When coming online and there's a pending immediate sync, trigger it
+  if (isOnline && smartSync.isImmediateSyncPending) {
+    // Use a microtask to avoid provider rebuild issues
+    Future.microtask(() {
+      ref.read(smartSyncProvider.notifier).checkPendingImmediateSync();
+    });
+  }
 });

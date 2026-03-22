@@ -432,4 +432,84 @@ class AttendanceLocalDataSource {
     final updatedContact = await getContactById(contactId);
     return updatedContact!;
   }
+
+  /// Gets attendance history with contact names for display.
+  Future<List<AttendanceWithContact>> getAttendanceHistory({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    ServiceType? serviceType,
+  }) async {
+    List<AttendanceWithContact> results;
+
+    if (serviceType != null) {
+      // Get by service type first, then filter by date range
+      results = await _db.getAttendancesWithContactsByServiceType(
+        serviceType.backendValue,
+      );
+      
+      // Filter by date range in memory
+      if (dateFrom != null || dateTo != null) {
+        results = results.where((a) {
+          final serviceDate = a.attendance.serviceDate;
+          
+          if (dateFrom != null) {
+            final fromStartOfDay = DateTime(dateFrom.year, dateFrom.month, dateFrom.day);
+            if (serviceDate.isBefore(fromStartOfDay)) return false;
+          }
+          
+          if (dateTo != null) {
+            final toEndOfDay = DateTime(dateTo.year, dateTo.month, dateTo.day, 23, 59, 59);
+            if (serviceDate.isAfter(toEndOfDay)) return false;
+          }
+          
+          return true;
+        }).toList();
+      }
+    } else if (dateFrom != null && dateTo != null) {
+      // Get by date range
+      results = await _db.getAttendancesWithContactsByDateRange(
+        dateFrom,
+        dateTo.add(const Duration(days: 1)),
+      );
+    } else {
+      // Get all
+      final allAttendances = await _db.getAllAttendances();
+      final allContacts = await _db.getAllContacts();
+      
+      results = allAttendances.map((attendance) {
+        final contact = allContacts.where((c) => c.id == attendance.contactId).firstOrNull;
+        return AttendanceWithContact(
+          attendance: attendance,
+          contactName: contact?.name,
+        );
+      }).toList();
+    }
+
+    return results;
+  }
+
+  /// Calculates service type counts from attendance records.
+  Map<String, int> calculateServiceTypeCounts(List<AttendanceWithContact> attendances) {
+    final counts = <String, int>{};
+    for (final attendance in attendances) {
+      counts[attendance.attendance.serviceType] =
+          (counts[attendance.attendance.serviceType] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  /// Marks all unsynced attendance records as synced.
+  /// This is useful for fixing records that got stuck due to duplicate sync errors.
+  Future<int> markAllAsSynced() async {
+    // Get all unsynced attendances
+    final unsynced = await getUnsyncedAttendances();
+    
+    int updated = 0;
+    for (final record in unsynced) {
+      await markAsSynced(record.id, 0);
+      updated++;
+    }
+    
+    return updated;
+  }
 }

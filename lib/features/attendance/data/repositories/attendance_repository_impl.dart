@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/core/network/dio_client.dart';
 import 'package:church_attendance_app/features/attendance/data/datasources/attendance_local_datasource.dart';
@@ -79,6 +82,13 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
         // If network error, add to sync queue
         if (e.isNetworkError) {
           await _localDataSource.addToSyncQueue(attendance);
+        }
+        // Check if server indicates attendance already exists - this means
+        // the record was already synced, so mark as synced locally
+        else if (_isDuplicateAttendanceError(e.message)) {
+          // Server already has this record - mark as synced with server ID 0
+          // (we don't have the actual server ID, but that's OK since it exists)
+          await _localDataSource.markAsSynced(attendance.id, 0);
         }
         // Return local record anyway
         return attendance;
@@ -356,10 +366,63 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
           record.id,
           serverRecord.serverId ?? 0,
         );
+      } on AttendanceRemoteException catch (e) {
+        // If server indicates attendance already exists, mark as synced
+        if (_isDuplicateAttendanceError(e.message)) {
+          await _localDataSource.markAsSynced(record.id, 0);
+          continue;
+        }
+        // Skip this record if it fails, will retry next time
+        continue;
       } catch (e) {
         // Skip this record if it fails, will retry next time
         continue;
       }
+    }
+  }
+
+  @override
+  Future<List<AttendanceWithContact>> getAttendanceHistory({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    ServiceType? serviceType,
+  }) async {
+    return _localDataSource.getAttendanceHistory(
+      dateFrom: dateFrom,
+      dateTo: dateTo,
+      serviceType: serviceType,
+    );
+  }
+
+  @override
+  Future<Uint8List> downloadAttendancePdf({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    ServiceType? serviceType,
+    DateTime? date,
+  }) async {
+    // Check if online
+    if (!await _isOnline()) {
+      throw const AttendanceException(
+        'No internet connection. Please try again when online.',
+        type: AttendanceExceptionType.networkError,
+      );
+    }
+
+    try {
+      return await _remoteDataSource.downloadAttendancePdf(
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        serviceType: serviceType,
+        date: date,
+      );
+    } on AttendanceRemoteException catch (e) {
+      throw AttendanceException(
+        e.message,
+        type: e.isNetworkError 
+            ? AttendanceExceptionType.networkError 
+            : AttendanceExceptionType.unknown,
+      );
     }
   }
 
@@ -378,5 +441,14 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     } catch (e) {
       return false;
     }
+  }
+
+  /// Checks if the error message indicates attendance was already recorded.
+  /// Server returns 400 with message like "Attendance already recorded for this contact on 2026-02-27 for specialEvent"
+  bool _isDuplicateAttendanceError(String message) {
+    final lowerMessage = message.toLowerCase();
+    return lowerMessage.contains('already recorded') ||
+           lowerMessage.contains('already exists') ||
+           lowerMessage.contains('duplicate');
   }
 }

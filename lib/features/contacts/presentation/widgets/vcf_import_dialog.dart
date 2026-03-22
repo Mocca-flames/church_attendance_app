@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:church_attendance_app/core/constants/app_constants.dart';
+import 'dart:async';
+
+import 'package:church_attendance_app/core/services/haptic_service.dart';
 import 'package:church_attendance_app/core/services/vcf_sharing_service.dart';
+import 'package:flutter/material.dart';
+
 
 /// Reusable dialog for showing VCF import results.
 /// Used by both FilePicker and Share Intent import flows.
@@ -24,9 +26,9 @@ class VcfImportResultDialog extends StatelessWidget {
 
     // Trigger haptic feedback based on result
     if (success) {
-      HapticFeedback.heavyImpact();
+      unawaited(HapticService.heavy());
     } else {
-      HapticFeedback.vibrate();
+      unawaited(HapticService.soft());
     }
 
     return AlertDialog(
@@ -87,13 +89,15 @@ class VcfImportResultDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            Navigator.of(context).pop();
+          onPressed: () async {
+            await HapticService.medium();
+            if (context.mounted) {
+              Navigator.of(context).pop();
+            }
             onDismiss?.call();
           },
           style: TextButton.styleFrom(
-            foregroundColor: AppColors.primary,
+            foregroundColor: Theme.of(context).colorScheme.primary,
           ),
           child: const Text('OK'),
         ),
@@ -132,7 +136,7 @@ class VcfImportLoadingDialog extends StatelessWidget {
     return AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.1)),
+        side: BorderSide(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)),
       ),
       backgroundColor: Colors.white,
       elevation: 0,
@@ -174,14 +178,14 @@ class VcfShareConfirmDialog extends StatelessWidget {
       ),
       elevation: 0,
       backgroundColor: Colors.white,
-      title: const Row(
+      title: Row(
         children: [
           Icon(
             Icons.contact_phone_outlined,
-            color: AppColors.primary,
+            color: Theme.of(context).colorScheme.primary,
           ),
-          SizedBox(width: 8),
-          Text(
+          const SizedBox(width: 8),
+          const Text(
             'Import Contacts',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
@@ -201,9 +205,9 @@ class VcfShareConfirmDialog extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.description_outlined,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -222,9 +226,9 @@ class VcfShareConfirmDialog extends StatelessWidget {
           // Contact count
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.people_outline,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -312,8 +316,8 @@ class VcfShareConfirmDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            HapticFeedback.mediumImpact();
+          onPressed: () async {
+            await HapticService.medium();
             onCancel();
           },
           style: TextButton.styleFrom(
@@ -323,13 +327,13 @@ class VcfShareConfirmDialog extends StatelessWidget {
         ),
         ElevatedButton(
           onPressed: parseResult.success
-              ? () {
-                  HapticFeedback.mediumImpact();
+              ? () async {
+                  await HapticService.medium();
                   onImport();
                 }
               : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
+            backgroundColor: Theme.of(context).colorScheme.primary,
             foregroundColor: Colors.white,
           ),
           child: const Text('Import'),

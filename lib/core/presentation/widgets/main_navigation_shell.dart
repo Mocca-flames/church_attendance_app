@@ -1,10 +1,10 @@
 import 'package:church_attendance_app/features/contacts/screens/contacts_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/features/home/presentation/screens/home_screen.dart';
 import 'package:church_attendance_app/features/attendance/presentation/screens/attendance_screen.dart';
 
-import 'package:church_attendance_app/features/settings/presentation/screens/settings_screen.dart';
+import '../../../features/more/presentation/screen/more_screen.dart';
+import '../../constants/app_strings.dart';
 
 /// Main navigation shell that provides bottom navigation for the app.
 /// Contains the scaffold with BottomNavigationBar and manages tab switching.
@@ -23,7 +23,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     HomeScreen(),
     AttendanceScreen(),
     ContactsScreen(),
-    SettingsScreen(),
+    MoreScreen(),
   ];
 
   /// List of navigation items
@@ -39,15 +39,15 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       label: AppStrings.attendance,
     ),
     BottomNavigationBarItem(
-      icon: Icon(Icons.card_membership_outlined),
-      activeIcon: Icon(Icons.card_membership),
+      icon: Icon(Icons.contact_phone_outlined),
+      activeIcon: Icon(Icons.contact_phone),
       label: AppStrings.contacts,
     ),
     
     BottomNavigationBarItem(
-      icon: Icon(Icons.settings_outlined),
-      activeIcon: Icon(Icons.settings),
-      label: AppStrings.settings,
+      icon: Icon(Icons.menu_outlined),
+      activeIcon: Icon(Icons.menu),
+      label: AppStrings.more,
     ),
   ];
 
@@ -66,8 +66,8 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           });
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
         items: _navItems,
       ),
     );

@@ -8,16 +8,14 @@ import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
+
 /// Button that shares a contact's QR code via WhatsApp.
-/// 
+///
 /// Generates a QR code image and shares it with a pre-filled message.
 class QRShareButton extends StatefulWidget {
   final Contact contact;
 
-  const QRShareButton({
-    
-    required this.contact,super.key,
-  });
+  const QRShareButton({required this.contact, super.key});
 
   @override
   State<QRShareButton> createState() => _QRShareButtonState();
@@ -27,18 +25,45 @@ class _QRShareButtonState extends State<QRShareButton> {
   bool _isSharing = false;
   final GlobalKey _qrKey = GlobalKey();
 
+  /// Helper method to capture QR code from hidden widget
+  RenderRepaintBoundary? _tryCaptureFromHiddenWidget() {
+    try {
+      final context = _qrKey.currentContext;
+      if (context == null) {
+        debugPrint('[QRShare] Hidden widget context is null');
+        return null;
+      }
+      final boundary = context.findRenderObject() as RenderRepaintBoundary?;
+      debugPrint('[QRShare] Hidden widget boundary: ${boundary != null}');
+      return boundary;
+    } catch (e) {
+      debugPrint('[QRShare] Error capturing hidden widget: $e');
+      return null;
+    }
+  }
+
   Future<void> _shareQRCode() async {
     if (_isSharing) return;
 
     setState(() => _isSharing = true);
 
+    debugPrint(
+      '[QRShare] Starting QR share process for contact: ${widget.contact.id}',
+    );
+
     try {
-      // Wait for the widget to render
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Wait for the widget to be rendered
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      debugPrint('[QRShare] Attempting to capture QR code widget');
 
       // Capture the QR code widget as an image
-      final boundary = _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final boundary = _tryCaptureFromHiddenWidget();
+
+      debugPrint('[QRShare] Boundary found: ${boundary != null}');
+
       if (boundary == null) {
+        debugPrint('[QRShare] ERROR: Boundary is null - cannot capture QR');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -47,13 +72,19 @@ class _QRShareButtonState extends State<QRShareButton> {
             ),
           );
         }
+        setState(() => _isSharing = false);
         return;
       }
 
+      debugPrint('[QRShare] Calling toImage() on boundary');
       final image = await boundary.toImage(pixelRatio: 3.0);
+      debugPrint('[QRShare] Image captured: ${image.width}x${image.height}');
+
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      
+      debugPrint('[QRShare] ByteData obtained: ${byteData != null}');
+
       if (byteData == null) {
+        debugPrint('[QRShare] ByteData is null');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -62,16 +93,24 @@ class _QRShareButtonState extends State<QRShareButton> {
             ),
           );
         }
+        setState(() => _isSharing = false);
         return;
       }
 
+      debugPrint('[QRShare] Saving to temp file');
+
       // Save to temp file
       final tempDir = await getTemporaryDirectory();
+      debugPrint('[QRShare] Temp directory: ${tempDir.path}');
+
       final file = File('${tempDir.path}/qr_${widget.contact.id}.png');
       await file.writeAsBytes(byteData.buffer.asUint8List());
 
+      debugPrint('[QRShare] Temp file saved: ${file.path}');
+
       // Share via WhatsApp
-      final message = '''
+      final message =
+          '''
 Hi ${widget.contact.name ?? 'there'}! 
 
 Here's your QR code for church attendance. Simply show this at the entrance to check in quickly.
@@ -81,13 +120,28 @@ God bless!
 ${widget.contact.phone}
 ''';
 
-      await SharePlus.instance.share(
-        ShareParams(
-          text: message,
-          files: [XFile(file.path)],
-          subject: 'Your Church QR Code',
-        ),
-      );
+      debugPrint('[QRShare] Preparing to share via SharePlus');
+
+      try {
+        await SharePlus.instance.share(
+          ShareParams(
+            text: message,
+            files: [XFile(file.path)],
+            subject: 'Your Church QR Code',
+          ),
+        );
+        debugPrint('[QRShare] Share completed successfully');
+      } catch (e) {
+        debugPrint('[QRShare] ERROR during share: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error sharing: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
 
       // Clean up temp file after a delay
       Future.delayed(const Duration(minutes: 5), () {
@@ -95,7 +149,9 @@ ${widget.contact.phone}
           file.deleteSync();
         }
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[QRShare] EXCEPTION caught: $e');
+      debugPrint('[QRShare] Stack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -113,17 +169,23 @@ ${widget.contact.phone}
 
   @override
   Widget build(BuildContext context) {
+    debugPrint(
+      '[QRShare] Building widget, isEligibleForQRCode: ${widget.contact.isEligibleForQRCode}',
+    );
+
     // Only show for eligible contacts
     if (!widget.contact.isEligibleForQRCode) {
+      debugPrint('[QRShare] Contact not eligible for QR code');
       return const SizedBox.shrink();
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    // Use Stack to position QR code off-screen (but still rendered)
+    return Stack(
       children: [
-        // Hidden QR code widget for capturing
-        Opacity(
-          opacity: 0,
+        // QR code widget positioned off-screen (but still rendered)
+        Positioned(
+          left: -9999,
+          top: -9999,
           child: RepaintBoundary(
             key: _qrKey,
             child: Container(
@@ -132,12 +194,104 @@ ${widget.contact.phone}
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // QR Code
-                  QrImageView(
-                    data: widget.contact.phone,
-                    version: QrVersions.auto,
-                    size: 200,
-                    backgroundColor: Colors.white,
+                  // ── QR Code Container with Decorative Frame ───────────
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Role Badge at Top
+                        if (widget.contact.primaryRoleTag != null)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: widget.contact.roleColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: widget.contact.roleColor.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(widget.contact.roleIcon, color: widget.contact.roleColor, size: 16),
+                                const SizedBox(width: 6),
+                                Text(
+                                  widget.contact.primaryRole?.displayName ?? widget.contact.primaryRoleTag!,
+                                  style: TextStyle(
+                                    color: widget.contact.roleColor,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        // QR Code with Logo Overlay
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: QrImageView(
+                                data: widget.contact.phone,
+                                version: QrVersions.auto,
+                                size: 200,
+                                backgroundColor: Colors.white,
+                                errorCorrectionLevel: QrErrorCorrectLevel.H,
+                                eyeStyle: const QrEyeStyle(
+                                  eyeShape: QrEyeShape.square,
+                                  color: Colors.black,
+                                ),
+                                dataModuleStyle: const QrDataModuleStyle(
+                                  dataModuleShape: QrDataModuleShape.square,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                            // Center Logo Overlay
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 3),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: ClipOval(
+                                child: Image.asset(
+                                  'assets/logo.png',
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
                   // Contact Name
@@ -153,17 +307,14 @@ ${widget.contact.phone}
                   // Phone
                   Text(
                     widget.contact.phone,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
               ),
             ),
           ),
         ),
-        
+
         // Share button
         ElevatedButton.icon(
           onPressed: _isSharing ? null : _shareQRCode,
