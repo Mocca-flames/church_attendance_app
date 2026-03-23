@@ -891,6 +891,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   label: 'Sync',
                   color: Colors.orange,
                   onTap: () async {
+                    // Pull fresh contacts from server first
+                    await ref.read(syncStatusProvider.notifier).pullContacts();
+                    // Then sync pending items to server
                     await ref.read(syncStatusProvider.notifier).syncAll();
                     ref.invalidate(pendingSyncCountProvider);
                   },
@@ -1189,6 +1192,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     BuildContext context,
     AsyncValue<Map<ContactTag, int>> locationData,
   ) {
+    // Use the new dynamic provider for locations (supports both hardcoded and user-added)
+    final dynamicLocationData = ref.watch(dynamicLocationTagDistributionProvider);
+    
     return Card(
       
       child: Padding(
@@ -1211,16 +1217,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
               ],
             ),
             const SizedBox(height: AppDimens.paddingM),
-            locationData.when(
-              data: (locationCounts) {
-                if (locationCounts.isEmpty) {
+            dynamicLocationData.when(
+              data: (locations) {
+                if (locations.isEmpty) {
                   return _buildEmptyState('No location data');
                 }
                 return SizedBox(
                   height: 100,
-                  child: HorizontalBarChart(
-                    data: locationCounts,
-                    barColor: Colors.red,
+                  child: DynamicHorizontalBarChart(
+                    data: locations,
                   ),
                 );
               },
@@ -1586,6 +1591,91 @@ class HorizontalBarChart extends StatelessWidget {
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
                         color: barColor,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+}
+
+/// Dynamic horizontal bar chart widget for Location tags
+/// Supports both hardcoded and user-added locations from database
+class DynamicHorizontalBarChart extends StatelessWidget {
+  final List<DynamicLocationData> data;
+
+  const DynamicHorizontalBarChart({
+    required this.data, super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (data.isEmpty) {
+      return const Center(child: Text('No data'));
+    }
+
+    final maxCount = data.first.count.toDouble();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Column(
+          children: data.map((location) {
+            final barWidth = (location.count / maxCount) * constraints.maxWidth;
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 60,
+                    child: Text(
+                      location.displayName,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Container(
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: location.color.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: FractionallySizedBox(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: barWidth / constraints.maxWidth,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                location.color.withValues(alpha: 0.7),
+                                location.color,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  SizedBox(
+                    width: 24,
+                    child: Text(
+                      '${location.count}',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: location.color,
                       ),
                       textAlign: TextAlign.right,
                     ),

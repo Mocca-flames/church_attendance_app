@@ -44,4 +44,8 @@ abstract class ContactRepository {
 
   /// Sync contacts with server
   Future<void> syncContacts();
+
+  /// Extract and sync location tags from all local contacts.
+  /// This parses contact metadata to find new locations not yet in the database.
+  Future<void> syncLocationsFromLocalContacts();
 }

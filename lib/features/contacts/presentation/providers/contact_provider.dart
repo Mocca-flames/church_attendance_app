@@ -96,11 +96,41 @@ class ContactState {
 /// Contact state notifier for managing contact operations
 class ContactNotifier extends Notifier<ContactState> {
   late final ContactRepository _repository;
+  bool _initialized = false;
 
   @override
   ContactState build() {
     _repository = ref.watch(contactRepositoryProvider);
+    
+    // Listen to the async contactListProvider and initialize recentContacts when loaded
+    // This ensures contacts are loaded on app start so optimistic UI works immediately
+    if (!_initialized) {
+      _initialized = true;
+      // Schedule the initialization after the widget tree is built
+      Future.microtask(() async {
+        try {
+          final contacts = await ref.read(contactListProvider.future);
+          // Only update if state hasn't been modified by CRUD operations
+          if (state.recentContacts.isEmpty) {
+            state = state.copyWith(recentContacts: contacts);
+          }
+        } catch (e) {
+          // Ignore errors - will fall back to empty list
+        }
+      });
+    }
+    
     return const ContactState();
+  }
+
+  /// Refresh contacts from database
+  Future<void> refreshContacts() async {
+    try {
+      final contacts = await _repository.getAllContacts();
+      state = state.copyWith(recentContacts: contacts);
+    } catch (e) {
+      // Keep existing data on error
+    }
   }
 
   /// Trigger haptic feedback for successful operations.
@@ -500,11 +530,12 @@ final contactsListProvider = Provider<List<Contact>>((ref) {
   final contactsAsync = ref.watch(contactListProvider);
   
   // If we have recentContacts from ContactNotifier, use them (instant updates)
+  // This includes initial load from database and all CRUD operations
   if (contactState.recentContacts.isNotEmpty) {
     return contactState.recentContacts;
   }
   
-  // Otherwise fall back to the async list
+  // Otherwise fall back to the async list (handles initial loading state)
   return contactsAsync.when(
     data: (contacts) => contacts,
     loading: () => <Contact>[],

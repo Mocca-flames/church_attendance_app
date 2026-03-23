@@ -99,6 +99,9 @@ class SyncStatusIndicator extends ConsumerWidget {
 
   Future<void> _triggerSync(WidgetRef ref) async {
     try {
+      // Pull fresh contacts from server first
+      await ref.read(syncStatusProvider.notifier).pullContacts();
+      // Then sync pending items to server
       await ref.read(syncStatusProvider.notifier).syncAll();
     } catch (_) {
       // Silently fail - sync will retry later

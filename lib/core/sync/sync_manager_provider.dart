@@ -11,6 +11,7 @@ import 'package:church_attendance_app/features/home/presentation/screens/home_sc
 import 'package:church_attendance_app/main.dart';
 
 
+
 /// Provider for SyncManager instance.
 /// 
 /// The SyncManager handles:
@@ -84,7 +85,9 @@ class IsOnlineNotifier extends Notifier<bool> {
 
   Future<void> _triggerAutoSync() async {
     try {
-      // Sync pending items when coming online
+      // Pull fresh contacts from server when coming online
+      await ref.read(syncStatusProvider.notifier).pullContacts();
+      // Also sync pending items to server
       await ref.read(syncStatusProvider.notifier).syncAll();
     } catch (e) {
       // Silently fail - will retry later
@@ -238,6 +241,15 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
         forceFullSync: forceFullSync,
         progressCallback: onProgress,
       );
+      
+      // Extract and sync new locations from contacts after pulling
+      // This ensures new location tags from server appear in the Contact Edit Screen
+      try {
+        final repository = ref.read(contactRepositoryProvider);
+        await repository.syncLocationsFromLocalContacts();
+      } catch (e) {
+        // Location sync failed - continue, locations will sync on next sync
+      }
       
       // Invalidate data providers to refresh UI with new data
       _invalidateDataProviders();
@@ -435,6 +447,9 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
     }
 
     try {
+      // Pull fresh contacts from server first
+      await ref.read(syncStatusProvider.notifier).pullContacts();
+      // Then sync pending items to server
       await ref.read(syncStatusProvider.notifier).syncAll();
       state = state.copyWith(isImmediateSyncPending: false);
     } catch (e) {

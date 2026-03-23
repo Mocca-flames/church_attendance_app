@@ -313,6 +313,78 @@ class ContactRepositoryImpl implements ContactRepository {
     }
   }
 
+  @override
+  Future<void> syncLocationsFromLocalContacts() async {
+    // Extract and sync new locations from all local contacts
+    await _syncLocationsFromLocalContacts();
+  }
+
+  /// Extracts new locations from local contacts and adds them to local database.
+  /// This is called after contacts are pulled from server to ensure new locations appear.
+  Future<void> _syncLocationsFromLocalContacts() async {
+    if (_locationService == null) return;
+    
+    // Known tags to exclude (roles + member)
+    const excludedTags = {
+      'member',
+      'pastor',
+      'protocol',
+      'worshiper',
+      'usher',
+      'financier',
+      'servant',
+    };
+    
+    // Get all local contacts
+    final localContacts = await _localDataSource.getAllContacts();
+    
+    // Extract all unique tags from local contacts
+    final allTags = <String>{};
+    for (final contact in localContacts) {
+      final tags = contact.tags;
+      allTags.addAll(tags);
+    }
+    
+    // Filter to get only potential new locations (not member, not roles)
+    final potentialLocations = allTags.difference(excludedTags);
+    
+    // Get existing locations to avoid duplicates
+    final existingLocations = await _locationService.getAllLocations();
+    final existingValues = existingLocations.map((loc) => loc.value.toLowerCase()).toSet();
+    final existingDisplayNames = existingLocations.map((loc) => _normalizeForComparison(loc.displayName)).toSet();
+    
+    // Add new locations that don't exist yet
+    for (final locationValue in potentialLocations) {
+      // Normalize the value for comparison
+      final normalizedValue = _normalizeLocationValue(locationValue);
+      final displayName = _capitalize(locationValue);
+      final normalizedDisplayName = _normalizeForComparison(displayName);
+      
+      // Skip if already exists (by value or display name)
+      if (existingValues.contains(normalizedValue) || 
+          existingDisplayNames.contains(normalizedDisplayName)) {
+        continue;
+      }
+      
+      // Skip if this is a known hardcoded location tag (it's already in the enum)
+      if (ContactLocations.validLocations.contains(normalizedValue)) {
+        continue;
+      }
+      
+      try {
+        await _locationService.addLocation(
+          value: normalizedValue,
+          displayName: displayName,
+          colorValue: 0xFF9E9E9E, // Default gray color
+        );
+        // Add to existing values so we don't try to add duplicates in same batch
+        existingValues.add(normalizedValue);
+      } catch (e) {
+        // Location might already exist (race condition), ignore
+      }
+    }
+  }
+
   /// Extracts new locations from server contacts and adds them to local database.
   /// 
   /// Process:

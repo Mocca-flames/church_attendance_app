@@ -238,6 +238,9 @@ class ContactDetailScreen extends ConsumerWidget {
             .deleteContact(contact.id);
 
         if (success && context.mounted) {
+          // Refresh contacts list to ensure UI updates
+          ref.read(contactNotifierProvider.notifier).refreshContacts();
+          
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Contact deleted')),

@@ -186,7 +186,9 @@ class AppDatabase extends _$AppDatabase {
   // CONTACT QUERIES
   // ==========================================================================
 
-  Future<List<ContactEntity>> getAllContacts() => select(contacts).get();
+  /// Get all contacts (excluding soft-deleted)
+  Future<List<ContactEntity>> getAllContacts() => 
+    (select(contacts)..where((t) => t.isDeleted.equals(false))).get();
 
   Future<int> getContactCount() async {
     final result = await select(contacts).get();

@@ -109,10 +109,53 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     });
   }
 
+  /// Formats location name for display (auto-capitalize, proper spacing)
+  /// Example: "unit 7" → "Unit 7", "unit7" → "Unit 7", "unit7hall" → "Unit 7 Hall"
+  String _formatLocationName(String name) {
+    // Trim and normalize spacing
+    String formatted = name.trim();
+    
+    // Add space before capital letters that follow lowercase (camelCase to Title Case)
+    // e.g., "Unit7" → "Unit 7", "Unit7Hall" → "Unit 7 Hall"
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'([a-z])([A-Z])'),
+      (match) => '${match.group(1)} ${match.group(2)}',
+    );
+    
+    // Add space before numbers that follow letters
+    // e.g., "Unit7" → "Unit 7"
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'([a-zA-Z])(\d)'),
+      (match) => '${match.group(1)} ${match.group(2)}',
+    );
+    
+    // Add space after numbers that follow letters
+    // e.g., "7Unit" → "7 Unit"
+    formatted = formatted.replaceAllMapped(
+      RegExp(r'(\d)([a-zA-Z])'),
+      (match) => '${match.group(1)} ${match.group(2)}',
+    );
+    
+    // Convert to title case (capitalize first letter of each word)
+    formatted = formatted.split(' ').map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
+    
+    // Clean up multiple spaces
+    formatted = formatted.replaceAll(RegExp(r'\s+'), ' ');
+    
+    return formatted;
+  }
+
   Future<void> _addNewLocation(String name) async {
     if (name.trim().isEmpty) return;
     
-    final value = name.trim().toLowerCase().replaceAll(' ', '_');
+    // Auto-format the display name
+    final displayName = _formatLocationName(name);
+    
+    // Create value for database (lowercase with underscores)
+    final value = displayName.toLowerCase().replaceAll(' ', '_');
     
     // Generate a random color
     final random = Random();
@@ -128,7 +171,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
       final locationService = ref.read(locationServiceProvider);
       await locationService.addLocation(
         value: value,
-        displayName: name.trim(),
+        displayName: displayName,
         colorValue: colorValue,
         sortOrder: _allLocations.length + 1,
       );
@@ -145,7 +188,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Location "$name" added')),
+          SnackBar(content: Text('Location "$displayName" added')),
         );
       }
     } catch (e) {
@@ -269,6 +312,9 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
         
         // Check mounted again after async gap before using context
         if (!mounted) return;
+        
+        // Refresh the contacts list to ensure UI updates
+        ref.read(contactNotifierProvider.notifier).refreshContacts();
         
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -413,7 +459,85 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
             ),
             const SizedBox(height: AppDimens.paddingM),
 
-            // Location Section - Dynamic from database
+            // Role Section (first - fewer items)
+            _buildSectionCard(
+              context: context,
+              title: 'Role',
+              icon: Icons.work_outline,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Select roles/ministry positions',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.color?.withValues(alpha: 1.0),
+                  ),
+                  ),
+                  const SizedBox(height: AppDimens.paddingM),
+                  
+                  // Role chips (horizontal scrollable)
+                  SizedBox(
+                    height: 40,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: ContactTag.roleTags.asMap().entries.map((entry) {
+                          final role = entry.value;
+                          final isSelected = _selectedRoles.contains(role.value);
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              right: entry.key < ContactTag.roleTags.length - 1 
+                                  ? AppDimens.paddingS 
+                                  : 0,
+                            ),
+                            child: FilterChip(
+                              label: Text(
+                                role.displayName,
+                                style: AppTypography.labelMedium.copyWith(
+                                  color: isSelected ? role.color : Theme.of(context).chipTheme.labelStyle?.color,
+                                ),
+                              ),
+                              avatar: Icon(
+                                role.icon,
+                                size: 18,
+                                color: isSelected ? role.color : AppColors.neutral400,
+                              ),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                setState(() {
+                                  if (selected) {
+                                    _selectedRoles.add(role.value);
+                                  } else {
+                                    _selectedRoles.remove(role.value);
+                                  }
+                                });
+                              },
+                              selectedColor: role.color.withValues(alpha: 0.15),
+                              checkmarkColor: role.color,
+                              backgroundColor: Theme.of(context).chipTheme.backgroundColor,
+                              side: BorderSide(
+                                color: isSelected 
+                                    ? role.color.withValues(alpha: 0.3)
+                                    : AppColors.neutral200,
+                                width: 1,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppDimens.radiusL),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppDimens.paddingM),
+
+            // Location Section - Dynamic from database (last - more items, needs more space)
             _buildSectionCard(
               context: context,
               title: 'Location',
@@ -435,10 +559,11 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
                 children: [
                   Text(
                     'Select or add the area this contact belongs to',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.neutral500,
-                    ),
-                  ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.color?.withValues(alpha: 1.0),
+                  ),),
                   const SizedBox(height: AppDimens.paddingM),
                   
                   if (_isLoadingLocations)
@@ -452,69 +577,6 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
                     )
                   else
                     _buildLocationSelector(),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppDimens.paddingM),
-
-            // Role Section
-            _buildSectionCard(
-              context: context,
-              title: 'Role',
-              icon: Icons.work_outline,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Select roles/ministry positions',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.neutral500,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimens.paddingM),
-                  
-                  Wrap(
-                    spacing: AppDimens.paddingS,
-                    runSpacing: AppDimens.paddingS,
-                    children: ContactTag.roleTags.map((role) {
-                      final isSelected = _selectedRoles.contains(role.value);
-                      return FilterChip(
-                        label: Text(
-                          role.displayName,
-                          style: AppTypography.labelMedium.copyWith(
-                            color: isSelected ? role.color : Theme.of(context).chipTheme.labelStyle?.color,
-                          ),
-                        ),
-                        avatar: Icon(
-                          role.icon,
-                          size: 18,
-                          color: isSelected ? role.color : AppColors.neutral400,
-                        ),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            if (selected) {
-                              _selectedRoles.add(role.value);
-                            } else {
-                              _selectedRoles.remove(role.value);
-                            }
-                          });
-                        },
-                        selectedColor: role.color.withValues(alpha: 0.15),
-                        checkmarkColor: role.color,
-                        backgroundColor: Theme.of(context).chipTheme.backgroundColor,
-                        side: BorderSide(
-                          color: isSelected 
-                              ? role.color.withValues(alpha: 0.3)
-                              : AppColors.neutral200,
-                          width: 1,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppDimens.radiusL),
-                        ),
-                      );
-                    }).toList(),
-                  ),
                 ],
               ),
             ),
@@ -680,9 +742,9 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
         
         const SizedBox(height: AppDimens.paddingM),
         
-        // Location chips (scrollable)
+        // Location chips (scrollable with 3 rows visible)
         ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 150),
+          constraints: const BoxConstraints(maxHeight: 140),
           child: SingleChildScrollView(
             child: Wrap(
               spacing: AppDimens.paddingS,
@@ -757,7 +819,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
                   ActionChip(
                     avatar: const Icon(Icons.add, size: 18, color: AppColors.cyan600),
                     label: Text(
-                      'Add "${_locationSearchController.text}"',
+                      'Add "${_formatLocationName(_locationSearchController.text)}"',
                       style: AppTypography.labelMedium.copyWith(
                         color: AppColors.cyan600,
                       ),
