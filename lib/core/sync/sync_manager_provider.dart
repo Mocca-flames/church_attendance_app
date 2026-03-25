@@ -7,7 +7,7 @@ import 'package:church_attendance_app/features/auth/presentation/providers/auth_
 import 'package:church_attendance_app/features/contacts/presentation/providers/contact_count_provider.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/contact_provider.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/tag_statistics_provider.dart';
-import 'package:church_attendance_app/features/home/presentation/screens/home_screen.dart';
+import 'package:church_attendance_app/features/home/presentation/providers/dashboard_providers.dart';
 import 'package:church_attendance_app/main.dart';
 
 
@@ -206,11 +206,12 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
     ref.invalidate(roleTagDistributionProvider);
     ref.invalidate(membershipDistributionProvider);
     ref.invalidate(totalContactCountProvider);
+    ref.invalidate(dynamicLocationTagDistributionProvider);
     
     // Attendance providers (Home screen)
-    ref.invalidate(weeklyAttendanceCountProvider);
-    ref.invalidate(attendanceTrendProvider);
-    ref.invalidate(attendanceByServiceTypeProvider);
+    // Note: These are invalidated in HomeScreen's _refreshDataProviders method
+    // Include basic providers that may exist here
+    ref.invalidate(pendingSyncCountProvider);
   }
 
   /// Pull contacts from server and update sync status.
@@ -332,7 +333,7 @@ extension SyncModeExtension on SyncMode {
   Duration get interval {
     switch (this) {
       case SyncMode.active:
-        return const Duration(minutes: 5);
+        return const Duration(seconds: 30); // Faster for active/home screen usage
       case SyncMode.normal:
         return const Duration(hours: 1);
       case SyncMode.background:
@@ -369,7 +370,7 @@ class SmartSyncState {
 /// Notifier that tracks sync mode and manages smart sync behavior.
 ///
 /// Automatically switches between:
-/// - Active mode (5 min interval): When user is on attendance screen or editing contacts
+/// - Active mode (30 sec interval): When user is on home screen or attendance screen
 /// - Normal mode (1 hour interval): Regular usage
 /// - Background mode (24 hour interval): App in background
 class SmartSyncNotifier extends Notifier<SmartSyncState> {
@@ -377,10 +378,30 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
 
   @override
   SmartSyncState build() {
+    // Listen to home screen state changes
+    ref.listen<bool>(isOnHomeScreenProvider, (previous, next) {
+      if (next) {
+        // User is on home screen - use faster sync
+        _setHomeScreenMode();
+      } else if (previous == true && next == false) {
+        // User left home screen - return to normal mode
+        setNormalMode();
+      }
+    });
+    
     ref.onDispose(() {
       _inactivityTimer?.cancel();
     });
     return SmartSyncState(lastActivity: DateTime.now());
+  }
+
+  /// Set sync mode to home screen (30 second interval for dashboard updates)
+  void _setHomeScreenMode() {
+    _inactivityTimer?.cancel();
+    state = state.copyWith(mode: SyncMode.active, lastActivity: DateTime.now());
+    
+    // Restart periodic sync with faster interval for dashboard
+    _restartPeriodicSync(interval: const Duration(seconds: 30));
   }
 
   /// Set sync mode to active (e.g., when on attendance screen)
@@ -431,10 +452,10 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
   }
 
   /// Restart periodic sync with current mode's interval
-  void _restartPeriodicSync() {
+  void _restartPeriodicSync({Duration? interval}) {
     final periodicSync = ref.read(periodicSyncProvider.notifier);
     periodicSync.stopPeriodicSync();
-    periodicSync.startPeriodicSync(interval: state.mode.interval);
+    periodicSync.startPeriodicSync(interval: interval ?? state.mode.interval);
   }
 
   /// Trigger immediate sync of pending items

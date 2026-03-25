@@ -48,4 +48,8 @@ abstract class ContactRepository {
   /// Extract and sync location tags from all local contacts.
   /// This parses contact metadata to find new locations not yet in the database.
   Future<void> syncLocationsFromLocalContacts();
+
+  /// Get total contact count from server statistics endpoint.
+  /// Returns the authoritative contact count from the server.
+  Future<int> getTotalContacts();
 }

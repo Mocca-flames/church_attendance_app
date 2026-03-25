@@ -96,30 +96,10 @@ class ContactState {
 /// Contact state notifier for managing contact operations
 class ContactNotifier extends Notifier<ContactState> {
   late final ContactRepository _repository;
-  bool _initialized = false;
 
   @override
   ContactState build() {
     _repository = ref.watch(contactRepositoryProvider);
-    
-    // Listen to the async contactListProvider and initialize recentContacts when loaded
-    // This ensures contacts are loaded on app start so optimistic UI works immediately
-    if (!_initialized) {
-      _initialized = true;
-      // Schedule the initialization after the widget tree is built
-      Future.microtask(() async {
-        try {
-          final contacts = await ref.read(contactListProvider.future);
-          // Only update if state hasn't been modified by CRUD operations
-          if (state.recentContacts.isEmpty) {
-            state = state.copyWith(recentContacts: contacts);
-          }
-        } catch (e) {
-          // Ignore errors - will fall back to empty list
-        }
-      });
-    }
-    
     return const ContactState();
   }
 
@@ -523,19 +503,12 @@ final contactListProvider = FutureProvider<List<Contact>>((ref) async {
   return repository.getAllContacts();
 });
 
-/// Reactive provider that watches ContactNotifier for instant UI updates
-/// This ensures the UI updates immediately when contacts are created/updated/deleted
+/// Reactive provider for contact list
+/// Watches the async contactListProvider for data loading
 final contactsListProvider = Provider<List<Contact>>((ref) {
-  final contactState = ref.watch(contactNotifierProvider);
   final contactsAsync = ref.watch(contactListProvider);
   
-  // If we have recentContacts from ContactNotifier, use them (instant updates)
-  // This includes initial load from database and all CRUD operations
-  if (contactState.recentContacts.isNotEmpty) {
-    return contactState.recentContacts;
-  }
-  
-  // Otherwise fall back to the async list (handles initial loading state)
+  // Return data when available, handle loading/error states gracefully
   return contactsAsync.when(
     data: (contacts) => contacts,
     loading: () => <Contact>[],
@@ -592,24 +565,29 @@ class ContactSearchNotifier extends Notifier<ContactSearchState> {
   /// Search contacts with debounce
   Future<void> search(String query) async {
     _debounceTimer?.cancel();
-    state = state.copyWith(query: query, clearError: true);
-
-    if (query.trim().isEmpty) {
-      state = state.copyWith(results: [], isLoading: false);
+    
+    final trimmedQuery = query.trim();
+    
+    // Immediately clear results when query is empty
+    if (trimmedQuery.isEmpty) {
+      state = state.copyWith(query: '', results: [], isLoading: false, clearError: true);
       return;
     }
-
+    
+    state = state.copyWith(query: trimmedQuery, clearError: true);
     state = state.copyWith(isLoading: true);
 
     _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
       try {
         final repository = ref.read(contactRepositoryProvider);
-        final results = await repository.searchContacts(query.trim());
-        if (state.query == query) {
+        final results = await repository.searchContacts(trimmedQuery);
+        // Only update results if the query still matches (hasn't been cleared/changed)
+        if (state.query == trimmedQuery) {
           state = state.copyWith(results: results, isLoading: false);
         }
       } catch (e) {
-        if (state.query == query) {
+        // Only update error if the query still matches
+        if (state.query == trimmedQuery) {
           state = state.copyWith(
             isLoading: false,
             error: 'Failed to search contacts: $e',

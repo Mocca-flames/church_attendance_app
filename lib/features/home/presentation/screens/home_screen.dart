@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -17,6 +18,7 @@ import 'package:church_attendance_app/main.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/widgets/gradient_background.dart';
 import 'package:church_attendance_app/core/widgets/lottie_loading_widget.dart';
+import '../providers/dashboard_providers.dart';
 
 /// Provider for weekly attendance count
 final weeklyAttendanceCountProvider = FutureProvider<int>((ref) async {
@@ -251,6 +253,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObserver {
   bool _isInitialSyncDone = false;
+  Timer? _autoRefreshTimer;
 
   @override
   void initState() {
@@ -259,15 +262,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     WidgetsBinding.instance.addObserver(this);
     // Trigger sync on first load
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Mark as on home screen for smart sync
+      ref.read(isOnHomeScreenProvider.notifier).setValue(true);
       _refreshDataProviders();
       _triggerInitialSync();
+      _startAutoRefreshTimer();
     });
   }
 
   @override
   void dispose() {
+    // Stop auto-refresh timer
+    _autoRefreshTimer?.cancel();
     // Unregister observer
     WidgetsBinding.instance.removeObserver(this);
+    // Note: Not setting isOnHomeScreenProvider to false here to avoid
+    // "Bad state: Using ref when widget is about to be unmounted" error.
+    // The sync system detects home screen presence through other means.
     super.dispose();
   }
 
@@ -277,7 +288,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     // This ensures the home screen shows updated data after recording attendance
     if (state == AppLifecycleState.resumed) {
       _refreshDataProviders();
+      // Restart auto-refresh timer if it was stopped
+      _startAutoRefreshTimer();
+    } else if (state == AppLifecycleState.paused) {
+      // Stop auto-refresh when app goes to background to save resources
+      _autoRefreshTimer?.cancel();
     }
+  }
+
+  /// Start the auto-refresh timer that refreshes data every 30 seconds
+  void _startAutoRefreshTimer() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        ref.read(isDashboardRefreshingProvider.notifier).setValue(true);
+        _refreshDataProviders().then((_) {
+          ref.read(isDashboardRefreshingProvider.notifier).setValue(false);
+          ref.read(lastDashboardRefreshProvider.notifier).setValue(DateTime.now());
+        });
+      }
+    });
+  }
+
+  /// Handle pull-to-refresh action
+  Future<void> _handlePullToRefresh() async {
+    ref.read(isDashboardRefreshingProvider.notifier).setValue(true);
+    
+    await _refreshDataProviders();
+    
+    // Also trigger a sync when user manually refreshes
+    try {
+      await ref.read(syncStatusProvider.notifier).syncAll();
+    } catch (e) {
+      // Sync failed - continue anyway
+    }
+    
+    ref.read(isDashboardRefreshingProvider.notifier).setValue(false);
+    ref.read(lastDashboardRefreshProvider.notifier).setValue(DateTime.now());
   }
 
   /// Refresh all data providers to get fresh data
@@ -327,6 +374,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   @override
   Widget build(BuildContext context) {
     final syncStatus = ref.watch(syncStatusProvider);
+    final isRefreshing = ref.watch(isDashboardRefreshingProvider);
 
     return DynamicBackground(
       child: Scaffold(
@@ -340,9 +388,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
             context,
           ).colorScheme.onPrimary.withValues(alpha: 0.5),
           foregroundColor: Theme.of(context).colorScheme.onPrimary,
-          actions: const [
+          actions: [
+            // Auto-refresh indicator
+            if (isRefreshing)
+              const Padding(
+                padding: EdgeInsets.only(right: AppDimens.paddingS),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             // Sync status indicator in app bar
-            Padding(
+            const Padding(
               padding: EdgeInsets.only(right: AppDimens.paddingS),
               child: SyncStatusIndicatorCompact(),
             ),
@@ -350,35 +411,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         ),
         body: Stack(
           children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimens.paddingM),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Quick Stats Row
-                  _buildQuickStatsRow(context, ref),
-                  const SizedBox(height: AppDimens.paddingL),
-                  
-                  // Dynamic Sync Status Widgets
-                  _buildSyncStatusCard(context, ref),
-                  const SizedBox(height: AppDimens.paddingL),
+            RefreshIndicator(
+              onRefresh: _handlePullToRefresh,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(AppDimens.paddingM),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Quick Stats Row
+                    _buildQuickStatsRow(context, ref),
+                    const SizedBox(height: AppDimens.paddingL),
+                    
+                    // Dynamic Sync Status Widgets
+                    _buildSyncStatusCard(context, ref),
+                    const SizedBox(height: AppDimens.paddingL),
 
-                  // Quick Actions Card
-                  _buildQuickActionsCard(context, ref),
-                  const SizedBox(height: AppDimens.paddingL),
+                    // Quick Actions Card
+                    _buildQuickActionsCard(context, ref),
+                    const SizedBox(height: AppDimens.paddingL),
 
-                  // Attendance Trend Chart
-                  _buildAttendanceTrendChart(context, ref),
-                  const SizedBox(height: AppDimens.paddingL),
+                    // Attendance Trend Chart
+                    _buildAttendanceTrendChart(context, ref),
+                    const SizedBox(height: AppDimens.paddingL),
 
-                  // Tag Distribution Pie Chart
-                  _buildTagDistributionChart(context, ref),
-                  const SizedBox(height: AppDimens.paddingL),
+                    // Tag Distribution Pie Chart
+                    _buildTagDistributionChart(context, ref),
+                    const SizedBox(height: AppDimens.paddingL),
 
-                  // Recent Activity Card
-                  _buildRecentActivityCard(context, ref),
-                  const SizedBox(height: AppDimens.paddingL),
-                ],
+                    // Recent Activity Card
+                    _buildRecentActivityCard(context, ref),
+                    const SizedBox(height: AppDimens.paddingL),
+                  ],
+                ),
               ),
             ),
             // Sync overlay - shown while syncing
@@ -404,7 +469,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
 
   /// Build quick stats row with key metrics
   Widget _buildQuickStatsRow(BuildContext context, WidgetRef ref) {
-    final totalContacts = ref.watch(totalContactCountProvider);
+    final countData = ref.watch(contactCountDataProvider);
     final contactStoreInfo = ref.watch(offlineContactStoreInfoProvider);
     final weeklyAttendance = ref.watch(weeklyAttendanceCountProvider);
     final pendingSync = ref.watch(pendingSyncCountProvider);
@@ -413,11 +478,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
       children: [
         // Total Contacts
         Expanded(
-          child: totalContacts.when(
-            data: (count) => _QuickStatCard(
-              icon: Icons.people,
+          child: countData.when(
+            data: (data) => _QuickStatCard(
+              icon: data.icon,
               label: 'Contacts',
-              value: count.toString(),
+              value: data.displayCount.toString(),
               color: Theme.of(context).colorScheme.primary,
             ),
             loading: () => _QuickStatCard(

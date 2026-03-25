@@ -45,8 +45,11 @@ class _ContactListScreenState extends ConsumerState<ContactListScreen> {
   }
 
   Future<void> _handleRefresh() async {
+    // Use the notifier's refreshContacts method for proper state management
+    // This ensures both recentContacts and the async list are refreshed
+    await ref.read(contactNotifierProvider.notifier).refreshContacts();
+    // Also invalidate the async provider to ensure data is fresh
     ref.invalidate(contactListProvider);
-    await ref.read(contactListProvider.future);
   }
 
   void _navigateToDetail(Contact contact) {

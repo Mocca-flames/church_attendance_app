@@ -666,4 +666,19 @@ class ContactRepositoryImpl implements ContactRepository {
       return false;
     }
   }
+
+  @override
+  Future<int> getTotalContacts() async {
+    // Try to get from server first
+    if (await _isOnline()) {
+      try {
+        return await _remoteDataSource.getTotalContacts();
+      } catch (e) {
+        // Fall back to local count if server fails
+      }
+    }
+    // Return local count as fallback
+    final localContacts = await _localDataSource.getAllContacts();
+    return localContacts.length;
+  }
 }

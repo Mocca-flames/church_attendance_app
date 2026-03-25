@@ -39,7 +39,7 @@ class ContactDetailScreen extends ConsumerWidget {
             actions: [
               IconButton(
                 icon: Icon(Icons.edit_outlined, color: colorScheme.onPrimary),
-                onPressed: () => _navigateToEdit(context, displayContact),
+                onPressed: () => _navigateToEdit(context, ref, displayContact),
                 tooltip: 'Edit Contact',
               ),
               PopupMenuButton<String>(
@@ -199,10 +199,17 @@ class ContactDetailScreen extends ConsumerWidget {
 
 
 
-  void _navigateToEdit(BuildContext context, Contact contact) {
+  void _navigateToEdit(BuildContext context, WidgetRef ref, Contact contact) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => ContactEditScreen(contact: contact)),
-    );
+    ).then((result) {
+      // When returning from edit screen, check if changes were saved
+      if (result == true) {
+        // Refresh the contact data to show updated information
+        ref.invalidate(contactByIdProvider(contact.id));
+        ref.read(contactNotifierProvider.notifier).refreshContacts();
+      }
+    });
   }
 
   Future<void> _handleMenuAction(
@@ -238,8 +245,10 @@ class ContactDetailScreen extends ConsumerWidget {
             .deleteContact(contact.id);
 
         if (success && context.mounted) {
-          // Refresh contacts list to ensure UI updates
+          // Refresh the contacts list to ensure UI updates
           ref.read(contactNotifierProvider.notifier).refreshContacts();
+          // Also invalidate the async provider to ensure data consistency
+          ref.invalidate(contactListProvider);
           
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/enums/contact_tag.dart';
 import 'package:church_attendance_app/main.dart';
+import 'package:church_attendance_app/features/contacts/presentation/providers/contact_provider.dart';
 
 /// Data class for dynamic location display in charts
 /// This supports both hardcoded and user-added locations
@@ -161,11 +162,58 @@ final membershipDistributionProvider = FutureProvider<Map<String, int>>((ref) as
   };
 });
 
-/// Provider for total contact count (alias for offlineContactCountProvider for convenience)
-final totalContactCountProvider = FutureProvider<int>((ref) async {
+/// Data class holding both local and server contact counts
+class ContactCountData {
+  final int localCount;
+  final int serverCount;
+  final bool isFromServer;
+
+  const ContactCountData({
+    required this.localCount,
+    required this.serverCount,
+    required this.isFromServer,
+  });
+
+  /// Returns the display count (server if available, otherwise local)
+  int get displayCount => isFromServer ? serverCount : localCount;
+
+  /// Returns the icon for the current data source
+  IconData get icon => isFromServer ? Icons.cloud : Icons.sd_storage;
+}
+
+/// Provider for combined local and server contact counts
+/// Shows both counts and indicates which source is being displayed
+final contactCountDataProvider = FutureProvider<ContactCountData>((ref) async {
+  // Get local count
   final database = ref.watch(databaseProvider);
   final contacts = await database.getAllContacts();
-  return contacts.length;
+  final localCount = contacts.length;
+
+  // Try to get server count
+  int serverCount = localCount;
+  bool isFromServer = false;
+
+  try {
+    final repository = ref.watch(contactRepositoryProvider);
+    serverCount = await repository.getTotalContacts();
+    isFromServer = true;
+  } catch (e) {
+    // Server unavailable, will use local count
+    isFromServer = false;
+  }
+
+  return ContactCountData(
+    localCount: localCount,
+    serverCount: serverCount,
+    isFromServer: isFromServer,
+  );
+});
+
+/// Provider for total contact count (from server when online, local when offline)
+/// This is the primary provider used by the UI
+final totalContactCountProvider = FutureProvider<int>((ref) async {
+  final countData = await ref.watch(contactCountDataProvider.future);
+  return countData.displayCount;
 });
 
 /// Provider for dynamic location distribution (horizontal bar chart)

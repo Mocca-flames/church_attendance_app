@@ -215,6 +215,23 @@ class ContactRemoteDataSource {
     }
   }
 
+  /// Get total contact count from server
+  /// Returns the total number of contacts from the server's statistics endpoint
+  Future<int> getTotalContacts() async {
+    try {
+      final response = await _dioClient.dio.get(ApiConstants.totalContacts);
+      final data = response.data;
+      
+      // Response format: {'total_contacts': 2632}
+      if (data is Map<String, dynamic>) {
+        return data['total_contacts'] as int? ?? 0;
+      }
+      return 0;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   /// Handle Dio errors and convert to friendly exceptions
   Exception _handleDioError(DioException e) {
     switch (e.type) {

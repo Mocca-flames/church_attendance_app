@@ -314,7 +314,10 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
         if (!mounted) return;
         
         // Refresh the contacts list to ensure UI updates
+        // Use the notifier's refresh method which updates recentContacts
         ref.read(contactNotifierProvider.notifier).refreshContacts();
+        // Also invalidate the async provider to ensure data is fresh
+        ref.invalidate(contactListProvider);
         
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -420,6 +423,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
                     prefixIcon: Icons.phone_outlined,
                     isRequired: true,
                     keyboardType: TextInputType.phone,
+                    readOnly: isEditing,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Phone number is required';
@@ -652,6 +656,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
     TextCapitalization textCapitalization = TextCapitalization.none,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
@@ -663,6 +668,7 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
       keyboardType: keyboardType,
       validator: validator,
       textCapitalization: textCapitalization,
+      readOnly: readOnly,
     );
   }
 

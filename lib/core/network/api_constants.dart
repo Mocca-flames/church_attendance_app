@@ -1,10 +1,14 @@
 class ApiConstants {
   // Base URL - Update this with your actual backend URL
   // For development, you can use your computer's local IP address
-  // e.g., 'http://192.168.1.100:8000' for Android emulator to access localhost
+
+  // Server 'http://35.238.27.155:8000'
   static const String baseUrl = 'http://35.238.27.155:8000';
   // Health Check
   static const String health = '/health';
+
+  // Statistics Endpoins
+  static const String totalContacts = '/stats/contacts/count';
 
   // Auth Endpoints
   static const String login = '/auth/login';
