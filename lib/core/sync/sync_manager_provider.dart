@@ -195,6 +195,9 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
   /// Invalidate all data providers to trigger UI refresh after sync.
   /// This ensures Contact List and Home Screen show updated data.
   void _invalidateDataProviders() {
+    // Trigger the dashboard refresh
+    ref.read(dashboardRefreshTriggerProvider.notifier).triggerRefresh();
+    
     // Contact list providers
     ref.invalidate(contactListProvider);
     ref.invalidate(offlineContactCountProvider);
@@ -333,7 +336,7 @@ extension SyncModeExtension on SyncMode {
   Duration get interval {
     switch (this) {
       case SyncMode.active:
-        return const Duration(seconds: 30); // Faster for active/home screen usage
+        return const Duration(seconds: 100); // Faster for active/home screen usage
       case SyncMode.normal:
         return const Duration(hours: 1);
       case SyncMode.background:

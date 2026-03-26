@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/enums/contact_tag.dart';
 import 'package:church_attendance_app/main.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/contact_provider.dart';
+import 'package:church_attendance_app/features/home/presentation/providers/dashboard_providers.dart';
 
 /// Data class for dynamic location display in charts
 /// This supports both hardcoded and user-added locations
@@ -40,6 +41,9 @@ List<String> _extractTags(String? metadata) {
 /// Returns a Map<ContactTag, int with counts for each tag.
 /// Only includes tags that have count > 0.
 final tagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) async {
+  // Watch the refresh trigger to rebuild on refresh
+  ref.watch(dashboardRefreshTriggerProvider);
+  
   final database = ref.watch(databaseProvider);
   final contacts = await database.getAllContacts();
   
@@ -68,6 +72,9 @@ final tagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) async
 /// Returns a MapContactTag, int with counts for location tags only
 /// FIXED: Count unique contacts per location instead of tag occurrences
 final locationTagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) async {
+  // Watch the refresh trigger to rebuild on refresh
+  ref.watch(dashboardRefreshTriggerProvider);
+  
   final database = ref.watch(databaseProvider);
   final contacts = await database.getAllContacts();
   
@@ -102,6 +109,9 @@ final locationTagDistributionProvider = FutureProvider<Map<ContactTag, int>>((re
 /// Returns a MapContactTag, int> with counts for role tags only
 /// FIXED: Count unique contacts per role instead of tag occurrences
 final roleTagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) async {
+  // Watch the refresh trigger to rebuild on refresh
+  ref.watch(dashboardRefreshTriggerProvider);
+  
   final database = ref.watch(databaseProvider);
   final contacts = await database.getAllContacts();
   
@@ -135,6 +145,9 @@ final roleTagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) a
 /// Returns a MapString, int with 'Member' and 'Non-Member' counts
 /// This correctly counts each contact once (they're mutually exclusive)
 final membershipDistributionProvider = FutureProvider<Map<String, int>>((ref) async {
+  // Watch the refresh trigger to rebuild on refresh
+  ref.watch(dashboardRefreshTriggerProvider);
+  
   final database = ref.watch(databaseProvider);
   final contacts = await database.getAllContacts();
   
@@ -184,6 +197,9 @@ class ContactCountData {
 /// Provider for combined local and server contact counts
 /// Shows both counts and indicates which source is being displayed
 final contactCountDataProvider = FutureProvider<ContactCountData>((ref) async {
+  // Watch the refresh trigger to rebuild on refresh
+  ref.watch(dashboardRefreshTriggerProvider);
+  
   // Get local count
   final database = ref.watch(databaseProvider);
   final contacts = await database.getAllContacts();
@@ -221,6 +237,9 @@ final totalContactCountProvider = FutureProvider<int>((ref) async {
 /// Sorted by count descending, limited to top 5
 /// FIXED: Count unique contacts per location instead of tag occurrences
 final dynamicLocationTagDistributionProvider = FutureProvider<List<DynamicLocationData>>((ref) async {
+  // Watch the refresh trigger to rebuild on refresh
+  ref.watch(dashboardRefreshTriggerProvider);
+  
   final database = ref.watch(databaseProvider);
   final contacts = await database.getAllContacts();
   final locations = await database.getAllLocations();

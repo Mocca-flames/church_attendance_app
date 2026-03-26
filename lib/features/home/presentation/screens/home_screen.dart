@@ -22,6 +22,9 @@ import '../providers/dashboard_providers.dart';
 
 /// Provider for weekly attendance count
 final weeklyAttendanceCountProvider = FutureProvider<int>((ref) async {
+  // Watch the refresh trigger to rebuild on refresh
+  ref.watch(dashboardRefreshTriggerProvider);
+  
   final database = ref.watch(databaseProvider);
   final now = DateTime.now();
   final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
@@ -39,9 +42,11 @@ final weeklyAttendanceCountProvider = FutureProvider<int>((ref) async {
 });
 
 /// Provider for last 7 days attendance data for chart
-final attendanceTrendProvider = FutureProvider<List<AttendanceDayData>>((
-  ref,
-) async {
+final attendanceTrendProvider = FutureProvider<List<AttendanceDayData>>(
+  (ref) async {
+  // Watch the refresh trigger to rebuild on refresh
+  ref.watch(dashboardRefreshTriggerProvider);
+  
   final database = ref.watch(databaseProvider);
   final now = DateTime.now();
   final List<AttendanceDayData> data = [];
@@ -114,6 +119,9 @@ class ServiceAttendanceOccurrence {
 /// Provider for attendance by service type (last 4 occurrences of each)
 final attendanceByServiceTypeProvider =
     FutureProvider<List<ServiceTypeAttendanceData>>((ref) async {
+      // Watch the refresh trigger to rebuild on refresh
+      ref.watch(dashboardRefreshTriggerProvider);
+      
       final database = ref.watch(databaseProvider);
 
       final List<ServiceTypeAttendanceData> result = [];
@@ -186,6 +194,9 @@ final attendanceByServiceTypeProvider =
 final recentAttendanceProvider = FutureProvider<List<RecentAttendanceItem>>((
   ref,
 ) async {
+  // Watch the refresh trigger to rebuild on refresh
+  ref.watch(dashboardRefreshTriggerProvider);
+  
   final database = ref.watch(databaseProvider);
   final now = DateTime.now();
   final twoWeeksAgo = now.subtract(const Duration(days: 14));
@@ -330,6 +341,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   /// Refresh all data providers to get fresh data
   /// This ensures the home screen shows updated data when navigating back
   Future<void> _refreshDataProviders() async {
+    // Trigger the refresh trigger to signal all providers to rebuild
+    ref.read(dashboardRefreshTriggerProvider.notifier).triggerRefresh();
+    
     // Invalidate all attendance-related providers to fetch fresh data
     ref.invalidate(attendanceByServiceTypeProvider);
     ref.invalidate(weeklyAttendanceCountProvider);

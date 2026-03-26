@@ -26,6 +26,8 @@ class SyncManager {
   
   // SharedPreferences key for last sync timestamp
   static const String _lastSyncKey = 'last_contact_sync';
+  // Maximum number of retry attempts before giving up and deleting the sync queue item
+  static const int _maxRetryCount = 3;
 
   SyncManager(this._db, this._dioClient);
 
@@ -77,16 +79,30 @@ class SyncManager {
         await _db.deleteSyncQueueItem(item.id);
         syncedCount++;
       } catch (e) {
-        _logger.e('Failed to sync item ${item.id}', error: e);
-        await _db.updateSyncQueueItem(
-          SyncQueueCompanion(
-            id: Value(item.id),
-            status: const Value('failed'),
-            errorMessage: Value(e.toString()),
-            retryCount: Value(item.retryCount + 1),
-            lastAttemptAt: Value(DateTime.now()),
-          ),
-        );
+        final newRetryCount = item.retryCount + 1;
+        _logger.e('Failed to sync item ${item.id} (attempt $newRetryCount/$_maxRetryCount)', error: e);
+        
+        // Check if we've exceeded max retries - delete the sync queue item instead of keeping it
+        if (newRetryCount >= _maxRetryCount) {
+          _logger.w('Max retry count exceeded for item ${item.id}, deleting from sync queue');
+          
+          // Delete the sync queue item to stop infinite retries
+          await _db.deleteSyncQueueItem(item.id);
+          
+          // Log failed item details for debugging
+          _logger.i('Deleted sync queue item - entityType=${item.entityType}, localId=${item.localId}, action=${item.action}');
+        } else {
+          // Update retry count and status for next attempt
+          await _db.updateSyncQueueItem(
+            SyncQueueCompanion(
+              id: Value(item.id),
+              status: const Value('failed'),
+              errorMessage: Value(e.toString()),
+              retryCount: Value(newRetryCount),
+              lastAttemptAt: Value(DateTime.now()),
+            ),
+          );
+        }
         failedCount++;
       }
     }

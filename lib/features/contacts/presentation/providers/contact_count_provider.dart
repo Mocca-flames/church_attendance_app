@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/main.dart';
+import 'package:church_attendance_app/features/home/presentation/providers/dashboard_providers.dart';
 
 /// Provider for getting the count of contacts stored locally for offline use.
 /// 
@@ -11,6 +12,9 @@ import 'package:church_attendance_app/main.dart';
 /// final contactCount = ref.watch(offlineContactCountProvider);
 /// ```
 final offlineContactCountProvider = FutureProvider<int>((ref) async {
+  // Watch the refresh trigger to rebuild on refresh
+  ref.watch(dashboardRefreshTriggerProvider);
+  
   final database = ref.watch(databaseProvider);
   final contacts = await database.getAllContacts();
   return contacts.length;
@@ -19,6 +23,9 @@ final offlineContactCountProvider = FutureProvider<int>((ref) async {
 /// Provider for getting contact count with metadata like last updated.
 /// This provides more detailed information about the offline contact store.
 final offlineContactStoreInfoProvider = FutureProvider<ContactStoreInfo>((ref) async {
+  // Watch the refresh trigger to rebuild on refresh
+  ref.watch(dashboardRefreshTriggerProvider);
+  
   final database = ref.watch(databaseProvider);
   final contacts = await database.getAllContacts();
   

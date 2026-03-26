@@ -48,3 +48,23 @@ class IsDashboardRefreshingNotifier extends Notifier<bool> {
 final isDashboardRefreshingProvider = NotifierProvider<IsDashboardRefreshingNotifier, bool>(() {
   return IsDashboardRefreshingNotifier();
 });
+
+/// Manual refresh trigger for dashboard data.
+/// This is a counter that increments each time a manual refresh is triggered.
+/// By watching this provider, other providers can rebuild when refresh is requested.
+class DashboardRefreshTriggerNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  /// Trigger a manual refresh by incrementing the counter
+  void triggerRefresh() {
+    state = state + 1;
+  }
+}
+
+/// Provider that tracks manual refresh triggers for dashboard.
+/// When this increments, it signals all dependent providers to refresh.
+final dashboardRefreshTriggerProvider =
+    NotifierProvider<DashboardRefreshTriggerNotifier, int>(() {
+  return DashboardRefreshTriggerNotifier();
+});
