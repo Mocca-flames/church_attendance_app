@@ -35,7 +35,7 @@ class DioClient {
     );
 
     _dio.interceptors.add(
-      InterceptorsWrapper(
+    InterceptorsWrapper(
         onRequest: (options, handler) async {
           // Add auth token to all requests
           final prefs = await SharedPreferences.getInstance();
@@ -475,6 +475,16 @@ class DioClient {
   Future<Response> updateContact(int contactId, Map<String, dynamic> data) async {
     final path = ApiConstants.contactById.replaceAll('{id}', contactId.toString());
     return put(path, data: data);
+  }
+
+  // ============================================================
+  // Statistics Endpoints
+  // ============================================================
+
+  /// GET /stats/daily-progress
+  /// Gets daily progress statistics (contacts created and modified today).
+  Future<Response> getDailyProgress() async {
+    return get(ApiConstants.dailyProgress);
   }
 
   // ============================================================

@@ -14,6 +14,7 @@ import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf
 import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 import 'package:church_attendance_app/core/enums/contact_tag.dart';
 import 'package:church_attendance_app/main.dart';
+import 'package:church_attendance_app/core/widgets/glass_popup_card.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/widgets/gradient_background.dart';
@@ -358,6 +359,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     
     // Invalidate sync-related providers
     ref.invalidate(pendingSyncCountProvider);
+    
+    // Invalidate daily progress provider
+    ref.invalidate(dailyProgressProvider);
   }
 
   /// Trigger initial sync if not done yet
@@ -485,114 +489,218 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   Widget _buildQuickStatsRow(BuildContext context, WidgetRef ref) {
     final countData = ref.watch(contactCountDataProvider);
     final contactStoreInfo = ref.watch(offlineContactStoreInfoProvider);
-    final weeklyAttendance = ref.watch(weeklyAttendanceCountProvider);
-    final pendingSync = ref.watch(pendingSyncCountProvider);
+    final dailyProgress = ref.watch(dailyProgressProvider);
+    final isOnline = ref.watch(isOnlineProvider);
 
-    return Row(
-      children: [
-        // Total Contacts
-        Expanded(
-          child: countData.when(
-            data: (data) => _QuickStatCard(
-              icon: data.icon,
-              label: 'Contacts',
-              value: data.displayCount.toString(),
-              color: Theme.of(context).colorScheme.primary,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Responsive spacing based on screen width
+        final spacing = constraints.maxWidth < 400 ? 8.0 : 12.0;
+        
+        return Row(
+          children: [
+            // Total Contacts
+            Expanded(
+              child: countData.when(
+                data: (data) => _QuickStatCard(
+                  icon: data.icon,
+                  label: 'Contacts',
+                  value: data.displayCount.toString(),
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                loading: () => _QuickStatCard(
+                  icon: Icons.cloud_queue,
+                  label: 'Contacts',
+                  value: '...',
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                error: (_, _) => _QuickStatCard(
+                  icon: Icons.cloud_off,
+                  label: 'Contacts',
+                  value: '-',
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
             ),
-            loading: () => _QuickStatCard(
-              icon: Icons.people,
-              label: 'Contacts',
-              value: '...',
-              color: Theme.of(context).colorScheme.primary,
+            SizedBox(width: spacing),
+            // Members
+            Expanded(
+              child: contactStoreInfo.when(
+                data: (info) => _QuickStatCard(
+                  icon: Icons.contact_phone,
+                  label: 'Members',
+                  value: info.memberCount.toString(),
+                  color: ContactTag.member.color,
+                ),
+                loading: () => _QuickStatCard(
+                  icon: Icons.contact_phone,
+                  label: 'Members',
+                  value: '...',
+                  color: ContactTag.member.color,
+                ),
+                error: (_, _) => _QuickStatCard(
+                  icon: Icons.contact_phone,
+                  label: 'Members',
+                  value: '-',
+                  color: ContactTag.member.color,
+                ),
+              ),
             ),
-            error: (_, _) => _QuickStatCard(
-              icon: Icons.people,
-              label: 'Contacts',
-              value: '-',
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        const SizedBox(width: AppDimens.paddingS),
-        // Members
-        Expanded(
-          child: contactStoreInfo.when(
-            data: (info) => _QuickStatCard(
-              icon: Icons.contact_phone,
-              label: 'Members',
-              value: info.memberCount.toString(),
-              color: ContactTag.member.color,
-            ),
-            loading: () => _QuickStatCard(
-              icon: Icons.contact_phone,
-              label: 'Members',
-              value: '...',
-              color: ContactTag.member.color,
-            ),
-            error: (_, _) => _QuickStatCard(
-              icon: Icons.contact_phone,
-              label: 'Members',
-              value: '-',
-              color: ContactTag.member.color,
-            ),
-          ),
-        ),
-        const SizedBox(width: AppDimens.paddingS),
-        // This Week's Attendance
-        Expanded(
-          child: weeklyAttendance.when(
-            data: (count) => _QuickStatCard(
-              icon: Icons.event_available,
-              label: 'This Week',
-              value: count.toString(),
-              color: Colors.green,
-            ),
-            loading: () => const _QuickStatCard(
-              icon: Icons.event_available,
-              label: 'This Week',
-              value: '...',
-              color: Colors.green,
-            ),
-            error: (_, _) => const _QuickStatCard(
-              icon: Icons.event_available,
-              label: 'This Week',
-              value: '-',
-              color: Colors.green,
-            ),
-          ),
-        ),
-        const SizedBox(width: AppDimens.paddingS),
-        // Pending Syncs
-        Expanded(
-          child: pendingSync.when(
-            data: (count) => count > 0
-                ? _QuickStatCard(
-                    icon: Icons.sync_problem,
-                    label: 'Pending',
-                    value: count.toString(),
-                    color: Colors.orange,
-                  )
-                : const _QuickStatCard(
-                    icon: Icons.sync,
-                    label: 'Synced',
-                    value: '0',
-                    color: Colors.green,
+            SizedBox(width: spacing),
+            // Progress (shows total from API, tap for details)
+            Expanded(
+              child: dailyProgress.when(
+                data: (data) {
+                  if (!isOnline) {
+                    // Offline - show disconnected indicator
+                    return _QuickStatCard(
+                      icon: Icons.cloud_off,
+                      label: 'Progress',
+                      value: '-',
+                      color: Colors.grey,
+                      onTap: () => _showProgressDetailsDialog(context, null),
+                    );
+                  }
+                  if (data == null) {
+                    return _QuickStatCard(
+                      icon: Icons.trending_up,
+                      label: 'Progress',
+                      value: '-',
+                      color: Colors.orange,
+                      onTap: () => _showProgressDetailsDialog(context, null),
+                    );
+                  }
+                  return _QuickStatCard(
+                    icon: Icons.trending_up,
+                    label: 'Progress',
+                    value: data.total.toString(),
+                    color: Colors.blue,
+                    onTap: () => _showProgressDetailsDialog(context, data),
+                  );
+                },
+                loading: () => const _QuickStatCard(
+                  icon: Icons.trending_up,
+                  label: 'Progress',
+                  value: '...',
+                  color: Colors.blue,
+                ),
+                error: (_, _) => _QuickStatCard(
+                  icon: Icons.trending_up,
+                  label: 'Progress',
+                  value: '-',
+                  color: Colors.grey,
+                  onTap: () => _showProgressDetailsDialog(context, null),
+                ),
+              ),
+            )
+          ],
+        );
+      },
+    );
+  }
+
+  /// Show dialog with daily progress details using GlassPopupCard design
+  void _showProgressDetailsDialog(BuildContext context, DailyProgressData? data) {
+    showGlassDialog(
+      context: context,
+      title: 'Daily Progress',
+      child: data == null
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                'No data available. Please check your connection.',
+                textAlign: TextAlign.center,
+              ),
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildGlassDetailRow(
+                  'Date',
+                  data.date,
+                  Icons.calendar_today,
+                  Colors.grey,
+                ),
+                const SizedBox(height: 16),
+                _buildGlassDetailRow(
+                  'New Contacts',
+                  data.newContacts.toString(),
+                  Icons.person_add,
+                  Colors.green,
+                ),
+                const SizedBox(height: 16),
+                _buildGlassDetailRow(
+                  'Modified',
+                  data.modifiedContacts.toString(),
+                  Icons.edit,
+                  Colors.orange,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-            loading: () => const _QuickStatCard(
-              icon: Icons.sync,
-              label: 'Synced',
-              value: '...',
-              color: Colors.green,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.blue, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Total: ${data.total}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                          fontSize: 16,
+                        ),
+                      ),
+                  ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ),
+              ],
             ),
-            error: (_, _) => const _QuickStatCard(
-              icon: Icons.sync,
-              label: 'Synced',
-              value: '-',
-              color: Colors.green,
+    );
+  }
+
+  /// Build a glass-style detail row for the dialog
+  Widget _buildGlassDetailRow(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
             ),
           ),
-        ),
-      ],
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1448,17 +1556,19 @@ class _QuickStatCard extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final VoidCallback? onTap;
 
   const _QuickStatCard({
     required this.icon,
     required this.label,
     required this.value,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final cardContent = Container(
       padding: const EdgeInsets.all(AppDimens.paddingS),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
@@ -1489,6 +1599,16 @@ class _QuickStatCard extends StatelessWidget {
         ],
       ),
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: cardContent,
+      );
+    }
+
+    return cardContent;
   }
 }
 
@@ -1909,3 +2029,4 @@ class MembershipPieChart extends StatelessWidget {
     );
   }
 }
+

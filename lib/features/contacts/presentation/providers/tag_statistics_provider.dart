@@ -6,6 +6,7 @@ import 'package:church_attendance_app/core/enums/contact_tag.dart';
 import 'package:church_attendance_app/main.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/contact_provider.dart';
 import 'package:church_attendance_app/features/home/presentation/providers/dashboard_providers.dart';
+import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 
 /// Data class for dynamic location display in charts
 /// This supports both hardcoded and user-added locations
@@ -196,25 +197,34 @@ class ContactCountData {
 
 /// Provider for combined local and server contact counts
 /// Shows both counts and indicates which source is being displayed
+/// Correctly handles offline state by using local data when offline
 final contactCountDataProvider = FutureProvider<ContactCountData>((ref) async {
   // Watch the refresh trigger to rebuild on refresh
   ref.watch(dashboardRefreshTriggerProvider);
+  
+  // Watch online status to handle offline state correctly
+  final isOnline = ref.watch(isOnlineProvider);
   
   // Get local count
   final database = ref.watch(databaseProvider);
   final contacts = await database.getAllContacts();
   final localCount = contacts.length;
 
-  // Try to get server count
+  // Try to get server count only when online
   int serverCount = localCount;
   bool isFromServer = false;
 
-  try {
-    final repository = ref.watch(contactRepositoryProvider);
-    serverCount = await repository.getTotalContacts();
-    isFromServer = true;
-  } catch (e) {
-    // Server unavailable, will use local count
+  if (isOnline) {
+    try {
+      final repository = ref.watch(contactRepositoryProvider);
+      serverCount = await repository.getTotalContacts();
+      isFromServer = true;
+    } catch (e) {
+      // Server unavailable, will use local count
+      isFromServer = false;
+    }
+  } else {
+    // Offline - use local count
     isFromServer = false;
   }
 
