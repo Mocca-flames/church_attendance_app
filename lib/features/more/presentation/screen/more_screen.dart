@@ -9,6 +9,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/widgets/gradient_background.dart';
 import '../../../attendance/presentation/screens/attendance_history_screen.dart';
+import 'statistics_screen.dart';
 
 /// More screen with organized sections for user preferences,
 /// data management, app information, and account actions.
@@ -24,6 +25,13 @@ class MoreScreen extends ConsumerWidget {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const AttendanceHistoryScreen()),
+      );
+    }
+
+    void navigateToStatistics() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const StatisticsScreen()),
       );
     }
 
@@ -136,6 +144,25 @@ class MoreScreen extends ConsumerWidget {
                     subtitle: const Text('View past attendance records'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: navigateToHistory,
+                  ),
+                  const Divider(height: 1, indent: 56),
+                  // Full Statistics
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(AppDimens.paddingS),
+                      decoration: BoxDecoration(
+                        color: AppColors.cyan500.withValues(alpha:0.2),
+                        borderRadius: BorderRadius.circular(AppDimens.radiusM),
+                      ),
+                      child: const Icon(
+                        Icons.analytics,
+                        color: AppColors.cyan500,
+                      ),
+                    ),
+                    title: const Text('Full Statistics'),
+                    subtitle: const Text('Detailed analytics with date filters'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: navigateToStatistics,
                   ),
                   const Divider(height: 1, indent: 56),
                   // To-do / Scenarios

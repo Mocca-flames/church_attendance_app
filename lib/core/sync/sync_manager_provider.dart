@@ -89,8 +89,14 @@ class IsOnlineNotifier extends Notifier<bool> {
       await ref.read(syncStatusProvider.notifier).pullContacts();
       // Also sync pending items to server
       await ref.read(syncStatusProvider.notifier).syncAll();
+      // Aggressively clean up failed sync items when online and refresh pending count
+      await ref.read(syncManagerProvider).aggressiveCleanupWhenOnline();
+      // Refresh pending count after cleanup to update UI
+      await ref.read(syncStatusProvider.notifier).refreshPendingCount();
     } catch (e) {
       // Silently fail - will retry later
+      // Still try to refresh pending count
+      await ref.read(syncStatusProvider.notifier).refreshPendingCount();
     }
   }
 }
@@ -278,11 +284,18 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
 
     try {
       final result = await _syncManager.syncAll();
+      
+      // Aggressively clean up any failed items after sync
+      await _syncManager.aggressiveCleanupWhenOnline();
+      
+      // Get fresh pending count after cleanup
       final pendingCount = await _syncManager.getPendingSyncCount();
 
       // Invalidate data providers to refresh UI with synced data
       _invalidateDataProviders();
 
+      // ALWAYS reset isSyncing, regardless of result
+      // This fixes the "pending dialog stuck" issue
       state = state.copyWith(
         isSyncing: false,
         lastSyncTime: DateTime.now(),
@@ -290,6 +303,7 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
         error: result.success ? null : result.message,
       );
     } catch (e) {
+      // Also reset isSyncing on exception to prevent stuck dialog
       state = state.copyWith(
         isSyncing: false,
         error: 'Sync failed: $e',

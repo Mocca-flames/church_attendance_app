@@ -232,6 +232,21 @@ class ContactRemoteDataSource {
     }
   }
 
+  /// Delete a location tag from all contacts on the server
+  /// Returns: { success: bool, deleted_location: string, contacts_updated: int, message: string }
+  Future<Map<String, dynamic>> deleteLocationTag(String locationTag) async {
+    try {
+      final endpoint = ApiConstants.deleteLocationTag.replaceAll(
+        '{location_tag}',
+        locationTag,
+      );
+      final response = await _dioClient.dio.delete(endpoint);
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
   /// Handle Dio errors and convert to friendly exceptions
   Exception _handleDioError(DioException e) {
     switch (e.type) {

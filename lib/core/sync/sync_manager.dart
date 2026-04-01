@@ -74,6 +74,13 @@ class SyncManager {
     int failedCount = 0;
 
     for (final item in pendingItems) {
+      // Pre-check: Skip items that have exceeded max retries
+      if (item.retryCount >= _maxRetryCount) {
+        _logger.w('Item ${item.id} already exceeded max retries (${item.retryCount}/$_maxRetryCount), cleaning up');
+        await _cleanupFailedSyncItem(item);
+        continue;
+      }
+
       try {
         await _syncItem(item);
         await _db.deleteSyncQueueItem(item.id);
@@ -82,15 +89,38 @@ class SyncManager {
         final newRetryCount = item.retryCount + 1;
         _logger.e('Failed to sync item ${item.id} (attempt $newRetryCount/$_maxRetryCount)', error: e);
         
-        // Check if we've exceeded max retries - delete the sync queue item instead of keeping it
-        if (newRetryCount >= _maxRetryCount) {
-          _logger.w('Max retry count exceeded for item ${item.id}, deleting from sync queue');
-          
-          // Delete the sync queue item to stop infinite retries
+        // Check if this is a 404 Not Found error - resource doesn't exist on server
+        final bool isNotFound = _is404Error(e);
+        
+        // Check if this is a "Contact not found in local database" error
+        final isLocalNotFound = e.toString().contains('not found in local database');
+        
+        // For 404 errors, immediately delete the sync item (resource doesn't exist)
+        // For local not found errors (orphaned sync items), also delete immediately
+        // For other errors, use the max retry count
+        if (isNotFound || isLocalNotFound) {
+          _logger.w('Resource not found (404=$isNotFound, localNotFound=$isLocalNotFound), deleting sync item ${item.id}');
           await _db.deleteSyncQueueItem(item.id);
           
-          // Log failed item details for debugging
-          _logger.i('Deleted sync queue item - entityType=${item.entityType}, localId=${item.localId}, action=${item.action}');
+          // If it's a delete action for a non-existent resource, clean up local
+          if (item.action == 'delete') {
+            try {
+              await _db.deleteContact(item.localId);
+              _logger.w('Cleaned up local contact ${item.localId} after 404');
+            } catch (_) {
+              // Contact might already be deleted
+            }
+          }
+          
+          // Count as success - resource doesn't exist, nothing to sync
+          syncedCount++;
+          continue;
+        }
+        
+        // For other errors, check if we've exceeded retry count
+        if (newRetryCount >= _maxRetryCount) {
+          _logger.w('Max retries exceeded for item ${item.id}, cleaning up');
+          await _cleanupFailedSyncItem(item);
         } else {
           // Update retry count and status for next attempt
           await _db.updateSyncQueueItem(
@@ -115,6 +145,92 @@ class SyncManager {
       syncedCount: syncedCount,
       failedCount: failedCount,
     );
+  }
+
+  /// Check if an exception is a 404 error
+  bool _is404Error(dynamic e) {
+    if (e is DioException && e.response?.statusCode == 404) {
+      return true;
+    } else if (e is ApiException && e.statusCode == 404) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Clean up a failed sync item and its associated local data
+  Future<void> _cleanupFailedSyncItem(SyncQueueEntity item) async {
+    try {
+      await _db.deleteSyncQueueItem(item.id);
+      
+      // For contacts, also clean up local record if sync failed permanently
+      if (item.entityType == 'contact') {
+        try {
+          await _db.deleteContact(item.localId);
+          _logger.w('Permanently deleted contact ${item.localId} after failed sync (action: ${item.action})');
+        } catch (e) {
+          // Contact might already be deleted or not exist
+          _logger.w('Could not delete contact ${item.localId}: $e');
+        }
+      }
+      
+      _logger.i('Cleaned up sync queue item - entityType=${item.entityType}, localId=${item.localId}, action=${item.action}');
+    } catch (e) {
+      _logger.w('Failed to cleanup sync item ${item.id}: $e');
+    }
+  }
+
+  /// Aggressively clean up failed sync queue items when online.
+  /// This is called when we detect the app is online to ensure pending items
+  /// are processed and failed ones are removed.
+  Future<int> aggressiveCleanupWhenOnline() async {
+    if (!await hasInternetConnection()) {
+      return 0;
+    }
+    
+    // Get all pending/failed items
+    final items = await _db.getPendingSyncItems();
+    
+    int cleanedCount = 0;
+    for (final item in items) {
+      // Skip items that are currently being retried (recently attempted)
+      if (item.lastAttemptAt != null) {
+        final timeSinceLastAttempt = DateTime.now().difference(item.lastAttemptAt!);
+        if (timeSinceLastAttempt.inMinutes < 5) {
+          // Skip recently attempted items to avoid race conditions
+          continue;
+        }
+      }
+      
+      // Check retry count - if already exceeded, delete immediately
+      if (item.retryCount >= _maxRetryCount) {
+        _logger.w('Aggressive cleanup: Item ${item.id} exceeded max retries (${item.retryCount}/$_maxRetryCount)');
+        await _cleanupFailedSyncItem(item);
+        cleanedCount++;
+      }
+      
+      // Also clean up orphaned sync items (items for contacts that no longer exist locally)
+      if (item.entityType == 'contact') {
+        try {
+          final contact = await _db.getContactById(item.localId);
+          if (contact == null || contact.isDeleted) {
+            _logger.w('Aggressive cleanup: Found orphaned sync item for deleted contact ${item.localId}');
+            await _db.deleteSyncQueueItem(item.id);
+            cleanedCount++;
+          }
+        } catch (e) {
+          _logger.w('Aggressive cleanup: Could not check contact ${item.localId}: $e');
+          // If we can't find the contact, assume it's orphaned
+          await _db.deleteSyncQueueItem(item.id);
+          cleanedCount++;
+        }
+      }
+    }
+    
+    if (cleanedCount > 0) {
+      _logger.i('Aggressive cleanup: Removed $cleanedCount failed/orphaned sync items');
+    }
+    
+    return cleanedCount;
   }
 
   /// Sync individual item based on entity type and action
@@ -232,9 +348,16 @@ class SyncManager {
       if (contact != null && contact.serverId != null) {
         _logger.i('Recovered serverId=${contact.serverId} from local database for contact $localId');
         serverId = contact.serverId;
+      } else if (contact != null && contact.isDeleted) {
+        // Contact was locally deleted - the sync item is orphaned, delete it
+        // Instead of throwing (which would trigger retry), return success since we're cleaning up
+        _logger.w('Contact $localId is soft-deleted locally, deleting orphaned sync queue item');
+        // Return without error - the sync item will be deleted by _syncItem caller
+        return; 
       } else {
-        _logger.e('CRITICAL: Cannot recover serverId for contact $localId. Skipping sync.');
-        return;
+        // Cannot find contact - throw a specific exception that will be caught and handled
+        // This will cause the sync to fail, and the main catch block will handle retries/deletion
+        throw Exception('Contact $localId not found in local database - cannot sync');
       }
     }
     
@@ -346,10 +469,35 @@ class SyncManager {
         // DEBUG: Log the URL being constructed
         final deleteUrl = ApiConstants.contactById.replaceAll('{id}', serverId.toString());
         _logger.d('DEBUG: Sending DELETE to $deleteUrl');
-        await _dioClient.delete(
-          deleteUrl,
-        );
-        await _db.deleteContact(localId);
+        
+        try {
+          await _dioClient.delete(deleteUrl);
+          await _db.deleteContact(localId);
+        } on DioException catch (e) {
+          // 404 means contact doesn't exist on server - already deleted, clean up locally
+          if (e.response?.statusCode == 404) {
+            _logger.w('Contact $serverId not found on server (already deleted), cleaning up local record');
+            try {
+              await _db.deleteContact(localId);
+            } catch (_) {
+              // Contact might already be deleted
+            }
+            return; // Success - resource doesn't exist
+          }
+          rethrow; // Re-throw other errors
+        } on ApiException catch (e) {
+          // 404 from ApiException (converted from DioException)
+          if (e.statusCode == 404) {
+            _logger.w('Contact $serverId not found on server (already deleted), cleaning up local record');
+            try {
+              await _db.deleteContact(localId);
+            } catch (_) {
+              // Contact might already be deleted
+            }
+            return; // Success - resource doesn't exist
+          }
+          rethrow; // Re-throw other errors
+        }
         break;
     }
   }
@@ -620,6 +768,25 @@ class SyncManager {
     if (updates.isNotEmpty) {
       _logger.d('Batch updating ${updates.length} existing contacts');
       await _db.batchUpdateContacts(updates);
+    }
+    
+    // CRITICAL FIX: Delete contacts that exist locally but NOT on server
+    // This handles contacts that were deleted by another user
+    final serverIdSet = serverIds.toSet();
+    final contactsToDelete = existingMap.values
+        .where((c) => c.serverId != null && !serverIdSet.contains(c.serverId))
+        .toList();
+    
+    if (contactsToDelete.isNotEmpty) {
+      _logger.i('Deleting ${contactsToDelete.length} contacts that were deleted on server');
+      for (final contact in contactsToDelete) {
+        try {
+          await _db.deleteContact(contact.id);
+          _logger.d('Deleted contact ${contact.id} (serverId=${contact.serverId}) - was deleted on server');
+        } catch (e) {
+          _logger.w('Failed to delete contact ${contact.id}: $e');
+        }
+      }
     }
   }
 

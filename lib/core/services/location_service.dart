@@ -9,6 +9,11 @@ class LocationService {
 
   LocationService(this._database);
 
+  /// Get all locations including inactive ones (for cleanup operations)
+  Future<List<LocationEntity>> getAllLocationsIncludingInactive() {
+    return _database.getAllLocationsIncludingInactive();
+  }
+
   /// Get all active locations
   Future<List<LocationEntity>> getAllLocations() {
     return _database.getAllLocations();
@@ -44,6 +49,11 @@ class LocationService {
   /// Update an existing location
   Future<bool> updateLocation(LocationEntity location) {
     return _database.updateLocation(location);
+  }
+
+  /// Reactivate (activate) a previously deactivated location
+  Future<int> reactivateLocation(int id) {
+    return _database.reactivateLocation(id);
   }
 
   /// Delete (deactivate) a location

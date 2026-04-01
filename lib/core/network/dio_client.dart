@@ -487,6 +487,38 @@ class DioClient {
     return get(ApiConstants.dailyProgress);
   }
 
+  /// GET /contacts/dashboard/statistics
+  /// Gets comprehensive dashboard statistics including membership counts from the server.
+  /// Returns: { total_contacts, new_contacts, modified_contacts, locations, roles, membership }
+  Future<Response> getDashboardStatistics({
+    String? dateFrom,
+    String? dateTo,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (dateFrom != null) queryParams['date_from'] = dateFrom;
+    if (dateTo != null) queryParams['date_to'] = dateTo;
+
+    return get(
+      ApiConstants.dashboardStatistics,
+      queryParameters: queryParams,
+    );
+  }
+
+  // ============================================================
+  // Contact Location Endpoints
+  // ============================================================
+
+  /// DELETE /contacts/locations/{location_tag}
+  /// Removes a location tag from all contacts.
+  /// Returns: { success: bool, deleted_location: string, contacts_updated: int, message: string }
+  Future<Response> deleteLocationTag(String locationTag) async {
+    final path = ApiConstants.deleteLocationTag.replaceAll(
+      '{location_tag}',
+      locationTag,
+    );
+    return delete(path);
+  }
+
   // ============================================================
   // Error Handling
   // ============================================================
@@ -526,3 +558,4 @@ class DioClient {
     }
   }
 }
+ 

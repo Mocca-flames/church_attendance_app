@@ -210,6 +210,7 @@ class ContactCard extends StatelessWidget {
   }
 
   Color _getTagColor(String tag) {
+    // First check hardcoded tags
     switch (tag.toLowerCase()) {
       case 'member':
         return Colors.green;
@@ -219,8 +220,36 @@ class ContactCard extends StatelessWidget {
         return Colors.purple;
       case 'lead':
         return Colors.orange;
+      case 'protocol':
+        return Colors.teal;
+      case 'worshiper':
+        return Colors.indigo;
+      case 'usher':
+        return Colors.orange;
+      case 'financier':
+        return Colors.cyan;
       default:
-        return Colors.grey;
+        // For dynamic location tags (not in the hardcoded enum),
+        // use a consistent color based on the tag name hash
+        return _getDynamicTagColor(tag);
     }
+  }
+
+  /// Generate a consistent color for dynamic tags based on hash
+  Color _getDynamicTagColor(String tag) {
+    final hash = tag.hashCode;
+    final colors = [
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+      Colors.indigo,
+      Colors.pink,
+      Colors.cyan,
+      Colors.red,
+      Colors.amber,
+    ];
+    return colors[hash.abs() % colors.length];
   }
 }

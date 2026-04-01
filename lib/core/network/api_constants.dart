@@ -10,6 +10,7 @@ class ApiConstants {
   // Statistics Endpoins
   static const String totalContacts = '/stats/contacts/count';
   static const String dailyProgress = '/stats/daily-progress';
+  static const String dashboardStatistics = '/contacts/dashboard/statistics';
 
   // Auth Endpoints
   static const String login = '/auth/login';
@@ -31,6 +32,7 @@ class ApiConstants {
   static const String tagsBulkAdd = '/contacts/tags/bulk-add';
   static const String tagsBulkRemove = '/contacts/tags/bulk-remove';
   static const String importVcfFile = '/contacts/import';
+  static const String deleteLocationTag = '/contacts/locations/{location_tag}';
 
   // Attendance Endpoints
   static const String attendances = '/attendance/records';

@@ -537,8 +537,10 @@ class AppDatabase extends _$AppDatabase {
   // ==========================================================================
 
   Future<List<SyncQueueEntity>> getPendingSyncItems() {
+    // Include both 'pending' and 'failed' items so failed items get retried
+    // Previously only 'pending' was fetched, causing failed items to get stuck forever
     return (select(syncQueue)
-          ..where((t) => t.status.equals('pending'))
+          ..where((t) => t.status.isIn(['pending', 'failed']))
           ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
         .get();
   }
@@ -561,6 +563,33 @@ class AppDatabase extends _$AppDatabase {
     return items.length;
   }
 
+  /// Get contacts that are NOT associated with failed sync queue items.
+  /// This is used for accurate contact counting - excludes contacts with failed sync attempts.
+  Future<List<ContactEntity>> getContactsWithSuccessfulSync() async {
+    // First get all non-deleted contacts
+    final allContacts = await getAllContacts();
+    
+    // Get all pending/failed sync queue items for contacts
+    final syncItems = await (select(syncQueue)
+          ..where((t) => 
+              t.entityType.equals('contact') & 
+              t.status.isIn(['pending', 'failed']))
+          ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+        .get();
+    
+    // Build a set of localIds that have pending sync
+    final pendingSyncLocalIds = syncItems.map((item) => item.localId).toSet();
+    
+    // Filter contacts to exclude those with pending sync
+    return allContacts.where((contact) => !pendingSyncLocalIds.contains(contact.id)).toList();
+  }
+
+  /// Get count of contacts excluding those with failed sync attempts.
+  Future<int> getValidContactCount() async {
+    final contacts = await getContactsWithSuccessfulSync();
+    return contacts.length;
+  }
+
   // ==========================================================================
   // USER QUERIES
   // ==========================================================================
@@ -575,6 +604,13 @@ class AppDatabase extends _$AppDatabase {
   // ==========================================================================
   // LOCATION QUERIES
   // ==========================================================================
+
+  /// Get all locations including inactive ones (for cleanup operations)
+  Future<List<LocationEntity>> getAllLocationsIncludingInactive() {
+    return (select(locations)
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .get();
+  }
 
   /// Get all active locations ordered by sort order
   Future<List<LocationEntity>> getAllLocations() {
@@ -609,6 +645,12 @@ class AppDatabase extends _$AppDatabase {
   Future<int> deactivateLocation(int id) {
     return (update(locations)..where((t) => t.id.equals(id)))
         .write(const LocationsCompanion(isActive: Value(false)));
+  }
+
+  /// Reactivate (activate) a previously deactivated location
+  Future<int> reactivateLocation(int id) {
+    return (update(locations)..where((t) => t.id.equals(id)))
+        .write(const LocationsCompanion(isActive: Value(true)));
   }
 
   /// Check if location exists by value

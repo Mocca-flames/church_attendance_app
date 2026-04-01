@@ -491,6 +491,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     final contactStoreInfo = ref.watch(offlineContactStoreInfoProvider);
     final dailyProgress = ref.watch(dailyProgressProvider);
     final isOnline = ref.watch(isOnlineProvider);
+    // Watch dashboard statistics for server membership data
+    final dashboardStats = ref.watch(dashboardStatisticsProvider);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -523,27 +525,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
               ),
             ),
             SizedBox(width: spacing),
-            // Members
+            // Members - Use server data when online, local fallback when offline
             Expanded(
-              child: contactStoreInfo.when(
-                data: (info) => _QuickStatCard(
-                  icon: Icons.contact_phone,
-                  label: 'Members',
-                  value: info.memberCount.toString(),
-                  color: ContactTag.member.color,
-                ),
-                loading: () => _QuickStatCard(
-                  icon: Icons.contact_phone,
-                  label: 'Members',
-                  value: '...',
-                  color: ContactTag.member.color,
-                ),
-                error: (_, _) => _QuickStatCard(
-                  icon: Icons.contact_phone,
-                  label: 'Members',
-                  value: '-',
-                  color: ContactTag.member.color,
-                ),
+              child: _buildMembersCard(
+                context,
+                isOnline,
+                dashboardStats,
+                contactStoreInfo,
               ),
             ),
             SizedBox(width: spacing),
@@ -597,6 +585,72 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
         );
       },
     );
+  }
+
+  /// Build Members card with server data when online, local fallback when offline
+  Widget _buildMembersCard(
+    BuildContext context,
+    bool isOnline,
+    AsyncValue<DashboardStatistics?> dashboardStats,
+    AsyncValue<ContactStoreInfo> contactStoreInfo,
+  ) {
+    // When online, try to use server data first
+    if (isOnline) {
+      return dashboardStats.when(
+        data: (stats) {
+          if (stats != null) {
+            // Server data available - use it (shows accurate member count)
+            return _QuickStatCard(
+              icon: Icons.cloud,
+              label: 'Members',
+              value: stats.memberCount.toString(),
+              color: ContactTag.member.color,
+            );
+          }
+          // Server data unavailable - show loading or error
+          return _QuickStatCard(
+            icon: Icons.cloud_queue,
+            label: 'Members',
+            value: '...',
+            color: ContactTag.member.color,
+          );
+        },
+        loading: () => _QuickStatCard(
+          icon: Icons.cloud_queue,
+          label: 'Members',
+          value: '...',
+          color: ContactTag.member.color,
+        ),
+        error: (_, _) => _QuickStatCard(
+          icon: Icons.cloud_off,
+          label: 'Members',
+          value: '-',
+          color: ContactTag.member.color,
+        ),
+      );
+    } else {
+      // Offline - use local data as fallback
+      return contactStoreInfo.when(
+        data: (info) => _QuickStatCard(
+          icon: Icons.sd_storage,
+          label: 'Members',
+          value: info.memberCount.toString(),
+          color: ContactTag.member.color,
+        ),
+        loading: () => _QuickStatCard(
+          icon: Icons.contact_phone,
+          label: 'Members',
+          value: '...',
+          color: ContactTag.member.color,
+        ),
+        error: (_, _) => _QuickStatCard(
+          icon: Icons.contact_phone,
+          label: 'Members',
+          value: '-',
+          color: ContactTag.member.color,
+        ),
+      );
+    }
   }
 
   /// Show dialog with daily progress details using GlassPopupCard design

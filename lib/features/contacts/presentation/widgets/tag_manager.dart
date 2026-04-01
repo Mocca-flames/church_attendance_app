@@ -1,10 +1,24 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/enums/contact_tag.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../main.dart';
 import '../../domain/models/contact.dart';
+import '../providers/contact_provider.dart';
+
+/// Hardcoded location tags that cannot be deleted
+const Set<String> _hardcodedLocations = {
+  'kanana',
+  'majaneng',
+  'mashemong',
+  'soshanguve',
+  'kekana',
+};
 
 /// Tag Manager Widget for managing contact tags.
 ///
@@ -40,6 +54,11 @@ class _TagManagerState extends ConsumerState<TagManager> {
   List<LocationDisplayData> _filteredLocations = [];
   List<String> _recentLocationValues = [];
   String? _defaultLocationValue;
+  
+  // Delete mode state
+  String? _locationToDelete;
+  bool _isDeleting = false;
+  int _contactsWithLocation = 0;
 
   @override
   void initState() {
@@ -184,6 +203,178 @@ class _TagManagerState extends ConsumerState<TagManager> {
       });
     } catch (_) {
       // Preferences not available
+    }
+  }
+
+  /// Check if a location is hardcoded (cannot be deleted)
+  bool _isHardcodedLocation(String value) {
+    return _hardcodedLocations.contains(value.toLowerCase());
+  }
+
+  /// Show delete confirmation dialog
+  Future<bool?> _showDeleteConfirmation(String locationName, int affectedCount) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Delete Location'),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to delete "$locationName"?\n\n'
+          'This will remove this location from $affectedCount contact${affectedCount == 1 ? '' : 's'}.\n\n'
+          'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Count contacts with a specific location tag
+  Future<int> _countContactsWithLocation(String locationValue) async {
+    try {
+      final database = ref.read(databaseProvider);
+      final contacts = await database.getAllContacts();
+      int count = 0;
+      for (final contact in contacts) {
+        // Extract tags from metadata JSON
+        final tags = _extractTagsFromMetadata(contact.metadata);
+        if (tags.contains(locationValue)) {
+          count++;
+        }
+      }
+      return count;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  /// Extract tags from metadata JSON string
+  List<String> _extractTagsFromMetadata(String? metadata) {
+    if (metadata == null || metadata.isEmpty) return [];
+    try {
+      final Map<String, dynamic> meta = jsonDecode(metadata);
+      if (meta.containsKey('tags') && meta['tags'] is List) {
+        return (meta['tags'] as List).map((e) => e.toString()).toList();
+      }
+    } catch (e) {
+      // Invalid JSON
+    }
+    return [];
+  }
+
+  /// Handle long-press to initiate delete mode
+  Future<void> _onLocationLongPress(LocationDisplayData location) async {
+    // Don't allow deleting hardcoded locations
+    if (_isHardcodedLocation(location.value)) {
+      HapticService.medium();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${location.displayName} is a default location and cannot be deleted'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Provide haptic feedback
+    HapticService.medium();
+
+    // Count contacts with this location
+    final count = await _countContactsWithLocation(location.value);
+
+    setState(() {
+      _locationToDelete = location.value;
+      _contactsWithLocation = count;
+    });
+  }
+
+  /// Cancel delete mode
+  void _cancelDeleteMode() {
+    setState(() {
+      _locationToDelete = null;
+      _contactsWithLocation = 0;
+    });
+  }
+
+  /// Delete location from all contacts
+  Future<void> _deleteLocationTag(String locationValue, String displayName) async {
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      // Get the repository and call delete
+      final repository = ref.read(contactRepositoryProvider);
+      final result = await repository.deleteLocationTag(locationValue);
+
+      if (mounted) {
+        final success = result['success'] as bool? ?? false;
+        final message = result['message'] as String? ?? 'Location deleted';
+        final deletedCount = result['contacts_updated'] as int? ?? 0;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success 
+                ? 'Successfully removed "$displayName" from $deletedCount contact${deletedCount == 1 ? '' : 's'}'
+                : message),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+
+        if (success) {
+          // Refresh the locations list
+          await _loadLocations();
+          
+          // Clear selection if this was the selected location
+          if (_selectedLocationValue == locationValue) {
+            setState(() {
+              _selectedLocationValue = null;
+            });
+            widget.onTagsChanged(
+              _currentTags.where((t) => t != locationValue).toList(),
+            );
+          }
+          
+          // Refresh contacts list to update UI - this ensures deleted location tags
+          // are removed from all contact cards across the app
+          ref.read(contactNotifierProvider.notifier).refreshContacts();
+          ref.invalidate(contactListProvider);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting location: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+          _locationToDelete = null;
+        });
+      }
     }
   }
 
@@ -444,17 +635,101 @@ class _TagManagerState extends ConsumerState<TagManager> {
 
   /// Build a single location list tile
   Widget _buildLocationTile(LocationDisplayData location, bool isSelected) {
-    return ListTile(
-      dense: true,
-      leading: Icon(
-        Icons.location_on,
-        size: 20,
-        color: isSelected ? location.color : Colors.grey,
+    final isInDeleteMode = _locationToDelete == location.value;
+    final canDelete = !_isHardcodedLocation(location.value);
+
+    return GestureDetector(
+      onLongPress: () => _onLocationLongPress(location),
+      child: isInDeleteMode
+          ? _buildDeleteOverlay(location, canDelete)
+          : ListTile(
+              dense: true,
+              leading: Icon(
+                Icons.location_on,
+                size: 20,
+                color: isSelected ? location.color : Colors.grey,
+              ),
+              title: Text(location.displayName),
+              subtitle: canDelete
+                  ? Text(
+                      'Long press to delete',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[400],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    )
+                  : null,
+              selected: isSelected,
+              selectedTileColor: location.color.withValues(alpha: 0.1),
+              onTap: () => _onLocationSelected(location.value),
+            ),
+    );
+  }
+
+  /// Build delete overlay for a location
+  Widget _buildDeleteOverlay(LocationDisplayData location, bool canDelete) {
+    if (!canDelete) {
+      return ListTile(
+        dense: true,
+        leading: const Icon(Icons.lock, size: 20, color: Colors.grey),
+        title: Text(location.displayName),
+        subtitle: const Text(
+          'Cannot delete default location',
+          style: TextStyle(fontSize: 10, color: Colors.grey),
+        ),
+        tileColor: Colors.red.withValues(alpha: 0.1),
+        onTap: _cancelDeleteMode,
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(8),
       ),
-      title: Text(location.displayName),
-      selected: isSelected,
-      selectedTileColor: location.color.withValues(alpha: 0.1),
-      onTap: () => _onLocationSelected(location.value),
+      child: ListTile(
+        dense: true,
+        leading: const Icon(Icons.delete, size: 20, color: Colors.white),
+        title: Text(
+          location.displayName,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Text(
+          'Tap to delete from $_contactsWithLocation contacts',
+          style: const TextStyle(
+            fontSize: 10,
+            color: Colors.white70,
+          ),
+        ),
+        trailing: _isDeleting
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : IconButton(
+                icon: const Icon(Icons.delete_forever, color: Colors.white),
+                onPressed: () async {
+                  final confirmed = await _showDeleteConfirmation(
+                    location.displayName,
+                    _contactsWithLocation,
+                  );
+                  if (confirmed == true && mounted) {
+                    await _deleteLocationTag(location.value, location.displayName);
+                  } else {
+                    _cancelDeleteMode();
+                  }
+                },
+              ),
+        onTap: _cancelDeleteMode,
+      ),
     );
   }
 

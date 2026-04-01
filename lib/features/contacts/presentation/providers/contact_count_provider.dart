@@ -16,8 +16,9 @@ final offlineContactCountProvider = FutureProvider<int>((ref) async {
   ref.watch(dashboardRefreshTriggerProvider);
   
   final database = ref.watch(databaseProvider);
-  final contacts = await database.getAllContacts();
-  return contacts.length;
+  // Use getValidContactCount which excludes contacts with failed sync attempts
+  // This ensures accurate counting when contacts fail to sync
+  return await database.getValidContactCount();
 });
 
 /// Provider for getting contact count with metadata like last updated.
@@ -27,7 +28,8 @@ final offlineContactStoreInfoProvider = FutureProvider<ContactStoreInfo>((ref) a
   ref.watch(dashboardRefreshTriggerProvider);
   
   final database = ref.watch(databaseProvider);
-  final contacts = await database.getAllContacts();
+  // Use getContactsWithSuccessfulSync which excludes contacts with failed sync attempts
+  final contacts = await database.getContactsWithSuccessfulSync();
   
   // Count members vs non-members
   int memberCount = 0;

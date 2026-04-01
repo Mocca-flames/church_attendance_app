@@ -237,6 +237,12 @@ class ContactLocalDataSource {
     return tags.toList()..sort();
   }
 
+  /// Get valid contact count excluding contacts with pending sync operations.
+  /// This ensures accurate contact counting when contacts fail to sync.
+  Future<int> getValidContactCount() async {
+    return await _db.getValidContactCount();
+  }
+
   /// Add contact to sync queue for server sync
   /// [serverId] is required for update/delete actions to know which server record to update
   Future<void> addToSyncQueue({

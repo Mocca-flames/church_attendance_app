@@ -52,4 +52,9 @@ abstract class ContactRepository {
   /// Get total contact count from server statistics endpoint.
   /// Returns the authoritative contact count from the server.
   Future<int> getTotalContacts();
+
+  /// Delete a location tag from all contacts on the server.
+  /// This removes the specified location tag from all contacts that have it.
+  /// Returns a Map with success status, deleted location, contacts updated count, and message.
+  Future<Map<String, dynamic>> deleteLocationTag(String locationTag);
 }

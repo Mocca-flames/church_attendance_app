@@ -46,7 +46,8 @@ final tagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) async
   ref.watch(dashboardRefreshTriggerProvider);
   
   final database = ref.watch(databaseProvider);
-  final contacts = await database.getAllContacts();
+  // Use getContactsWithSuccessfulSync for accurate statistics
+  final contacts = await database.getContactsWithSuccessfulSync();
   
   // Map to store tag counts
   final Map<ContactTag, int> tagCounts = {};
@@ -77,7 +78,8 @@ final locationTagDistributionProvider = FutureProvider<Map<ContactTag, int>>((re
   ref.watch(dashboardRefreshTriggerProvider);
   
   final database = ref.watch(databaseProvider);
-  final contacts = await database.getAllContacts();
+  // Use getContactsWithSuccessfulSync for accurate statistics
+  final contacts = await database.getContactsWithSuccessfulSync();
   
   // Map to store unique contact counts per location
   final Map<ContactTag, Set<int>> locationContacts = {};
@@ -114,7 +116,8 @@ final roleTagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) a
   ref.watch(dashboardRefreshTriggerProvider);
   
   final database = ref.watch(databaseProvider);
-  final contacts = await database.getAllContacts();
+  // Use getContactsWithSuccessfulSync for accurate statistics
+  final contacts = await database.getContactsWithSuccessfulSync();
   
   // Map to store unique contact counts per role
   final Map<ContactTag, Set<int>> roleContacts = {};
@@ -150,7 +153,8 @@ final membershipDistributionProvider = FutureProvider<Map<String, int>>((ref) as
   ref.watch(dashboardRefreshTriggerProvider);
   
   final database = ref.watch(databaseProvider);
-  final contacts = await database.getAllContacts();
+  // Use getContactsWithSuccessfulSync for accurate statistics
+  final contacts = await database.getContactsWithSuccessfulSync();
   
   int memberCount = 0;
   int nonMemberCount = 0;
@@ -205,9 +209,9 @@ final contactCountDataProvider = FutureProvider<ContactCountData>((ref) async {
   // Watch online status to handle offline state correctly
   final isOnline = ref.watch(isOnlineProvider);
   
-  // Get local count
+  // Get local count - use valid contacts only
   final database = ref.watch(databaseProvider);
-  final contacts = await database.getAllContacts();
+  final contacts = await database.getContactsWithSuccessfulSync();
   final localCount = contacts.length;
 
   // Try to get server count only when online
@@ -251,7 +255,8 @@ final dynamicLocationTagDistributionProvider = FutureProvider<List<DynamicLocati
   ref.watch(dashboardRefreshTriggerProvider);
   
   final database = ref.watch(databaseProvider);
-  final contacts = await database.getAllContacts();
+  // Use getContactsWithSuccessfulSync for accurate statistics
+  final contacts = await database.getContactsWithSuccessfulSync();
   final locations = await database.getAllLocations();
   
   // Map to store unique contact IDs per location

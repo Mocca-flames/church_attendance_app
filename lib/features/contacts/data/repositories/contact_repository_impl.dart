@@ -348,7 +348,7 @@ class ContactRepositoryImpl implements ContactRepository {
     // Filter to get only potential new locations (not member, not roles)
     final potentialLocations = allTags.difference(excludedTags);
     
-    // Get existing locations to avoid duplicates
+    // Get existing locations (only active ones) to avoid duplicates
     final existingLocations = await _locationService.getAllLocations();
     final existingValues = existingLocations.map((loc) => loc.value.toLowerCase()).toSet();
     final existingDisplayNames = existingLocations.map((loc) => _normalizeForComparison(loc.displayName)).toSet();
@@ -392,6 +392,7 @@ class ContactRepositoryImpl implements ContactRepository {
   /// 2. Filter out known role tags and 'member' tag
   /// 3. Any remaining tags = new locations
   /// 4. Add to local database if not already exists
+  /// 5. Deactivate any local locations not found on server (except hardcoded)
   Future<void> _syncLocationsFromServerContacts(List<Map<String, dynamic>> serverContacts) async {
     if (_locationService == null) return;
     
@@ -404,6 +405,15 @@ class ContactRepositoryImpl implements ContactRepository {
       'usher',
       'financier',
       'servant',
+    };
+    
+    // Hardcoded locations that should never be deactivated
+    const hardcodedLocations = {
+      'kanana',
+      'majaneng',
+      'mashemong',
+      'soshanguve',
+      'kekana',
     };
     
     // Extract all unique tags from server contacts
@@ -442,6 +452,46 @@ class ContactRepositoryImpl implements ContactRepository {
         );
       } catch (e) {
         // Location might already exist (race condition), ignore
+      }
+    }
+    
+    // Clean up: Deactivate locations that don't exist on server
+    // Only keep locations that are either hardcoded OR exist in server contacts
+    // Get ALL locations (including inactive) so we can reactivate them if needed
+    final allExistingLocations = await _locationService.getAllLocationsIncludingInactive();
+    
+    for (final location in allExistingLocations) {
+      final normalizedValue = location.value.toLowerCase();
+      
+      // Skip hardcoded locations - they should never be deactivated
+      if (hardcodedLocations.contains(normalizedValue)) {
+        continue;
+      }
+      
+      // Check if this location exists in server contacts
+      final existsOnServer = potentialLocations.any((tag) => 
+        _normalizeLocationValue(tag) == normalizedValue ||
+        _normalizeForComparison(_capitalize(tag)) == _normalizeForComparison(location.displayName)
+      );
+      
+      // If location doesn't exist on server and is active, deactivate it
+      if (!existsOnServer && location.isActive) {
+        try {
+          await _locationService.deactivateLocation(location.id);
+          debugPrint('[Contact Repository] Deactivated location not on server: ${location.value}');
+        } catch (e) {
+          debugPrint('[Contact Repository] Error deactivating location ${location.value}: $e');
+        }
+      }
+      
+      // If location exists on server but is inactive, reactivate it
+      if (existsOnServer && !location.isActive) {
+        try {
+          await _locationService.reactivateLocation(location.id);
+          debugPrint('[Contact Repository] Reactivated location from server: ${location.value}');
+        } catch (e) {
+          debugPrint('[Contact Repository] Error reactivating location ${location.value}: $e');
+        }
       }
     }
   }
@@ -677,8 +727,28 @@ class ContactRepositoryImpl implements ContactRepository {
         // Fall back to local count if server fails
       }
     }
-    // Return local count as fallback
-    final localContacts = await _localDataSource.getAllContacts();
-    return localContacts.length;
+    // Return local count as fallback - use valid contacts only (exclude pending sync)
+    return await _localDataSource.getValidContactCount();
+  }
+
+  @override
+  Future<Map<String, dynamic>> deleteLocationTag(String locationTag) async {
+    // This operation requires online connectivity
+    if (!await _isOnline()) {
+      throw Exception('Cannot delete location while offline. Please check your internet connection.');
+    }
+
+    // Call the server to delete the location tag from all contacts
+    final result = await _remoteDataSource.deleteLocationTag(locationTag);
+
+    // After successful deletion, sync contacts to get the updated data
+    try {
+      await syncContacts();
+    } catch (e) {
+      // Sync error is non-critical - the deletion was successful
+    }
+
+    return result;
   }
 }
+

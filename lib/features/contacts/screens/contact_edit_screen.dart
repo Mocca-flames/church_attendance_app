@@ -1,9 +1,12 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
-import 'package:church_attendance_app/core/constants/app_colors.dart';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
+import 'package:church_attendance_app/core/constants/app_colors.dart';
 import 'package:church_attendance_app/core/constants/app_typography.dart';
 import 'package:church_attendance_app/core/enums/contact_tag.dart';
+import 'package:church_attendance_app/core/services/haptic_service.dart';
 import 'package:church_attendance_app/core/services/location_service.dart';
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/contact_provider.dart';
@@ -11,6 +14,16 @@ import 'package:church_attendance_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+
+/// Hardcoded location tags that cannot be deleted
+const Set<String> _hardcodedLocations = {
+  'kanana',
+  'majaneng',
+  'mashemong',
+  'soshanguve',
+  'kekana',
+};
 
 
 /// Contact Edit Screen for creating or editing contacts.
@@ -34,11 +47,44 @@ class ContactEditScreen extends ConsumerStatefulWidget {
   ConsumerState<ContactEditScreen> createState() => _ContactEditScreenState();
 }
 
+/// Text input formatter that formats SA phone numbers as user types
+/// Converts: 0712345678 → 071 234 5678
+class _SouthAfricanPhoneFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // Get digits only
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    
+    // Limit to 10 digits
+    final limitedDigits = digits.length > 10 ? digits.substring(0, 10) : digits;
+    
+    // Format as 071 234 5678
+    String formatted = '';
+    for (int i = 0; i < limitedDigits.length; i++) {
+      if (i == 3 || i == 6) {
+        formatted += ' ';
+      }
+      formatted += limitedDigits[i];
+    }
+    
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
+
+
 class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _locationSearchController;
+  Timer? _phoneSearchDebounce;
   
   bool _isMember = false;
   String? _selectedLocation;
@@ -49,6 +95,16 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
   bool _isLoadingLocations = true;
   List<LocationDisplayData> _allLocations = [];
   List<LocationDisplayData> _filteredLocations = [];
+
+  // Delete mode state for location chips
+  String? _locationToDelete;
+  bool _isDeleting = false;
+  int _contactsWithLocation = 0;
+
+  // Phone duplicate detection - Hash Map for O(1) lookup
+  Map<String, Contact> _phoneToContactMap = {};
+  Contact? _exactDuplicate;
+  List<Contact> _similarContacts = [];
 
   bool get isEditing => widget.contact != null;
 
@@ -67,7 +123,35 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     }
     
     _loadLocations();
+    _preloadPhoneMap();
   }
+
+  /// Preload phone-to-contact Hash Map for O(1) lookup
+  /// This is called once when screen loads for new contacts
+  Future<void> _preloadPhoneMap() async {
+    if (isEditing) return;
+    
+    try {
+      final repository = ref.read(contactRepositoryProvider);
+      final contacts = await repository.getAllContacts();
+      
+      // Build Hash Map: normalized phone -> Contact
+      final map = <String, Contact>{};
+      for (final contact in contacts) {
+        final normalized = PhoneUtils.normalizeSouthAfricanPhone(contact.phone);
+        if (normalized != null) {
+          map[normalized] = contact;
+        }
+      }
+      
+      if (mounted) {
+        setState(() => _phoneToContactMap = map);
+      }
+    } catch (e) {
+      // Silent fail - fallback to on-demand loading
+    }
+  }
+
 
   Future<void> _loadLocations() async {
     try {
@@ -203,6 +287,175 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     }
   }
 
+  /// Check if a location is hardcoded (cannot be deleted)
+  bool _isHardcodedLocation(String value) {
+    return _hardcodedLocations.contains(value.toLowerCase());
+  }
+
+  /// Count contacts with a specific location tag
+  Future<int> _countContactsWithLocation(String locationValue) async {
+    try {
+      final database = ref.read(databaseProvider);
+      final contacts = await database.getAllContacts();
+      int count = 0;
+      for (final contact in contacts) {
+        // Extract tags from metadata JSON
+        final tags = _extractTagsFromMetadata(contact.metadata);
+        if (tags.contains(locationValue)) {
+          count++;
+        }
+      }
+      return count;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  /// Extract tags from metadata JSON string
+  List<String> _extractTagsFromMetadata(String? metadata) {
+    if (metadata == null || metadata.isEmpty) return [];
+    try {
+      final Map<String, dynamic> meta = jsonDecode(metadata);
+      if (meta.containsKey('tags') && meta['tags'] is List) {
+        return (meta['tags'] as List).map((e) => e.toString()).toList();
+      }
+    } catch (e) {
+      // Invalid JSON
+    }
+    return [];
+  }
+
+  /// Show delete confirmation dialog
+  Future<bool?> _showDeleteConfirmation(String locationName, int affectedCount) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Delete Location'),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to delete "$locationName"?\n\n'
+          'This will remove this location from $affectedCount contact${affectedCount == 1 ? '' : 's'}.\n\n'
+          'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Handle long-press to initiate delete mode
+  Future<void> _onLocationLongPress(LocationDisplayData location) async {
+    // Don't allow deleting hardcoded locations
+    if (_isHardcodedLocation(location.value)) {
+      HapticService.medium();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${location.displayName} is a default location and cannot be deleted'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Provide haptic feedback
+    HapticService.medium();
+
+    // Count contacts with this location
+    final count = await _countContactsWithLocation(location.value);
+
+    setState(() {
+      _locationToDelete = location.value;
+      _contactsWithLocation = count;
+    });
+  }
+
+  /// Cancel delete mode
+  void _cancelDeleteMode() {
+    setState(() {
+      _locationToDelete = null;
+      _contactsWithLocation = 0;
+    });
+  }
+
+  /// Delete location from all contacts
+  Future<void> _deleteLocationTag(String locationValue, String displayName) async {
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      // Get the repository and call delete
+      final repository = ref.read(contactRepositoryProvider);
+      final result = await repository.deleteLocationTag(locationValue);
+
+      if (mounted) {
+        final success = result['success'] as bool? ?? false;
+        final message = result['message'] as String? ?? 'Location deleted';
+        final deletedCount = result['contacts_updated'] as int? ?? 0;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success 
+                ? 'Successfully removed "$displayName" from $deletedCount contact${deletedCount == 1 ? '' : 's'}'
+                : message),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+
+        if (success) {
+          // Refresh the locations list
+          await _loadLocations();
+          
+          // Clear selection if this was the selected location
+          if (_selectedLocation == locationValue) {
+            setState(() {
+              _selectedLocation = null;
+            });
+          }
+          
+          // Refresh contacts list to update UI - this ensures deleted location tags
+          // are removed from all contact cards across the app
+          ref.read(contactNotifierProvider.notifier).refreshContacts();
+          ref.invalidate(contactListProvider);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting location: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+          _locationToDelete = null;
+        });
+      }
+    }
+  }
+
   Future<void> _showAddLocationDialog() async {
     final controller = TextEditingController();
     final result = await showDialog<String>(
@@ -263,7 +516,117 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _locationSearchController.dispose();
+    _phoneSearchDebounce?.cancel();
     super.dispose();
+  }
+
+  /// Check for phone duplicates using Hash Map O(1) lookup
+  /// Called on each keystroke with instant feedback
+  void _onPhoneChanged(String value) {
+    // Remove spaces to get raw digits
+    final digitsOnly = value.replaceAll(' ', '');
+    
+    // Need at least 10 digits for a valid SA phone number
+    if (digitsOnly.length < 10) {
+      // Not enough digits - clear duplicates
+      if (_exactDuplicate != null || _similarContacts.isNotEmpty) {
+        setState(() {
+          _exactDuplicate = null;
+          _similarContacts = [];
+        });
+      }
+      return;
+    }
+    
+    if (isEditing || _phoneToContactMap.isEmpty) {
+      // Skip search if editing or no data loaded
+      return;
+    }
+    
+    // Normalize input to +27XXXXXXXXX format for exact match
+    final normalized = PhoneUtils.normalizeSouthAfricanPhone(digitsOnly);
+    
+    if (normalized != null) {
+      // O(1) Hash Map lookup for exact match
+      final exactMatch = _phoneToContactMap[normalized];
+      
+      if (exactMatch != null) {
+        // Exact match found - show Alert Dialog
+        setState(() => _exactDuplicate = exactMatch);
+      } else {
+        // No exact match - clear and check for partial match
+        if (_exactDuplicate != null) {
+          setState(() => _exactDuplicate = null);
+        }
+        _checkPartialMatch(normalized);
+      }
+    }
+  }
+
+  /// Check for partial matches (last 7 digits) for similar phone numbers
+  void _checkPartialMatch(String normalizedPhone) {
+    // Get last 7 digits for partial matching
+    final suffix7 = normalizedPhone.substring(normalizedPhone.length - 7);
+    
+    final similar = _phoneToContactMap.values.where((contact) {
+      final contactNormalized = PhoneUtils.normalizeSouthAfricanPhone(contact.phone);
+      if (contactNormalized == null) return false;
+      // Check if last 7 digits match
+      return contactNormalized.endsWith(suffix7);
+    }).toList();
+    
+    if (mounted) {
+      setState(() => _similarContacts = similar);
+    }
+  }
+
+  /// Show Alert Dialog when exact duplicate found
+  /// Allows user to navigate to Edit Contact or continue creating new
+  Future<void> _showDuplicateAlertDialog(Contact duplicate) async {
+    if (!mounted) return;
+    
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.contact_phone, color: AppColors.cyan500, size: 32),
+        title: const Text('Contact Already Exists'),
+        content: Text(
+          'This phone number is already registered.\n\n'
+          'Name: ${duplicate.name ?? 'Unknown'}\n'
+          'Phone: ${duplicate.phone}\n\n'
+          'Would you like to edit this contact instead?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Create New',
+              style: AppTypography.labelLarge.copyWith(
+                color: AppColors.neutral500,
+              ),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.cyan500,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Go to Contact'),
+          ),
+        ],
+      ),
+    );
+    
+    if (result == true && mounted) {
+      // Navigate to edit screen with existing contact
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ContactEditScreen(contact: duplicate),
+        ),
+      );
+    }
   }
 
   Future<void> _handleSave() async {
@@ -378,6 +741,15 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     
+    // Show alert dialog when exact duplicate found
+    if (_exactDuplicate != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showDuplicateAlertDialog(_exactDuplicate!);
+        // Reset to prevent repeated showing
+        setState(() => _exactDuplicate = null);
+      });
+    }
+    
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -407,6 +779,10 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
             bottom: AppDimens.paddingXL,
           ),
           children: [
+            // Subtle phone duplicate preview popup
+            // DEBUG: Log state before showing popup
+            if (_similarContacts.isNotEmpty && !isEditing) _buildPhoneDuplicatePopup(),
+
             // Basic Info Section
              const SizedBox(height: AppDimens.paddingL),
             _buildSectionCard(
@@ -419,17 +795,34 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
                   _buildFormField(
                     controller: _phoneController,
                     label: 'Phone',
-                    hint: 'Enter phone number',
+                    hint: '071 234 5678',
                     prefixIcon: Icons.phone_outlined,
                     isRequired: true,
                     keyboardType: TextInputType.phone,
                     readOnly: isEditing,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      _SouthAfricanPhoneFormatter(),
+                    ],
+                    onChanged: isEditing ? null : _onPhoneChanged,
                     validator: (value) {
+                      // Skip validation when editing - phone is read-only and may be in +27 format from server
+                      if (isEditing) {
+                        return null;
+                      }
                       if (value == null || value.trim().isEmpty) {
                         return 'Phone number is required';
                       }
-                      if (value.trim().length < 10) {
-                        return 'Enter a valid phone number';
+                      // Remove spaces for validation
+                      final digitsOnly = value.replaceAll(' ', '');
+                      // Must be exactly 10 digits (e.g., 0712345678)
+                      if (digitsOnly.length != 10) {
+                        return 'Enter 10 digits: 071 234 5678';
+                      }
+                      // Must start with valid SA mobile prefix (06-09)
+                      final prefix = digitsOnly.substring(0, 2);
+                      if (!['06', '07', '08', '09'].contains(prefix)) {
+                        return 'Invalid SA number. Use 06x-09x xxx xxxx';
                       }
                       return null;
                     },
@@ -657,6 +1050,8 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     String? Function(String?)? validator,
     TextCapitalization textCapitalization = TextCapitalization.none,
     bool readOnly = false,
+    List<TextInputFormatter>? inputFormatters,
+    void Function(String)? onChanged,
   }) {
     return TextFormField(
       controller: controller,
@@ -669,6 +1064,50 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
       validator: validator,
       textCapitalization: textCapitalization,
       readOnly: readOnly,
+      inputFormatters: inputFormatters,
+      onChanged: onChanged,
+    );
+  }
+
+  /// Build subtle phone duplicate preview popup
+  /// Shows phone numbers with similar endings from local database
+  Widget _buildPhoneDuplicatePopup() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.only(bottom: AppDimens.paddingS),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.paddingM,
+        vertical: AppDimens.paddingS,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E1), // Amber 50
+        borderRadius: BorderRadius.circular(AppDimens.radiusM),
+        border: Border.all(
+          color: const Color(0xFFFFE082).withValues(alpha: 0.5), // Amber 200
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.warning_amber_rounded,
+            size: 16,
+            color: Colors.amber[800],
+          ),
+          const SizedBox(width: AppDimens.paddingS),
+          Expanded(
+            child: Text(
+              'Similar: ${_similarContacts.map((c) => c.phone).join(', ')}',
+              style: AppTypography.bodySmall.copyWith(
+                color: Colors.amber[900],
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -719,6 +1158,117 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     );
   }
 
+  /// Build location chip with delete support
+  Widget _buildLocationChip(LocationDisplayData location, bool isSelected) {
+    final isInDeleteMode = _locationToDelete == location.value;
+    final canDelete = !_isHardcodedLocation(location.value);
+
+    if (isInDeleteMode) {
+      // Show delete overlay
+      return GestureDetector(
+        onTap: _cancelDeleteMode,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(AppDimens.radiusL),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_isDeleting)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 18, color: Colors.white),
+                  onPressed: () async {
+                    final confirmed = await _showDeleteConfirmation(
+                      location.displayName,
+                      _contactsWithLocation,
+                    );
+                    if (confirmed == true && mounted) {
+                      await _deleteLocationTag(location.value, location.displayName);
+                    } else {
+                      _cancelDeleteMode();
+                    }
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              const SizedBox(width: 4),
+              Text(
+                location.displayName,
+                style: AppTypography.labelMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onLongPress: () => _onLocationLongPress(location),
+      child: FilterChip(
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!canDelete)
+              const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: Icon(Icons.lock, size: 14, color: AppColors.neutral400),
+              ),
+            Text(
+              location.displayName,
+              style: AppTypography.labelMedium.copyWith(
+                color: isSelected ? location.color : Theme.of(context).chipTheme.labelStyle?.color,
+              ),
+            ),
+          ],
+        ),
+        avatar: Icon(
+          location.icon,
+          size: 18,
+          color: isSelected ? location.color : AppColors.neutral400,
+        ),
+        selected: isSelected,
+        onSelected: (selected) {
+          // If in delete mode, cancel it
+          if (_locationToDelete != null) {
+            _cancelDeleteMode();
+            return;
+          }
+          // Normal selection
+          setState(() {
+            _selectedLocation = selected ? location.value : null;
+          });
+        },
+        selectedColor: location.color.withValues(alpha: 0.15),
+        checkmarkColor: location.color,
+        backgroundColor: Theme.of(context).chipTheme.backgroundColor,
+        side: BorderSide(
+          color: isSelected
+              ? location.color.withValues(alpha: 0.3)
+              : AppColors.neutral200,
+          width: 1,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimens.radiusL),
+        ),
+        showCheckmark: false,
+      ),
+    );
+  }
+
   /// Build searchable location selector
   Widget _buildLocationSelector() {
     return Column(
@@ -748,77 +1298,49 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
         
         const SizedBox(height: AppDimens.paddingM),
         
-        // Location chips (scrollable with 3 rows visible)
+        // Location chips (scrollable with 5 rows visible)
         ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 140),
+          constraints: const BoxConstraints(maxHeight: 340),
           child: SingleChildScrollView(
             child: Wrap(
               spacing: AppDimens.paddingS,
               runSpacing: AppDimens.paddingS,
               children: [
-                // "No location" option
-                FilterChip(
-                  label: const Text(
-                    'None',
-                    style: AppTypography.labelMedium,
-                  ),
-                  avatar: const Icon(Icons.clear, size: 18, color: AppColors.neutral500),
-                  selected: _selectedLocation == null,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() => _selectedLocation = null);
-                    }
-                  },
-                  backgroundColor: Theme.of(context).chipTheme.backgroundColor,
-                  selectedColor: Theme.of(context).chipTheme.selectedColor,
-                  side: BorderSide(
-                    color: _selectedLocation == null
-                        ? AppColors.neutral400
-                        : AppColors.neutral100,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimens.radiusL),
-                  ),
-                ),
-                
-                // Location chips
-                ..._filteredLocations.map((location) {
-                  final isSelected = _selectedLocation == location.value;
-                  return FilterChip(
-                    label: Text(
-                      location.displayName,
-                      style: AppTypography.labelMedium.copyWith(
-                        color: isSelected ? location.color : Theme.of(context).chipTheme.labelStyle?.color,
-                      ),
+                // "No location" option (only when not in delete mode)
+                if (_locationToDelete == null)
+                  FilterChip(
+                    label: const Text(
+                      'None',
+                      style: AppTypography.labelMedium,
                     ),
-                    avatar: Icon(
-                      location.icon,
-                      size: 18,
-                      color: isSelected ? location.color : AppColors.neutral400,
-                    ),
-                    selected: isSelected,
+                    avatar: const Icon(Icons.clear, size: 18, color: AppColors.neutral500),
+                    selected: _selectedLocation == null,
                     onSelected: (selected) {
-                      setState(() {
-                        _selectedLocation = selected ? location.value : null;
-                      });
+                      if (selected) {
+                        setState(() => _selectedLocation = null);
+                      }
                     },
-                    selectedColor: location.color.withValues(alpha: 0.15),
-                    checkmarkColor: location.color,
                     backgroundColor: Theme.of(context).chipTheme.backgroundColor,
+                    selectedColor: Theme.of(context).chipTheme.selectedColor,
                     side: BorderSide(
-                      color: isSelected
-                          ? location.color.withValues(alpha: 0.3)
-                          : AppColors.neutral200,
-                      width: 1,
+                      color: _selectedLocation == null
+                          ? AppColors.neutral400
+                          : AppColors.neutral100,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppDimens.radiusL),
                     ),
-                  );
+                  ),
+                
+                // Location chips with long-press delete
+                ..._filteredLocations.map((location) {
+                  final isSelected = _selectedLocation == location.value;
+                  return _buildLocationChip(location, isSelected);
                 }),
                 
-                // "Add new" chip when searching
-                if (_locationSearchController.text.isNotEmpty &&
+                // "Add new" chip when searching (only when not in delete mode)
+                if (_locationToDelete == null &&
+                    _locationSearchController.text.isNotEmpty &&
                     !_filteredLocations.any((loc) => 
                         loc.displayName.toLowerCase() == 
                         _locationSearchController.text.toLowerCase()))
@@ -835,6 +1357,20 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
                     side: const BorderSide(color: AppColors.cyan200),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppDimens.radiusL),
+                    ),
+                  ),
+
+                // Hint to long-press (only when not in delete mode and not searching)
+                if (_locationToDelete == null &&
+                    _locationSearchController.text.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      'Long press to delete',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.neutral400,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ),
               ],
