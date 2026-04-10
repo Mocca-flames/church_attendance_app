@@ -48,7 +48,8 @@ class ApiConstants {
   static const String scenarioById = '/scenarios/{id}';
   static const String scenarioTasks = '/scenarios/{id}/tasks';
   static const String scenarioStatistics = '/scenarios/{id}/statistics';
-  static const String scenarioTaskComplete = '/scenarios/{id}/tasks/{taskId}/complete';
+  static const String scenarioTaskComplete =
+      '/scenarios/{id}/tasks/{taskId}/complete';
   static const String scenarioDelete = '/scenarios/{id}';
 
   // Timeout

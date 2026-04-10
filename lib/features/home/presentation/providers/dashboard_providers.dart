@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:church_attendance_app/main.dart';
 
 /// Data class for full dashboard statistics from server
 /// Based on /contacts/dashboard/statistics endpoint response
@@ -499,4 +500,35 @@ class WidgetLoadingStateNotifier extends Notifier<WidgetLoadingState> {
 final widgetLoadingStateProvider =
     NotifierProvider<WidgetLoadingStateNotifier, WidgetLoadingState>(() {
   return WidgetLoadingStateNotifier();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Location Sync Provider
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Provider for syncing local locations with server locations
+/// This runs on app startup to remove locally cached locations
+/// that have been deleted on the server
+final locationSyncProvider = FutureProvider<void>((ref) async {
+  // Check if device is online
+  final isOnline = ref.watch(isOnlineProvider);
+  if (!isOnline) {
+    return; // Skip sync when offline
+  }
+
+  try {
+    final dioClient = ref.read(dioClientProvider);
+    final response = await dioClient.getDashboardStatistics();
+    
+    if (response.statusCode == 200 && response.data != null) {
+      final locationsJson = response.data['locations'] as Map<String, dynamic>? ?? {};
+      final serverLocationValues = locationsJson.keys.toSet();
+      
+      // Get the location service and sync
+      final locationService = ref.read(locationServiceProvider);
+      await locationService.syncLocationsWithServer(serverLocationValues);
+    }
+  } catch (e) {
+    // Silent fail - don't block app startup on location sync errors
+  }
 });

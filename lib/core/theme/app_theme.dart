@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
 
-
 class AppTheme {
   AppTheme._();
 
@@ -62,7 +61,13 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         color: const Color.fromARGB(166, 255, 255, 255),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color.fromARGB(255, 255, 255, 255), width: 1)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(
+            color: Color.fromARGB(255, 255, 255, 255),
+            width: 1,
+          ),
+        ),
         margin: EdgeInsets.zero,
         // Use Container with gradient in your widget:
         // decoration: BoxDecoration(
@@ -73,21 +78,24 @@ class AppTheme {
 
       // Buttons with cyan gradients
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: const Color(0xFF06B6D4), // Cyan 500
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: AppTypography.button,
-        ).copyWith(
-          backgroundColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.pressed)) {
-              return const Color(0xFF0891B2); // Cyan 600
-            }
-            return const Color(0xFF06B6D4);
-          }),
-        ),
+        style:
+            ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: const Color(0xFF06B6D4), // Cyan 500
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: AppTypography.button,
+            ).copyWith(
+              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.pressed)) {
+                  return const Color(0xFF0891B2); // Cyan 600
+                }
+                return const Color(0xFF06B6D4);
+              }),
+            ),
       ),
 
       filledButtonTheme: FilledButtonThemeData(
@@ -95,7 +103,9 @@ class AppTheme {
           backgroundColor: const Color(0xFF06B6D4),
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
 
@@ -104,7 +114,9 @@ class AppTheme {
           foregroundColor: const Color(0xFF0891B2),
           side: const BorderSide(color: Color(0xFF22D3EE), width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
 
@@ -112,7 +124,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1),
@@ -133,7 +148,9 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
         ),
-        hintStyle: AppTypography.bodyMedium.copyWith(color: const Color(0xFF94A3B8)),
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: const Color(0xFF94A3B8),
+        ),
       ),
 
       // Chips with cyan accent
@@ -219,7 +236,9 @@ class AppTheme {
       // Snackbars with cyan-dark
       snackBarTheme: SnackBarThemeData(
         backgroundColor: const Color(0xFF164E63),
-        contentTextStyle: AppTypography.bodyMedium.copyWith(color: Colors.white),
+        contentTextStyle: AppTypography.bodyMedium.copyWith(
+          color: Colors.white,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),
@@ -283,28 +302,36 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         color: const Color.fromARGB(61, 100, 100, 100),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side:  
-        const BorderSide(color: Color.fromARGB(190, 100, 100, 100), width: 1)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(
+            color: Color.fromARGB(190, 100, 100, 100),
+            width: 1,
+          ),
+        ),
         margin: EdgeInsets.zero,
       ),
 
       // Buttons with electric cyan
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: const Color(0xFF06B6D4),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: AppTypography.button,
-        ).copyWith(
-          backgroundColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.pressed)) {
-              return const Color(0xFF0891B2);
-            }
-            return const Color(0xFF06B6D4);
-          }),
-        ),
+        style:
+            ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: const Color(0xFF06B6D4),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: AppTypography.button,
+            ).copyWith(
+              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.pressed)) {
+                  return const Color(0xFF0891B2);
+                }
+                return const Color(0xFF06B6D4);
+              }),
+            ),
       ),
 
       filledButtonTheme: FilledButtonThemeData(
@@ -312,7 +339,9 @@ class AppTheme {
           backgroundColor: const Color(0xFF06B6D4),
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
 
@@ -321,7 +350,9 @@ class AppTheme {
           foregroundColor: const Color(0xFF22D3EE),
           side: const BorderSide(color: Color(0xFF22D3EE), width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
 
@@ -329,7 +360,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF1C1C1C),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF404040), width: 1),
@@ -350,7 +384,9 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFEF4444), width: 2),
         ),
-        hintStyle: AppTypography.bodyMedium.copyWith(color: const Color(0xFF8A8A8A)),
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: const Color(0xFF8A8A8A),
+        ),
       ),
 
       // Chips with cyan container
@@ -435,7 +471,9 @@ class AppTheme {
       // Snackbars with cyan-dark
       snackBarTheme: SnackBarThemeData(
         backgroundColor: const Color(0xFF383838),
-        contentTextStyle: AppTypography.bodyMedium.copyWith(color: Colors.white),
+        contentTextStyle: AppTypography.bodyMedium.copyWith(
+          color: Colors.white,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
       ),

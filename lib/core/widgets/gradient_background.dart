@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
-
 class DynamicBackground extends StatelessWidget {
   final Widget child;
   final bool useGradient;
@@ -28,7 +27,8 @@ class DynamicBackground extends StatelessWidget {
                 ? LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: gradientColors ??
+                    colors:
+                        gradientColors ??
                         (isDark
                             ? AppColors.backgroundGradientDark
                             : AppColors.backgroundGradientLight),
@@ -38,8 +38,8 @@ class DynamicBackground extends StatelessWidget {
             color: useGradient
                 ? null
                 : (isDark
-                    ? AppColors.darkBackgroundPrimary
-                    : AppColors.backgroundPrimary),
+                      ? AppColors.darkBackgroundPrimary
+                      : AppColors.backgroundPrimary),
           ),
         ),
 
@@ -53,7 +53,7 @@ class DynamicBackground extends StatelessWidget {
                   center: const Alignment(-0.8, 1.2), // bottom-left bleed
                   radius: 1.1,
                   colors: [
-                    const Color(0xFF164E63).withValues(alpha:0.45), // Cyan 900
+                    const Color(0xFF164E63).withValues(alpha: 0.45), // Cyan 900
                     Colors.transparent,
                   ],
                   stops: const [0.0, 1.0],
@@ -71,7 +71,12 @@ class DynamicBackground extends StatelessWidget {
                   center: const Alignment(1.0, -0.8), // top-right
                   radius: 0.7,
                   colors: [
-                    const Color.fromARGB(122, 15, 23, 42).withValues(alpha:0.6), // Slate 900 cool tint
+                    const Color.fromARGB(
+                      122,
+                      15,
+                      23,
+                      42,
+                    ).withValues(alpha: 0.6), // Slate 900 cool tint
                     Colors.transparent,
                   ],
                   stops: const [0.0, 1.0],
@@ -89,7 +94,9 @@ class DynamicBackground extends StatelessWidget {
                   center: const Alignment(-0.9, 1.3), // bottom-left
                   radius: 1.2,
                   colors: [
-                    const Color(0xFF06B6D4).withValues(alpha:0.15), // Cyan 500 light
+                    const Color(
+                      0xFF06B6D4,
+                    ).withValues(alpha: 0.15), // Cyan 500 light
                     Colors.transparent,
                   ],
                   stops: const [0.0, 1.0],
@@ -107,7 +114,12 @@ class DynamicBackground extends StatelessWidget {
                   center: const Alignment(0.3, -0.2), // top-right
                   radius: 0.8,
                   colors: [
-                    const Color.fromARGB(255, 213, 235, 250).withValues(alpha:0.5), // Very light cyan
+                    const Color.fromARGB(
+                      255,
+                      213,
+                      235,
+                      250,
+                    ).withValues(alpha: 0.5), // Very light cyan
                     Colors.transparent,
                   ],
                   stops: const [0.0, 1.0],

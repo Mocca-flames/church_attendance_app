@@ -371,7 +371,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     _isInitialSyncDone = true;
 
     try {
-      // First, sync any pending offline items (attendance, contacts) to server
+      // First, sync any pending offline items (attendance, contacts) to server 
       await ref.read(syncStatusProvider.notifier).syncAll();
 
       // Then pull fresh contacts from server

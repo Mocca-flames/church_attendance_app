@@ -8,8 +8,11 @@ import 'package:church_attendance_app/core/constants/app_typography.dart';
 import 'package:church_attendance_app/core/enums/contact_tag.dart';
 import 'package:church_attendance_app/core/services/haptic_service.dart';
 import 'package:church_attendance_app/core/services/location_service.dart';
+import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
+import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/contact_provider.dart';
+
 import 'package:church_attendance_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -101,8 +104,9 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
   bool _isDeleting = false;
   int _contactsWithLocation = 0;
 
-  // Phone duplicate detection - Hash Map for O(1) lookup
-  Map<String, Contact> _phoneToContactMap = {};
+  // Phone duplicate detection - Hash Maps for O(1) lookup
+  Map<String, Contact> _phoneToContactMap = {}; // Exact match: +27XXXXXXXXX -> Contact
+  Map<String, List<Contact>> _phoneSuffix7Map = {}; // Partial match: last 7 digits -> [Contacts]
   Contact? _exactDuplicate;
   List<Contact> _similarContacts = [];
 
@@ -126,7 +130,9 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     _preloadPhoneMap();
   }
 
-  /// Preload phone-to-contact Hash Map for O(1) lookup
+  /// Preload phone-to-contact Hash Maps for O(1) lookup
+  /// - _phoneToContactMap: exact phone match (+27XXXXXXXXX -> Contact)
+  /// - _phoneSuffix7Map: partial match (last 7 digits -> [Contacts])
   /// This is called once when screen loads for new contacts
   Future<void> _preloadPhoneMap() async {
     if (isEditing) return;
@@ -135,17 +141,31 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
       final repository = ref.read(contactRepositoryProvider);
       final contacts = await repository.getAllContacts();
       
-      // Build Hash Map: normalized phone -> Contact
-      final map = <String, Contact>{};
+      // Build Hash Maps
+      final exactMap = <String, Contact>{};
+      final suffix7Map = <String, List<Contact>>{};
+      
       for (final contact in contacts) {
+        // Get normalized phone (e.g., +27821234567)
         final normalized = PhoneUtils.normalizeSouthAfricanPhone(contact.phone);
         if (normalized != null) {
-          map[normalized] = contact;
+          // Add to exact match map
+          exactMap[normalized] = contact;
+          
+          // Add to suffix 7 map for partial matching
+          final suffix7 = normalized.substring(normalized.length - 7);
+          if (!suffix7Map.containsKey(suffix7)) {
+            suffix7Map[suffix7] = [];
+          }
+          suffix7Map[suffix7]!.add(contact);
         }
       }
       
       if (mounted) {
-        setState(() => _phoneToContactMap = map);
+        setState(() {
+          _phoneToContactMap = exactMap;
+          _phoneSuffix7Map = suffix7Map;
+        });
       }
     } catch (e) {
       // Silent fail - fallback to on-demand loading
@@ -157,9 +177,30 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     try {
       final locationService = ref.read(locationServiceProvider);
       final locations = await locationService.getAllLocationsAsDisplayData();
+      
+      // Filter locations against server data - only show locations that exist on server
+      // This is the second layer of protection in case sync didn't catch deleted locations
+      final serverLocations = await _getServerLocations();
+      
+      List<LocationDisplayData> filteredLocations;
+      if (serverLocations != null) {
+        // Filter to only show locations that exist on server
+        filteredLocations = locations.where((loc) {
+          // Keep hardcoded locations always
+          if (_hardcodedLocations.contains(loc.value.toLowerCase())) {
+            return true;
+          }
+          // Keep if exists on server
+          return serverLocations.contains(loc.value);
+        }).toList();
+      } else {
+        // Fallback: use all local active locations if we can't reach server
+        filteredLocations = locations;
+      }
+      
       setState(() {
-        _allLocations = locations;
-        _filteredLocations = locations;
+        _allLocations = filteredLocations;
+        _filteredLocations = filteredLocations;
         _isLoadingLocations = false;
       });
     } catch (e) {
@@ -176,6 +217,26 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
         _filteredLocations = _allLocations;
         _isLoadingLocations = false;
       });
+    }
+  }
+
+  /// Get active location values from server via dashboardStatistics
+  /// Returns null if offline or error
+  Future<Set<String>?> _getServerLocations() async {
+    try {
+      final isOnline = ref.read(isOnlineProvider);
+      if (!isOnline) return null;
+      
+      final dioClient = ref.read(dioClientProvider);
+      final response = await dioClient.getDashboardStatistics();
+      
+      if (response.statusCode == 200 && response.data != null) {
+        final locationsJson = response.data['locations'] as Map<String, dynamic>? ?? {};
+        return locationsJson.keys.toSet();
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 
@@ -563,20 +624,20 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
     }
   }
 
-  /// Check for partial matches (last 7 digits) for similar phone numbers
+  /// Check for partial matches using Hash Map (last 7 digits)
+  /// Uses pre-built _phoneSuffix7Map for O(1) lookup
   void _checkPartialMatch(String normalizedPhone) {
-    // Get last 7 digits for partial matching
-    final suffix7 = normalizedPhone.substring(normalizedPhone.length - 7);
+    if (normalizedPhone.length < 7) {
+      setState(() => _similarContacts = []);
+      return;
+    }
     
-    final similar = _phoneToContactMap.values.where((contact) {
-      final contactNormalized = PhoneUtils.normalizeSouthAfricanPhone(contact.phone);
-      if (contactNormalized == null) return false;
-      // Check if last 7 digits match
-      return contactNormalized.endsWith(suffix7);
-    }).toList();
+    // Get last 7 digits - O(1) Hash Map lookup
+    final suffix7 = normalizedPhone.substring(normalizedPhone.length - 7);
+    final matches = _phoneSuffix7Map[suffix7] ?? [];
     
     if (mounted) {
-      setState(() => _similarContacts = similar);
+      setState(() => _similarContacts = matches);
     }
   }
 
@@ -591,7 +652,6 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
         icon: const Icon(Icons.contact_phone, color: AppColors.cyan500, size: 32),
         title: const Text('Contact Already Exists'),
         content: Text(
-          'This phone number is already registered.\n\n'
           'Name: ${duplicate.name ?? 'Unknown'}\n'
           'Phone: ${duplicate.phone}\n\n'
           'Would you like to edit this contact instead?'
@@ -626,6 +686,13 @@ class _ContactEditScreenState extends ConsumerState<ContactEditScreen> {
           builder: (context) => ContactEditScreen(contact: duplicate),
         ),
       );
+    } else if (result == false && mounted) {
+      // User chose "Create New" - clear phone field to prevent duplicates
+      _phoneController.clear();
+      setState(() {
+        _exactDuplicate = null;
+        _similarContacts = [];
+      });
     }
   }
 

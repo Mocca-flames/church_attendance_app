@@ -2,6 +2,15 @@ import 'package:church_attendance_app/core/database/database.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 
+/// Hardcoded location tags that cannot be deleted
+const Set<String> _hardcodedLocations = {
+  'kanana',
+  'majaneng',
+  'mashemong',
+  'soshanguve',
+  'kekana',
+};
+
 /// Service for managing church locations
 /// Provides a clean interface for location operations
 class LocationService {
@@ -81,6 +90,25 @@ class LocationService {
   Future<List<LocationDisplayData>> getAllLocationsAsDisplayData() async {
     final locations = await getAllLocations();
     return locations.map(locationToDisplayData).toList();
+  }
+
+  /// Sync local locations with server locations
+  /// Removes any locally cached locations that don't exist on the server
+  /// except for hardcoded locations
+  Future<void> syncLocationsWithServer(Set<String> serverLocationValues) async {
+    final allLocations = await getAllLocationsIncludingInactive();
+    
+    for (final location in allLocations) {
+      // Skip hardcoded locations - they can never be deleted
+      if (_hardcodedLocations.contains(location.value.toLowerCase())) {
+        continue;
+      }
+      
+      // If location doesn't exist on server, deactivate it locally
+      if (!serverLocationValues.contains(location.value)) {
+        await deactivateLocation(location.id);
+      }
+    }
   }
 }
 

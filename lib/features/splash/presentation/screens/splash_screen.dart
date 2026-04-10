@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/constants/app_constants.dart';
 import 'package:church_attendance_app/core/enums/app_route.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:church_attendance_app/features/home/presentation/providers/dashboard_providers.dart';
 
 import '../../../../core/constants/app_strings.dart';
 
@@ -38,6 +39,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final authState = ref.read(authProvider);
 
     if (mounted) {
+      // If authenticated, sync locations in background
+      if (authState.isAuthenticated) {
+        // Trigger location sync - this will fetch server locations
+        // and deactivate any deleted ones in local database
+        ref.read(locationSyncProvider);
+      }
+
       final nextRoute = AppRoute.getInitialRoute(
         isAuthenticated: authState.isAuthenticated,
       );
