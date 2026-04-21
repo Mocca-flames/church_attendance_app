@@ -3,7 +3,7 @@ class ApiConstants {
   // For development, you can use your computer's local IP address
 
   // Server 'http://35.238.27.155:8000'
-  static const String baseUrl = 'http://35.238.27.155:8000';
+  static const String baseUrl = 'https://d3ee-102-253-16-2.ngrok-free.app';
   // Health Check
   static const String health = '/health';
 
@@ -42,6 +42,7 @@ class ApiConstants {
   static const String attendanceById = '/attendance/{id}';
   static const String attendanceDelete = '/attendance/{id}';
   static const String attendanceExport = '/attendance/export';
+  static const String attendanceDeleteFiltered = '/attendance/';
 
   // Scenario Endpoints
   static const String scenarios = '/scenarios/';

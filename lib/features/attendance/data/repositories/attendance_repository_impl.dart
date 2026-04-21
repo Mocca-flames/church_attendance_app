@@ -11,7 +11,7 @@ import 'package:church_attendance_app/features/contacts/domain/models/contact.da
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Implementation of [AttendanceRepository].
-/// 
+///
 /// Follows Clean Architecture principles:
 /// - Coordinates between local and remote data sources
 /// - Implements offline-first strategy
@@ -25,9 +25,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     required AttendanceLocalDataSource localDataSource,
     required AttendanceRemoteDataSource remoteDataSource,
     required DioClient dioClient,
-  })  : _localDataSource = localDataSource,
-        _remoteDataSource = remoteDataSource,
-        _dioClient = dioClient;
+  }) : _localDataSource = localDataSource,
+       _remoteDataSource = remoteDataSource,
+       _dioClient = dioClient;
 
   @override
   Future<Attendance> recordAttendance({
@@ -113,7 +113,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   }) async {
     // Find contact by phone
     final contact = await _localDataSource.getContactByPhone(phone);
-    
+
     if (contact == null) {
       throw const AttendanceException(
         'Contact not found',
@@ -145,11 +145,12 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   }) async {
     // Check if contact already exists with this phone number
     final existingContact = await _localDataSource.getContactByPhone(phone);
-    
+
     if (existingContact != null) {
       // Check if this is a contact where phone == name (no real name was entered)
       // In this case, we need to update the contact with the new name, tags, and location
-      if (existingContact.name != null && existingContact.name == existingContact.phone) {
+      if (existingContact.name != null &&
+          existingContact.name == existingContact.phone) {
         // This contact has phone == name, need to update it
         final updatedContact = await _localDataSource.updateContactDetails(
           contactId: existingContact.id,
@@ -157,7 +158,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
           isMember: isMember,
           location: location,
         );
-        
+
         // Try to sync the update to server
         if (await _isOnline()) {
           try {
@@ -166,7 +167,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
               contactId: existingContact.id,
               name: name,
             );
-            
+
             // Add member tag if needed
             if (isMember) {
               await _remoteDataSource.addTagsToContact(
@@ -174,7 +175,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
                 tags: ['member'],
               );
             }
-            
+
             // Mark as synced
             if (updatedContact.serverId != null) {
               await _localDataSource.markContactAsSynced(
@@ -185,7 +186,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
           } on AttendanceRemoteException catch (e) {
             // Failed to sync immediately - add to sync queue for later retry
             // ignore: avoid_print
-            print('Failed to sync contact update immediately: ${e.message}. Adding to sync queue.');
+            print(
+              'Failed to sync contact update immediately: ${e.message}. Adding to sync queue.',
+            );
             await _localDataSource.addContactToSyncQueue(
               contactId: updatedContact.id,
               data: {
@@ -210,10 +213,10 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
             },
           );
         }
-        
+
         return updatedContact;
       }
-      
+
       // Contact exists with a real name, just return it
       return existingContact;
     }
@@ -227,12 +230,10 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     if (location != null && location.isNotEmpty) {
       tags.add(location);
     }
-    
+
     Map<String, dynamic>? metadata;
     if (tags.isNotEmpty) {
-      metadata = <String, dynamic>{
-        'tags': tags,
-      };
+      metadata = <String, dynamic>{'tags': tags};
     }
 
     final contact = await _localDataSource.createContact(
@@ -257,18 +258,20 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
           name: name,
           tags: tags,
         );
-        
+
         // Update local contact with server ID and mark as synced
         final serverId = serverContact['id'] as int?;
         if (serverId != null) {
           await _localDataSource.markContactAsSynced(contact.id, serverId);
         }
-        
+
         return contact;
       } on AttendanceRemoteException catch (e) {
         // Failed to sync immediately - add to sync queue for later retry
         // ignore: avoid_print
-        print('Failed to sync contact immediately: ${e.message}. Adding to sync queue.');
+        print(
+          'Failed to sync contact immediately: ${e.message}. Adding to sync queue.',
+        );
         await _localDataSource.addContactToSyncQueue(
           contactId: contact.id,
           data: syncData,
@@ -333,13 +336,39 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   @override
   Future<void> deleteAttendance(int attendanceId) async {
     await _localDataSource.deleteAttendance(attendanceId);
-    
+
     // Delete from server when online
     if (await _isOnline()) {
       try {
         await _remoteDataSource.deleteAttendance(attendanceId);
       } on AttendanceRemoteException catch (e) {
         // Log error but don't fail - local record was deleted
+        // ignore: avoid_print
+        print('Failed to delete attendance from server: ${e.message}');
+      }
+    }
+  }
+
+  @override
+  Future<void> deleteAttendanceByPhone({
+    required String phone,
+    required DateTime date,
+  }) async {
+    // Delete locally first
+    await _localDataSource.deleteAttendanceByPhoneAndDate(
+      phone: phone,
+      date: date,
+    );
+
+    // Attempt remote delete best-effort (non-blocking)
+    if (await _isOnline()) {
+      try {
+        await _remoteDataSource.deleteAttendanceFiltered(
+          phone: phone,
+          date: date,
+        );
+      } on AttendanceRemoteException catch (e) {
+        // Log error but don't fail - local records already deleted
         // ignore: avoid_print
         print('Failed to delete attendance from server: ${e.message}');
       }
@@ -419,8 +448,8 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     } on AttendanceRemoteException catch (e) {
       throw AttendanceException(
         e.message,
-        type: e.isNetworkError 
-            ? AttendanceExceptionType.networkError 
+        type: e.isNetworkError
+            ? AttendanceExceptionType.networkError
             : AttendanceExceptionType.unknown,
       );
     }
@@ -434,7 +463,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       if (connectivityResult.contains(ConnectivityResult.none)) {
         return false;
       }
-      
+
       // Try to reach the server
       final response = await _dioClient.dio.get('/health');
       return response.statusCode == 200;
@@ -448,7 +477,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   bool _isDuplicateAttendanceError(String message) {
     final lowerMessage = message.toLowerCase();
     return lowerMessage.contains('already recorded') ||
-           lowerMessage.contains('already exists') ||
-           lowerMessage.contains('duplicate');
+        lowerMessage.contains('already exists') ||
+        lowerMessage.contains('duplicate');
   }
 }

@@ -15,7 +15,7 @@ class AttendanceRemoteDataSource {
   AttendanceRemoteDataSource(this._dioClient);
 
   /// Records attendance on the server.
-  /// 
+  ///
   /// Phone number is normalized to +27XXXXXXXXX format before sending.
   /// Returns the created attendance record with server ID.
   Future<Attendance> recordAttendance({
@@ -29,7 +29,7 @@ class AttendanceRemoteDataSource {
     if (normalizedPhone == null) {
       throw ArgumentError('Invalid phone number format: $phone');
     }
-    
+
     try {
       final requestData = {
         'contact_id': contactId,
@@ -38,19 +38,17 @@ class AttendanceRemoteDataSource {
         'service_date': serviceDate.toUtc().toIso8601String(),
         'recorded_by': recordedBy,
       };
-      
+
       // Debug: Log the request details
-      
+
       final response = await _dioClient.dio.post(
         ApiConstants.attendanceRecord,
         data: requestData,
       );
 
-
       // Debug: Log each field type before parsing
       final data = response.data as Map<String, dynamic>;
-      
-      
+
       // The server returns snake_case keys, but the generated Attendance model
       // expects snake_case keys (contact_id, service_type, service_date, recorded_at)
       // Note: The server returns 'id' as the attendance's server ID. We need to:
@@ -66,7 +64,9 @@ class AttendanceRemoteDataSource {
             break;
           case 'service_type':
             // Convert backend value to enum name
-            convertedData['service_type'] = ServiceType.fromBackend(value as String).name;
+            convertedData['service_type'] = ServiceType.fromBackend(
+              value as String,
+            ).name;
             break;
           case 'service_date':
             // Ensure service_date is ISO8601 string
@@ -84,7 +84,7 @@ class AttendanceRemoteDataSource {
             convertedData[key] = value;
         }
       });
-      
+
       try {
         final result = Attendance.fromJson(convertedData);
         return result;
@@ -92,9 +92,8 @@ class AttendanceRemoteDataSource {
         rethrow;
       }
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
-      
+      if (e.response != null) {}
+
       if (e.response?.statusCode == 400) {
         final message = e.response?.data['detail'] ?? 'Bad request';
         throw AttendanceRemoteException(message);
@@ -119,7 +118,7 @@ class AttendanceRemoteDataSource {
   }) async {
     try {
       final queryParams = <String, dynamic>{};
-      
+
       if (dateFrom != null) {
         queryParams['date_from'] = dateFrom.toUtc().toIso8601String();
       }
@@ -140,13 +139,11 @@ class AttendanceRemoteDataSource {
         queryParameters: queryParams,
       );
 
-
       final List<dynamic> data = response.data;
       return data.map((json) => Attendance.fromJson(json)).toList();
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
-      
+      if (e.response != null) {}
+
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.unknown) {
         throw const AttendanceRemoteException(
@@ -162,7 +159,10 @@ class AttendanceRemoteDataSource {
   Future<List<Attendance>> getContactAttendance(int contactId) async {
     try {
       final response = await _dioClient.dio.get(
-        ApiConstants.attendanceByContactId.replaceAll('{id}', contactId.toString()),
+        ApiConstants.attendanceByContactId.replaceAll(
+          '{id}',
+          contactId.toString(),
+        ),
       );
 
       final List<dynamic> data = response.data;
@@ -186,7 +186,7 @@ class AttendanceRemoteDataSource {
   }) async {
     try {
       final queryParams = <String, dynamic>{};
-      
+
       if (dateFrom != null) {
         queryParams['date_from'] = dateFrom.toUtc().toIso8601String();
       }
@@ -230,8 +230,56 @@ class AttendanceRemoteDataSource {
     }
   }
 
+  /// Deletes attendance records from the server matching the provided filters.
+  /// Uses phone and date parameters to identify records to delete.
+  Future<void> deleteAttendanceFiltered({
+    required String phone,
+    DateTime? date,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? serviceType,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+
+      // Phone is required
+      queryParams['phone'] = phone;
+
+      if (date != null) {
+        // Single date - format as YYYY-MM-DD (local timezone)
+        queryParams['date'] =
+            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      } else {
+        if (dateFrom != null) {
+          queryParams['date_from'] = dateFrom.toUtc().toIso8601String();
+        }
+        if (dateTo != null) {
+          queryParams['date_to'] = dateTo.toUtc().toIso8601String();
+        }
+      }
+
+      if (serviceType != null) {
+        queryParams['service_type'] = serviceType;
+      }
+
+      await _dioClient.dio.delete(
+        ApiConstants.attendanceDeleteFiltered,
+        queryParameters: queryParams,
+      );
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.unknown) {
+        throw const AttendanceRemoteException(
+          'Network error',
+          isNetworkError: true,
+        );
+      }
+      rethrow;
+    }
+  }
+
   /// Downloads attendance PDF from server.
-  /// 
+  ///
   /// [dateFrom] - Start date for filtering (inclusive)
   /// [dateTo] - End date for filtering (inclusive)
   /// [serviceType] - Optional service type filter
@@ -249,7 +297,8 @@ class AttendanceRemoteDataSource {
       // If date is provided, use it (takes priority)
       // Format: YYYY-MM-DD for entire day in SAST timezone
       if (date != null) {
-        queryParams['date'] = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+        queryParams['date'] =
+            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       } else {
         // Otherwise use date_from/date_to range
         if (dateFrom != null) {
@@ -259,7 +308,7 @@ class AttendanceRemoteDataSource {
           queryParams['date_to'] = dateTo.toUtc().toIso8601String();
         }
       }
-      
+
       if (serviceType != null) {
         queryParams['service_type'] = serviceType.backendValue;
       }
@@ -267,9 +316,7 @@ class AttendanceRemoteDataSource {
       final response = await _dioClient.dio.get(
         ApiConstants.attendanceExport,
         queryParameters: queryParams,
-        options: Options(
-          responseType: ResponseType.bytes,
-        ),
+        options: Options(responseType: ResponseType.bytes),
       );
 
       return Uint8List.fromList(response.data);
@@ -286,7 +333,7 @@ class AttendanceRemoteDataSource {
   }
 
   /// Creates a contact on the server.
-  /// 
+  ///
   /// Phone number is normalized to +27XXXXXXXXX format before sending.
   /// Returns the created contact with server ID.
   Future<Map<String, dynamic>> createContact({
@@ -298,7 +345,7 @@ class AttendanceRemoteDataSource {
     if (normalizedPhone == null) {
       throw ArgumentError('Invalid phone number format: $phone');
     }
-    
+
     try {
       final requestData = {
         'phone': normalizedPhone,
@@ -313,12 +360,10 @@ class AttendanceRemoteDataSource {
         data: requestData,
       );
 
-
       return response.data;
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
-      
+      if (e.response != null) {}
+
       if (e.response?.statusCode == 400) {
         final message = e.response?.data['detail'] ?? 'Bad request';
         throw AttendanceRemoteException(message);
@@ -345,7 +390,7 @@ class AttendanceRemoteDataSource {
   }) async {
     try {
       final requestData = <String, dynamic>{};
-      
+
       if (name != null) requestData['name'] = name;
       if (phone != null) {
         final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(phone);
@@ -355,7 +400,9 @@ class AttendanceRemoteDataSource {
       }
       if (status != null) requestData['status'] = status;
       if (optOutSms != null) requestData['opt_out_sms'] = optOutSms;
-      if (optOutWhatsapp != null) requestData['opt_out_whatsapp'] = optOutWhatsapp;
+      if (optOutWhatsapp != null) {
+        requestData['opt_out_whatsapp'] = optOutWhatsapp;
+      }
 
       // Debug: Log the request details
 
@@ -364,12 +411,10 @@ class AttendanceRemoteDataSource {
         data: requestData,
       );
 
-
       return response.data;
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
-      
+      if (e.response != null) {}
+
       if (e.response?.statusCode == 400) {
         final message = e.response?.data['detail'] ?? 'Bad request';
         throw AttendanceRemoteException(message);
@@ -400,12 +445,10 @@ class AttendanceRemoteDataSource {
         data: requestData,
       );
 
-
       return response.data;
     } on DioException catch (e) {
-      if (e.response != null) {
-      }
-      
+      if (e.response != null) {}
+
       if (e.response?.statusCode == 400) {
         final message = e.response?.data['detail'] ?? 'Bad request';
         throw AttendanceRemoteException(message);
@@ -427,10 +470,7 @@ class AttendanceRemoteException implements Exception {
   final String message;
   final bool isNetworkError;
 
-  const AttendanceRemoteException(
-    this.message, {
-    this.isNetworkError = false,
-  });
+  const AttendanceRemoteException(this.message, {this.isNetworkError = false});
 
   @override
   String toString() => 'AttendanceRemoteException: $message';

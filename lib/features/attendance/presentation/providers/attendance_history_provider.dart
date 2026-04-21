@@ -20,7 +20,9 @@ class AttendanceHistoryState {
   final bool isDownloadingPdf;
 
   const AttendanceHistoryState({
-    required this.dateFrom, required this.dateTo, this.isLoading = false,
+    required this.dateFrom,
+    required this.dateTo,
+    this.isLoading = false,
     this.attendances = const [],
     this.serviceTypeCounts = const {},
     this.selectedServiceType,
@@ -46,7 +48,9 @@ class AttendanceHistoryState {
       serviceTypeCounts: serviceTypeCounts ?? this.serviceTypeCounts,
       dateFrom: dateFrom ?? this.dateFrom,
       dateTo: dateTo ?? this.dateTo,
-      selectedServiceType: clearSelectedServiceType ? null : (selectedServiceType ?? this.selectedServiceType),
+      selectedServiceType: clearSelectedServiceType
+          ? null
+          : (selectedServiceType ?? this.selectedServiceType),
       error: clearError ? null : (error ?? this.error),
       isDownloadingPdf: isDownloadingPdf ?? this.isDownloadingPdf,
     );
@@ -60,12 +64,15 @@ class AttendanceHistoryNotifier extends Notifier<AttendanceHistoryState> {
   @override
   AttendanceHistoryState build() {
     _repository = ref.watch(attendanceRepositoryProvider);
-    
-    // Initialize with default date range (last 30 days)
+
+    // Initialize with current date (midnight) and appropriate service type
     final now = DateTime.now();
+    final todayMidnight = DateTime(now.year, now.month, now.day);
+    final defaultServiceType = ServiceType.getServiceTypeByDay(now);
     return AttendanceHistoryState(
-      dateFrom: now.subtract(const Duration(days: 30)),
-      dateTo: now,
+      dateFrom: todayMidnight,
+      dateTo: todayMidnight,
+      selectedServiceType: defaultServiceType,
     );
   }
 
@@ -93,23 +100,27 @@ class AttendanceHistoryNotifier extends Notifier<AttendanceHistoryState> {
         serviceTypeCounts: counts,
       );
     } on AttendanceException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.message,
-      );
+      state = state.copyWith(isLoading: false, error: e.message);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   /// Sets the date range for filtering.
   void setDateRange(DateTime dateFrom, DateTime dateTo) {
+    state = state.copyWith(dateFrom: dateFrom, dateTo: dateTo);
+    loadAttendances();
+  }
+
+  /// Sets a single date for filtering and automatically selects
+  /// the appropriate service type based on the day of week.
+  void setSingleDate(DateTime date) {
+    final dateOnly = DateTime(date.year, date.month, date.day);
+    final serviceType = ServiceType.getServiceTypeByDay(dateOnly);
     state = state.copyWith(
-      dateFrom: dateFrom,
-      dateTo: dateTo,
+      dateFrom: dateOnly,
+      dateTo: dateOnly,
+      selectedServiceType: serviceType,
     );
     loadAttendances();
   }
@@ -124,6 +135,33 @@ class AttendanceHistoryNotifier extends Notifier<AttendanceHistoryState> {
     loadAttendances();
   }
 
+  /// Deletes attendance for a specific phone number on a specific date.
+  /// Deletes all service types for that phone on that day.
+  Future<void> deleteAttendanceForPhone({
+    required String phone,
+    required DateTime serviceDate,
+  }) async {
+    state = state.copyWith(clearError: true);
+
+    try {
+      // Strip time to get date-only for day-based matching
+      final dateOnly = DateTime(
+        serviceDate.year,
+        serviceDate.month,
+        serviceDate.day,
+      );
+
+      await _repository.deleteAttendanceByPhone(phone: phone, date: dateOnly);
+
+      // Refresh the list after successful deletion
+      await loadAttendances();
+    } on AttendanceException catch (e) {
+      state = state.copyWith(error: e.message);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
   /// Downloads attendance as PDF and shares it.
   Future<void> downloadPdf() async {
     state = state.copyWith(isDownloadingPdf: true, clearError: true);
@@ -133,7 +171,7 @@ class AttendanceHistoryNotifier extends Notifier<AttendanceHistoryState> {
       // If dateFrom and dateTo are the same day, use the new date parameter
       // Otherwise, use the date_from/date_to range
       final isSingleDay = _isSameDay(state.dateFrom, state.dateTo);
-      
+
       final pdfBytes = await _repository.downloadAttendancePdf(
         dateFrom: isSingleDay ? null : state.dateFrom,
         dateTo: isSingleDay ? null : state.dateTo,
@@ -144,7 +182,9 @@ class AttendanceHistoryNotifier extends Notifier<AttendanceHistoryState> {
       // Save to persistent documents directory and share
       final documentsDir = await getApplicationDocumentsDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final file = File('${documentsDir.path}/attendance_export_$timestamp.pdf');
+      final file = File(
+        '${documentsDir.path}/attendance_export_$timestamp.pdf',
+      );
       await file.writeAsBytes(pdfBytes);
 
       // Share the PDF file
@@ -152,21 +192,16 @@ class AttendanceHistoryNotifier extends Notifier<AttendanceHistoryState> {
         ShareParams(
           files: [XFile(file.path)],
           text: 'Attendance Export',
-          subject: 'Attendance Export ${_formatDate(state.dateFrom)} - ${_formatDate(state.dateTo)}',
+          subject:
+              'Attendance Export ${_formatDate(state.dateFrom)} - ${_formatDate(state.dateTo)}',
         ),
       );
 
       state = state.copyWith(isDownloadingPdf: false);
     } on AttendanceException catch (e) {
-      state = state.copyWith(
-        isDownloadingPdf: false,
-        error: e.message,
-      );
+      state = state.copyWith(isDownloadingPdf: false, error: e.message);
     } catch (e) {
-      state = state.copyWith(
-        isDownloadingPdf: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isDownloadingPdf: false, error: e.toString());
     }
   }
 
@@ -181,13 +216,14 @@ class AttendanceHistoryNotifier extends Notifier<AttendanceHistoryState> {
 
   /// Checks if two dates are the same day (ignoring time).
   bool _isSameDay(DateTime date1, DateTime date2) {
-    return date1.year == date2.year && 
-           date1.month == date2.month && 
-           date1.day == date2.day;
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 }
 
 /// Provider for AttendanceHistoryNotifier
-final attendanceHistoryProvider = NotifierProvider<AttendanceHistoryNotifier, AttendanceHistoryState>(() {
-  return AttendanceHistoryNotifier();
-});
+final attendanceHistoryProvider =
+    NotifierProvider<AttendanceHistoryNotifier, AttendanceHistoryState>(() {
+      return AttendanceHistoryNotifier();
+    });

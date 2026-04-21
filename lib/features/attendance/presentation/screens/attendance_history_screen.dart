@@ -9,9 +9,10 @@ import '../../../../core/widgets/gradient_background.dart';
 /// Attendance history screen showing past attendance records.
 ///
 /// Features:
-/// - Filter by date range
-/// - Filter by service type
+/// - Filter by single date (defaults to today)
+/// - Auto-filter by service type based on selected date's day of week
 /// - Show attendance count by service type
+/// - Manual service type override via filter button
 class AttendanceHistoryScreen extends ConsumerStatefulWidget {
   const AttendanceHistoryScreen({super.key});
 
@@ -32,29 +33,27 @@ class _AttendanceHistoryScreenState
     });
   }
 
-  Future<void> _selectDateRange() async {
+  Future<void> _selectDate() async {
     final currentState = ref.read(attendanceHistoryProvider);
-    final picked = await showDateRangePicker(
+    final picked = await showDatePicker(
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      initialDateRange: DateTimeRange(
-        start: currentState.dateFrom,
-        end: currentState.dateTo,
+      initialDate: DateTime(
+        currentState.dateFrom.year,
+        currentState.dateFrom.month,
+        currentState.dateFrom.day,
       ),
     );
 
     if (picked != null) {
-      ref.read(attendanceHistoryProvider.notifier).setDateRange(
-            picked.start,
-            picked.end,
-          );
+      ref.read(attendanceHistoryProvider.notifier).setSingleDate(picked);
     }
   }
 
   void _showServiceTypeFilter() {
     final currentState = ref.read(attendanceHistoryProvider);
-    
+
     showModalBottomSheet(
       context: context,
       builder: (bottomSheetContext) => SafeArea(
@@ -65,16 +64,15 @@ class _AttendanceHistoryScreenState
               padding: EdgeInsets.all(16.0),
               child: Text(
                 'Filter by Service Type',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             RadioGroup<ServiceType?>(
               groupValue: currentState.selectedServiceType,
               onChanged: (value) {
-                ref.read(attendanceHistoryProvider.notifier).setServiceType(value);
+                ref
+                    .read(attendanceHistoryProvider.notifier)
+                    .setServiceType(value);
                 Navigator.pop(bottomSheetContext);
               },
               child: Column(
@@ -84,16 +82,16 @@ class _AttendanceHistoryScreenState
                     value: null,
                     title: Text('All Services'),
                   ),
-                  ...ServiceType.values
-                      .map((type) => RadioListTile<ServiceType?>(
-                            value: type,
-                            title: Text(type.displayName),
-                            secondary: Text(
-                              '${currentState.serviceTypeCounts[type.backendValue] ?? 0}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          )),
+                  ...ServiceType.values.map(
+                    (type) => RadioListTile<ServiceType?>(
+                      value: type,
+                      title: Text(type.displayName),
+                      secondary: Text(
+                        '${currentState.serviceTypeCounts[type.backendValue] ?? 0}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -106,15 +104,15 @@ class _AttendanceHistoryScreenState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(attendanceHistoryProvider);
-    
+
     // Listen for errors and show snackbar
-    ref.listen<AttendanceHistoryState>(attendanceHistoryProvider, (previous, next) {
+    ref.listen<AttendanceHistoryState>(attendanceHistoryProvider, (
+      previous,
+      next,
+    ) {
       if (next.error != null && (previous?.error != next.error)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(next.error!), backgroundColor: Colors.red),
         );
         ref.read(attendanceHistoryProvider.notifier).clearError();
       }
@@ -134,7 +132,7 @@ class _AttendanceHistoryScreenState
               tooltip: 'Filter by service type',
             ),
             IconButton(
-              icon: state.isDownloadingPdf 
+              icon: state.isDownloadingPdf
                   ? const SizedBox(
                       width: 20,
                       height: 20,
@@ -146,26 +144,28 @@ class _AttendanceHistoryScreenState
                   : const Icon(Icons.download),
               onPressed: state.isDownloadingPdf
                   ? null
-                  : () => ref.read(attendanceHistoryProvider.notifier).downloadPdf(),
+                  : () => ref
+                        .read(attendanceHistoryProvider.notifier)
+                        .downloadPdf(),
               tooltip: 'Export to PDF',
             ),
           ],
         ),
         body: Column(
           children: [
-            // Date range selector
-            _buildDateRangeSelector(state),
-      
+            // Date selector
+            _buildDateSelector(state),
+
             // Summary cards
             if (!state.isLoading) _buildSummaryCards(state),
-      
+
             // Attendance list
             Expanded(
               child: state.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : state.attendances.isEmpty
-                      ? _buildEmptyState()
-                      : _buildAttendanceList(state),
+                  ? _buildEmptyState()
+                  : _buildAttendanceList(state),
             ),
           ],
         ),
@@ -173,11 +173,11 @@ class _AttendanceHistoryScreenState
     );
   }
 
-  Widget _buildDateRangeSelector(AttendanceHistoryState state) {
+  Widget _buildDateSelector(AttendanceHistoryState state) {
     return Container(
       padding: const EdgeInsets.all(AppDimens.paddingM),
       child: InkWell(
-        onTap: _selectDateRange,
+        onTap: _selectDate,
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimens.paddingM,
@@ -195,7 +195,7 @@ class _AttendanceHistoryScreenState
                   const Icon(Icons.calendar_today, size: 20),
                   const SizedBox(width: AppDimens.paddingS),
                   Text(
-                    '${_formatDate(state.dateFrom)} - ${_formatDate(state.dateTo)}',
+                    _formatDate(state.dateFrom),
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
@@ -224,7 +224,8 @@ class _AttendanceHistoryScreenState
           Expanded(
             child: _SummaryCard(
               title: 'Sunday',
-              count: state.serviceTypeCounts[ServiceType.sunday.backendValue] ?? 0,
+              count:
+                  state.serviceTypeCounts[ServiceType.sunday.backendValue] ?? 0,
               color: ServiceType.sunday.color,
             ),
           ),
@@ -232,7 +233,9 @@ class _AttendanceHistoryScreenState
           Expanded(
             child: _SummaryCard(
               title: 'Tuesday',
-              count: state.serviceTypeCounts[ServiceType.tuesday.backendValue] ?? 0,
+              count:
+                  state.serviceTypeCounts[ServiceType.tuesday.backendValue] ??
+                  0,
               color: ServiceType.tuesday.color,
             ),
           ),
@@ -246,24 +249,27 @@ class _AttendanceHistoryScreenState
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.history,
-            size: 64,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.history, size: 64, color: Colors.grey[400]),
           const SizedBox(height: AppDimens.paddingM),
           Text(
             'No attendance records',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: AppDimens.paddingS),
           Text(
-            'Try adjusting the date range or filter',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[500],
-                ),
+            'No attendance records for this date',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: AppDimens.paddingS),
+          Text(
+            'Try selecting a different date',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
           ),
         ],
       ),
@@ -276,7 +282,9 @@ class _AttendanceHistoryScreenState
       itemCount: state.attendances.length,
       itemBuilder: (context, index) {
         final attendance = state.attendances[index];
-        final serviceType = ServiceType.fromBackend(attendance.attendance.serviceType);
+        final serviceType = ServiceType.fromBackend(
+          attendance.attendance.serviceType,
+        );
 
         return Card(
           margin: const EdgeInsets.symmetric(
@@ -286,10 +294,7 @@ class _AttendanceHistoryScreenState
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: serviceType.color.withValues(alpha: 0.1),
-              child: Icon(
-                serviceType.icon,
-                color: serviceType.color,
-              ),
+              child: Icon(serviceType.icon, color: serviceType.color),
             ),
             title: Text(attendance.displayName),
             subtitle: Text(
@@ -297,10 +302,7 @@ class _AttendanceHistoryScreenState
               style: TextStyle(color: Colors.grey[600]),
             ),
             trailing: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: serviceType.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
@@ -314,6 +316,39 @@ class _AttendanceHistoryScreenState
                 ),
               ),
             ),
+            onLongPress: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Text('Delete Attendance'),
+                  content: Text(
+                    'Delete attendance for ${attendance.displayName} on ${_formatDate(attendance.attendance.serviceDate)}?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext, false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext, true),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirmed == true) {
+                await ref
+                    .read(attendanceHistoryProvider.notifier)
+                    .deleteAttendanceForPhone(
+                      phone: attendance.attendance.phone,
+                      serviceDate: attendance.attendance.serviceDate,
+                    );
+              }
+            },
           ),
         );
       },
@@ -358,13 +393,7 @@ class _SummaryCard extends StatelessWidget {
               color: color,
             ),
           ),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: color,
-            ),
-          ),
+          Text(title, style: TextStyle(fontSize: 12, color: color)),
         ],
       ),
     );

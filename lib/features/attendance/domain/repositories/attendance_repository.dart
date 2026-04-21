@@ -9,13 +9,13 @@ import 'package:church_attendance_app/features/contacts/domain/models/contact.da
 /// Following Clean Architecture, this defines the contract for data operations.
 abstract class AttendanceRepository {
   /// Records attendance for a contact.
-  /// 
+  ///
   /// [contactId] - The ID of the contact
   /// [phone] - The phone number (from QR code)
   /// [serviceType] - The type of service (Sunday, Tuesday, Special Event)
   /// [serviceDate] - The date/time of the service
   /// [recordedBy] - The user ID who recorded the attendance
-  /// 
+  ///
   /// Returns the created [Attendance] record.
   /// Throws [AttendanceException] if:
   /// - Contact not found
@@ -30,17 +30,17 @@ abstract class AttendanceRepository {
   });
 
   /// Records attendance by phone number (from QR scan).
-  /// 
+  ///
   /// This method will:
   /// 1. Find the contact by phone number
   /// 2. Check for duplicates
   /// 3. Record attendance if valid
-  /// 
+  ///
   /// [phone] - The phone number from QR code
   /// [serviceType] - The type of service
   /// [serviceDate] - The date/time of the service
   /// [recordedBy] - The user ID who recorded the attendance
-  /// 
+  ///
   /// Returns the created [Attendance] record.
   /// Throws [AttendanceException] with type:
   /// - [AttendanceExceptionType.contactNotFound] - No contact with this phone
@@ -58,12 +58,12 @@ abstract class AttendanceRepository {
   Future<Contact?> getContactByPhone(String phone);
 
   /// Creates a quick contact (from QR scan when contact not found).
-  /// 
+  ///
   /// [phone] - The phone number
   /// [name] - The contact name
   /// [isMember] - Whether the contact is a member (default: false)
   /// [location] - The contact location (optional)
-  /// 
+  ///
   /// Returns the created [Contact].
   Future<Contact> createQuickContact({
     required String phone,
@@ -73,7 +73,7 @@ abstract class AttendanceRepository {
   });
 
   /// Checks if attendance already exists for a contact on a specific date and service.
-  /// 
+  ///
   /// Returns true if already marked.
   Future<bool> checkAttendanceExists({
     required int contactId,
@@ -101,16 +101,24 @@ abstract class AttendanceRepository {
   /// Deletes an attendance record.
   Future<void> deleteAttendance(int attendanceId);
 
+  /// Deletes attendance record(s) by phone number and date.
+  /// Used for deleting attendance from history screen.
+  /// Matches all attendance records for the given phone on the given date.
+  Future<void> deleteAttendanceByPhone({
+    required String phone,
+    required DateTime date,
+  });
+
   /// Syncs pending attendance records to the server.
   /// Called by SyncManager when online.
   Future<void> syncPendingRecords();
 
   /// Gets attendance history with contact names for display.
-  /// 
+  ///
   /// [dateFrom] - Start date for filtering (inclusive)
   /// [dateTo] - End date for filtering (inclusive)
   /// [serviceType] - Optional service type filter
-  /// 
+  ///
   /// Returns list of [AttendanceWithContact] containing attendance records with contact names.
   Future<List<AttendanceWithContact>> getAttendanceHistory({
     DateTime? dateFrom,
@@ -119,13 +127,13 @@ abstract class AttendanceRepository {
   });
 
   /// Downloads attendance report as PDF from the server.
-  /// 
+  ///
   /// [dateFrom] - Start date for filtering (inclusive)
   /// [dateTo] - End date for filtering (inclusive)
   /// [serviceType] - Optional service type filter
   /// [date] - Single date for export (takes priority over dateFrom/dateTo)
   ///           Format: YYYY-MM-DD for entire day in SAST timezone
-  /// 
+  ///
   /// Returns the PDF as bytes.
   /// Throws [AttendanceException] if network error.
   Future<Uint8List> downloadAttendancePdf({
