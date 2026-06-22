@@ -1,9 +1,5 @@
 class ApiConstants {
-  // Base URL - Update this with your actual backend URL
-  // For development, you can use your computer's local IP address
-
-  // Server 'http://35.238.27.155:8000'
-  static const String baseUrl = 'http://35.238.27.155:8000';
+  static String get baseUrl => 'https://api.fountainofprayerministries.co.za';
   // Health Check
   static const String health = '/health';
 

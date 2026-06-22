@@ -117,7 +117,7 @@ class ServiceAttendanceOccurrence {
   }
 }
 
-/// Provider for attendance by service type (last 4 occurrences of each)
+/// Provider for attendance by service type (current month only)
 final attendanceByServiceTypeProvider =
     FutureProvider<List<ServiceTypeAttendanceData>>((ref) async {
       // Watch the refresh trigger to rebuild on refresh
@@ -127,29 +127,36 @@ final attendanceByServiceTypeProvider =
 
       final List<ServiceTypeAttendanceData> result = [];
 
-      // Get last 4 occurrences for each service type
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+
+      // Get occurrences for each service type within current month
       for (final serviceType in ServiceType.values) {
         try {
           final attendances = await database.getAttendancesByServiceType(
             serviceType.backendValue,
           );
 
+          // Filter to current month only
+          final monthAttendances = attendances.where((a) {
+            return !a.serviceDate.isBefore(startOfMonth) &&
+                !a.serviceDate.isAfter(endOfMonth);
+          }).toList();
+
           // Group by service date to get unique service dates
           final Map<String, List<AttendanceEntity>> groupedByDate = {};
-          for (final attendance in attendances) {
+          for (final attendance in monthAttendances) {
             final dateKey =
                 '${attendance.serviceDate.year}-${attendance.serviceDate.month}-${attendance.serviceDate.day}';
             groupedByDate.putIfAbsent(dateKey, () => []).add(attendance);
           }
 
-          // Convert to list and sort by date (most recent first)
+          // Convert to list and sort by date (oldest first)
           final sortedDates = groupedByDate.keys.toList()
-            ..sort((a, b) => b.compareTo(a));
+            ..sort((a, b) => a.compareTo(b));
 
-          // Take last 4 occurrences
-          final lastFourDates = sortedDates.take(4).toList();
-
-          final occurrences = lastFourDates.map((dateKey) {
+          final occurrences = sortedDates.map((dateKey) {
             final dateParts = dateKey.split('-');
             final date = DateTime(
               int.parse(dateParts[0]),
@@ -161,9 +168,6 @@ final attendanceByServiceTypeProvider =
               attendanceCount: groupedByDate[dateKey]!.length,
             );
           }).toList();
-
-          // Reverse to show oldest first for the chart
-          occurrences.sort((a, b) => a.serviceDate.compareTo(b.serviceDate));
 
           final totalAttendance = occurrences.fold<int>(
             0,
@@ -770,13 +774,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
           return const SizedBox.shrink();
         }
 
-        // Get max value for scaling
+        // Get max value for scaling — use totalAttendance (same as what bars display)
         int maxCount = 0;
         for (final data in dataList) {
-          for (final occurrence in data.occurrences) {
-            if (occurrence.attendanceCount > maxCount) {
-              maxCount = occurrence.attendanceCount;
-            }
+          if (data.totalAttendance > maxCount) {
+            maxCount = data.totalAttendance;
           }
         }
         final double chartMaxY = (maxCount * 1.18).ceilToDouble().clamp(4.0, double.infinity);
@@ -800,6 +802,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                       'Attendance by Service Type',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      'This Month',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],

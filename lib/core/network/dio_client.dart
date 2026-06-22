@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:dio/dio.dart';
 import 'package:church_attendance_app/core/network/api_constants.dart';
+import 'package:church_attendance_app/core/services/remote_config_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:logger/logger.dart';
 
@@ -18,13 +21,15 @@ class ApiException implements Exception {
 /// Dio HTTP Client for the Church Attendance API.
 /// Provides convenient methods for all API endpoints defined in ENDPOINTS.md.
 class DioClient {
-  late Dio _dio;
+  late final Dio _dio;
   final Logger _logger = Logger();
+  final VoidCallback? onSuccess;
+  final VoidCallback? onFailure;
 
-  DioClient() {
+  DioClient({this.onSuccess, this.onFailure}) {
     _dio = Dio(
       BaseOptions(
-        baseUrl: ApiConstants.baseUrl,
+        baseUrl: RemoteConfigService.apiBaseUrl,
         connectTimeout: ApiConstants.connectTimeout,
         receiveTimeout: ApiConstants.receiveTimeout,
         headers: {
@@ -35,22 +40,18 @@ class DioClient {
     );
 
     _dio.interceptors.add(
-    InterceptorsWrapper(
+      InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Add auth token to all requests
           final prefs = await SharedPreferences.getInstance();
           final token = prefs.getString('access_token');
-          
+
           if (token != null) {
-        
             options.headers['Authorization'] = 'Bearer $token';
-            
             _logger.d('DEBUG DIO: Added Bearer token to request: ${options.method} ${options.path}');
           } else {
             _logger.d('DEBUG DIO: NO TOKEN - Request will be unauthenticated: ${options.method} ${options.path}');
           }
 
-          // Detailed request logging for debugging
           _logger.d('═══════════════════════════════════════════════════════════');
           _logger.d('🌐 REQUEST START');
           _logger.d('═══════════════════════════════════════════════════════════');
@@ -68,7 +69,7 @@ class DioClient {
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          // Detailed response logging for debugging
+          onSuccess?.call();
           _logger.d('═══════════════════════════════════════════════════════════');
           _logger.d('✅ RESPONSE RECEIVED');
           _logger.d('═══════════════════════════════════════════════════════════');
@@ -82,7 +83,7 @@ class DioClient {
           return handler.next(response);
         },
         onError: (error, handler) async {
-          // Detailed error logging for debugging
+          onFailure?.call();
           _logger.e('═══════════════════════════════════════════════════════════');
           _logger.e('❌ ERROR OCCURRED');
           _logger.e('═══════════════════════════════════════════════════════════');
@@ -97,9 +98,7 @@ class DioClient {
           }
           _logger.e('═══════════════════════════════════════════════════════════');
 
-          // Handle 401 Unauthorized - Token expired
           if (error.response?.statusCode == 401) {
-            
             final prefs = await SharedPreferences.getInstance();
             await prefs.remove('access_token');
           }
@@ -109,7 +108,6 @@ class DioClient {
       ),
     );
 
-    // Add logging interceptor in debug mode
     _dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
@@ -558,4 +556,3 @@ class DioClient {
     }
   }
 }
- 

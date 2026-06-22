@@ -6,19 +6,32 @@ import 'package:church_attendance_app/core/navigation/app_navigator.dart';
 import 'package:church_attendance_app/core/presentation/providers/theme_mode_provider.dart';
 import 'package:church_attendance_app/core/services/location_service.dart';
 import 'package:church_attendance_app/core/services/location_preferences_service.dart';
+import 'package:church_attendance_app/core/presentation/widgets/offline_banner.dart';
 import 'package:church_attendance_app/features/contacts/presentation/widgets/vcf_share_intent_handler.dart';
 import 'package:church_attendance_app/features/splash/presentation/screens/splash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+ 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:church_attendance_app/firebase_options.dart';
+import 'package:church_attendance_app/core/services/remote_config_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Initialize shared preferences first (needed for DioClient interceptor)
+  final prefs = await SharedPreferences.getInstance();
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Initialize Remote Config (fetches the API base URL from server)
+  await RemoteConfigService.initialize();
+
   // Initialize database
   final database = AppDatabase();
-  
-  // Initialize shared preferences
-  final prefs = await SharedPreferences.getInstance();
-  
+
   runApp(
     ProviderScope(
       overrides: [
@@ -72,6 +85,14 @@ class ChurchAttendanceApp extends ConsumerWidget {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: themeMode,
+        builder: (context, child) {
+          return Column(
+            children: [
+              const OfflineBanner(),
+              Expanded(child: child!),
+            ],
+          );
+        },
         // Always start with SplashScreen - let VcfShareIntentHandler
         // handle showing the import dialog when VCF is detected
         home: const SplashScreen(),

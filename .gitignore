@@ -1,4 +1,4 @@
-# Miscellaneous
+In this section # Miscellaneous
 *.class
 *.log
 *.pyc
@@ -46,3 +46,7 @@ app.*.map.json
 
 # Release APKs
 /release
+
+# Kilo workspace metadata
+.kilo/
+

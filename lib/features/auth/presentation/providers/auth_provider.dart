@@ -8,6 +8,7 @@ import 'package:church_attendance_app/features/auth/domain/repositories/auth_rep
 import 'package:church_attendance_app/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:church_attendance_app/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:church_attendance_app/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:church_attendance_app/core/services/connection_status_service.dart';
 
 /// Auth state to track authentication status and user data.
 class AuthState {
@@ -46,7 +47,11 @@ class AuthState {
 
 /// Provider for DioClient instance
 final dioClientProvider = Provider<DioClient>((ref) {
-  return DioClient();
+  final connectionStatus = ref.watch(connectionStatusProvider.notifier);
+  return DioClient(
+    onSuccess: () => connectionStatus.recordSuccess(),
+    onFailure: () => connectionStatus.recordFailure(),
+  );
 });
 
 /// Provider for AuthLocalDataSource
