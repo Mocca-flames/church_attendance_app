@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/core/enums/service_type.dart';
+import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 import 'package:church_attendance_app/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -81,6 +82,18 @@ class AttendanceHistoryNotifier extends Notifier<AttendanceHistoryState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
+      // Pull fresh data from server first to ensure we have latest attendance
+      final syncManager = ref.read(syncManagerProvider);
+      try {
+        await syncManager.pullAttendance(
+          date: state.dateFrom,
+          serviceType: state.selectedServiceType,
+        );
+      } catch (e) {
+        // Continue with local data if pull fails
+      }
+
+      // Then load from local database
       final attendances = await _repository.getAttendanceHistory(
         dateFrom: state.dateFrom,
         dateTo: state.dateTo,

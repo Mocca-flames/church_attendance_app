@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/sync/sync_manager.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
@@ -10,15 +11,13 @@ import 'package:church_attendance_app/features/contacts/presentation/providers/t
 import 'package:church_attendance_app/features/home/presentation/providers/dashboard_providers.dart';
 import 'package:church_attendance_app/main.dart';
 
-
-
 /// Provider for SyncManager instance.
-/// 
+///
 /// The SyncManager handles:
 /// - Pulling contacts from server to local DB
 /// - Syncing pending items to server
 /// - Checking internet connectivity
-/// 
+///
 /// Usage:
 /// ```dart
 /// final syncManager = ref.read(syncManagerProvider);
@@ -40,7 +39,9 @@ final connectivityProvider = FutureProvider<bool>((ref) async {
 
 /// StreamProvider for monitoring connectivity changes.
 /// This allows the app to react when the device goes online/offline.
-final connectivityStreamProvider = StreamProvider<List<ConnectivityResult>>((ref) {
+final connectivityStreamProvider = StreamProvider<List<ConnectivityResult>>((
+  ref,
+) {
   return Connectivity().onConnectivityChanged;
 });
 
@@ -87,6 +88,8 @@ class IsOnlineNotifier extends Notifier<bool> {
     try {
       // Pull fresh contacts from server when coming online
       await ref.read(syncStatusProvider.notifier).pullContacts();
+      // Pull attendance from server (critical for multi-user scenarios)
+      await ref.read(syncStatusProvider.notifier).pullAttendance();
       // Also sync pending items to server
       await ref.read(syncStatusProvider.notifier).syncAll();
       // Aggressively clean up failed sync items when online and refresh pending count
@@ -100,6 +103,7 @@ class IsOnlineNotifier extends Notifier<bool> {
     }
   }
 }
+
 final pendingSyncCountProvider = FutureProvider<int>((ref) async {
   final syncManager = ref.watch(syncManagerProvider);
   return syncManager.getPendingSyncCount();
@@ -110,11 +114,11 @@ final pendingSyncCountProvider = FutureProvider<int>((ref) async {
 final contactsNeedSyncProvider = FutureProvider<bool>((ref) async {
   final database = ref.watch(databaseProvider);
   final syncManager = ref.watch(syncManagerProvider);
-  
+
   // Check if device has internet
   final hasConnection = await syncManager.hasInternetConnection();
   if (!hasConnection) return false; // Can't sync without internet
-  
+
   // Check local contact count
   final count = await database.getContactCount();
   return count == 0; // Need sync if no contacts
@@ -157,9 +161,13 @@ class SyncStatus {
       lastSyncTime: lastSyncTime ?? this.lastSyncTime,
       pendingCount: pendingCount ?? this.pendingCount,
       error: clearError ? null : (error ?? this.error),
-      currentProgress: clearProgress ? 0 : (currentProgress ?? this.currentProgress),
+      currentProgress: clearProgress
+          ? 0
+          : (currentProgress ?? this.currentProgress),
       totalProgress: clearProgress ? 0 : (totalProgress ?? this.totalProgress),
-      progressMessage: clearProgress ? null : (progressMessage ?? this.progressMessage),
+      progressMessage: clearProgress
+          ? null
+          : (progressMessage ?? this.progressMessage),
     );
   }
 
@@ -203,12 +211,12 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
   void _invalidateDataProviders() {
     // Trigger the dashboard refresh
     ref.read(dashboardRefreshTriggerProvider.notifier).triggerRefresh();
-    
+
     // Contact list providers
     ref.invalidate(contactListProvider);
     ref.invalidate(offlineContactCountProvider);
     ref.invalidate(offlineContactStoreInfoProvider);
-    
+
     // Tag statistics providers
     ref.invalidate(tagDistributionProvider);
     ref.invalidate(locationTagDistributionProvider);
@@ -216,7 +224,7 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
     ref.invalidate(membershipDistributionProvider);
     ref.invalidate(totalContactCountProvider);
     ref.invalidate(dynamicLocationTagDistributionProvider);
-    
+
     // Attendance providers (Home screen)
     // Note: These are invalidated in HomeScreen's _refreshDataProviders method
     // Include basic providers that may exist here
@@ -230,7 +238,7 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
     bool showProgress = true,
   }) async {
     state = state.copyWith(
-      isSyncing: true, 
+      isSyncing: true,
       clearError: true,
       clearProgress: true,
     );
@@ -246,12 +254,12 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
           );
         }
       }
-      
+
       await _syncManager.pullContacts(
         forceFullSync: forceFullSync,
         progressCallback: onProgress,
       );
-      
+
       // Extract and sync new locations from contacts after pulling
       // This ensures new location tags from server appear in the Contact Edit Screen
       try {
@@ -260,10 +268,10 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
       } catch (e) {
         // Location sync failed - continue, locations will sync on next sync
       }
-      
+
       // Invalidate data providers to refresh UI with new data
       _invalidateDataProviders();
-      
+
       state = state.copyWith(
         isSyncing: false,
         lastSyncTime: DateTime.now(),
@@ -284,10 +292,10 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
 
     try {
       final result = await _syncManager.syncAll();
-      
+
       // Aggressively clean up any failed items after sync
       await _syncManager.aggressiveCleanupWhenOnline();
-      
+
       // Get fresh pending count after cleanup
       final pendingCount = await _syncManager.getPendingSyncCount();
 
@@ -304,10 +312,7 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
       );
     } catch (e) {
       // Also reset isSyncing on exception to prevent stuck dialog
-      state = state.copyWith(
-        isSyncing: false,
-        error: 'Sync failed: $e',
-      );
+      state = state.copyWith(isSyncing: false, error: 'Sync failed: $e');
     }
   }
 
@@ -316,17 +321,28 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
     final count = await _syncManager.getPendingSyncCount();
     state = state.copyWith(pendingCount: count);
   }
+
+  /// Pull attendance data from server.
+  /// Critical for multi-user scenarios where users need to see
+  /// when contacts have already been marked by other users.
+  Future<void> pullAttendance() async {
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      await _syncManager.pullAttendance(date: today);
+    } catch (e) {
+      // Silently fail - will retry on next sync
+    }
+  }
 }
 
 /// Provider for SyncStatusNotifier.
-final syncStatusProvider =
-    NotifierProvider<SyncStatusNotifier, SyncStatus>(() {
+final syncStatusProvider = NotifierProvider<SyncStatusNotifier, SyncStatus>(() {
   return SyncStatusNotifier();
 });
 
 /// Provider for periodic sync timer.
-final periodicSyncProvider =
-    NotifierProvider<PeriodicSyncNotifier, Timer?>(() {
+final periodicSyncProvider = NotifierProvider<PeriodicSyncNotifier, Timer?>(() {
   return PeriodicSyncNotifier();
 });
 
@@ -350,7 +366,9 @@ extension SyncModeExtension on SyncMode {
   Duration get interval {
     switch (this) {
       case SyncMode.active:
-        return const Duration(seconds: 100); // Faster for active/home screen usage
+        return const Duration(
+          seconds: 100,
+        ); // Faster for active/home screen usage
       case SyncMode.normal:
         return const Duration(hours: 1);
       case SyncMode.background:
@@ -379,7 +397,8 @@ class SmartSyncState {
     return SmartSyncState(
       mode: mode ?? this.mode,
       lastActivity: lastActivity ?? this.lastActivity,
-      isImmediateSyncPending: isImmediateSyncPending ?? this.isImmediateSyncPending,
+      isImmediateSyncPending:
+          isImmediateSyncPending ?? this.isImmediateSyncPending,
     );
   }
 }
@@ -395,6 +414,15 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
 
   @override
   SmartSyncState build() {
+    // Check initial home screen state and set mode accordingly
+    final isOnHome = ref.watch(isOnHomeScreenProvider);
+    if (isOnHome) {
+      // If already on home screen when provider is created, set active mode
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _setHomeScreenMode();
+      });
+    }
+
     // Listen to home screen state changes
     ref.listen<bool>(isOnHomeScreenProvider, (previous, next) {
       if (next) {
@@ -405,7 +433,7 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
         setNormalMode();
       }
     });
-    
+
     ref.onDispose(() {
       _inactivityTimer?.cancel();
     });
@@ -416,7 +444,7 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
   void _setHomeScreenMode() {
     _inactivityTimer?.cancel();
     state = state.copyWith(mode: SyncMode.active, lastActivity: DateTime.now());
-    
+
     // Restart periodic sync with faster interval for dashboard
     _restartPeriodicSync(interval: const Duration(seconds: 30));
   }
@@ -425,7 +453,7 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
   void setActiveMode() {
     _inactivityTimer?.cancel();
     state = state.copyWith(mode: SyncMode.active, lastActivity: DateTime.now());
-    
+
     // Restart periodic sync with new interval
     _restartPeriodicSync();
   }
@@ -434,7 +462,7 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
   void setNormalMode() {
     _inactivityTimer?.cancel();
     state = state.copyWith(mode: SyncMode.normal, lastActivity: DateTime.now());
-    
+
     // Restart periodic sync with new interval
     _restartPeriodicSync();
   }
@@ -442,8 +470,11 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
   /// Set sync mode to background (e.g., when app goes to background)
   void setBackgroundMode() {
     _inactivityTimer?.cancel();
-    state = state.copyWith(mode: SyncMode.background, lastActivity: DateTime.now());
-    
+    state = state.copyWith(
+      mode: SyncMode.background,
+      lastActivity: DateTime.now(),
+    );
+
     // Restart periodic sync with new interval
     _restartPeriodicSync();
   }
@@ -451,7 +482,7 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
   /// Record activity and reset inactivity timer
   void recordActivity() {
     state = state.copyWith(lastActivity: DateTime.now());
-    
+
     // If in active mode, start timer to eventually return to normal
     if (state.mode == SyncMode.active) {
       _startInactivityTimer();
@@ -487,6 +518,8 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
     try {
       // Pull fresh contacts from server first
       await ref.read(syncStatusProvider.notifier).pullContacts();
+      // Pull attendance from server (critical for multi-user scenarios)
+      await ref.read(syncStatusProvider.notifier).pullAttendance();
       // Then sync pending items to server
       await ref.read(syncStatusProvider.notifier).syncAll();
       state = state.copyWith(isImmediateSyncPending: false);
@@ -505,9 +538,11 @@ class SmartSyncNotifier extends Notifier<SmartSyncState> {
 }
 
 /// Provider for SmartSyncNotifier
-final smartSyncProvider = NotifierProvider<SmartSyncNotifier, SmartSyncState>(() {
-  return SmartSyncNotifier();
-});
+final smartSyncProvider = NotifierProvider<SmartSyncNotifier, SmartSyncState>(
+  () {
+    return SmartSyncNotifier();
+  },
+);
 
 /// Provider for managing periodic background sync.
 /// This starts a timer that syncs contacts and pending items based on current sync mode.
@@ -550,7 +585,7 @@ class PeriodicSyncNotifier extends Notifier<Timer?> {
 final immediateSyncOnReconnectProvider = Provider<void>((ref) {
   final isOnline = ref.watch(isOnlineProvider);
   final smartSync = ref.watch(smartSyncProvider);
-  
+
   // When coming online and there's a pending immediate sync, trigger it
   if (isOnline && smartSync.isImmediateSyncPending) {
     // Use a microtask to avoid provider rebuild issues

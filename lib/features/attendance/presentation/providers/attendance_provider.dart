@@ -42,7 +42,9 @@ class AttendanceState {
     return AttendanceState(
       isLoading: isLoading ?? this.isLoading,
       isSyncing: isSyncing ?? this.isSyncing,
-      lastRecorded: clearLastRecorded ? null : (lastRecorded ?? this.lastRecorded),
+      lastRecorded: clearLastRecorded
+          ? null
+          : (lastRecorded ?? this.lastRecorded),
       error: clearError ? null : (error ?? this.error),
       syncError: clearSyncError ? null : (syncError ?? this.syncError),
       recentRecords: recentRecords ?? this.recentRecords,
@@ -51,26 +53,32 @@ class AttendanceState {
 }
 
 /// Provider for AttendanceLocalDataSource
-final attendanceLocalDataSourceProvider = Provider<AttendanceLocalDataSource>((ref) {
+final attendanceLocalDataSourceProvider = Provider<AttendanceLocalDataSource>((
+  ref,
+) {
   final database = ref.watch(databaseProvider);
   return AttendanceLocalDataSource(database);
 });
 
 /// Provider for AttendanceRemoteDataSource
-final attendanceRemoteDataSourceProvider = Provider<AttendanceRemoteDataSource>((ref) {
-  final dioClient = ref.watch(dioClientProvider);
-  return AttendanceRemoteDataSource(dioClient);
-});
+final attendanceRemoteDataSourceProvider = Provider<AttendanceRemoteDataSource>(
+  (ref) {
+    final dioClient = ref.watch(dioClientProvider);
+    return AttendanceRemoteDataSource(dioClient);
+  },
+);
 
 /// Provider for AttendanceRepository
 final attendanceRepositoryProvider = Provider<AttendanceRepository>((ref) {
   final localDataSource = ref.watch(attendanceLocalDataSourceProvider);
   final remoteDataSource = ref.watch(attendanceRemoteDataSourceProvider);
   final dioClient = ref.watch(dioClientProvider);
+  final database = ref.watch(databaseProvider);
   return AttendanceRepositoryImpl(
     localDataSource: localDataSource,
     remoteDataSource: remoteDataSource,
     dioClient: dioClient,
+    db: database,
   );
 });
 
@@ -143,41 +151,44 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     await _triggerSuccessHaptic();
 
     // Run actual repository call in background
-    _repository.recordAttendance(
-      contactId: contactId,
-      phone: phone,
-      serviceType: serviceType,
-      serviceDate: serviceDate,
-      recordedBy: recordedBy,
-    ).then((attendance) {
-      // On success: update with actual attendance data
-      // Replace optimistic record with actual record
-      final updatedRecords = state.recentRecords.map((r) {
-        if (r.contactId == attendance.contactId &&
-            r.serviceType == attendance.serviceType &&
-            r.serviceDate.year == attendance.serviceDate.year &&
-            r.serviceDate.month == attendance.serviceDate.month &&
-            r.serviceDate.day == attendance.serviceDate.day) {
-          return attendance;
-        }
-        return r;
-      }).toList();
+    _repository
+        .recordAttendance(
+          contactId: contactId,
+          phone: phone,
+          serviceType: serviceType,
+          serviceDate: serviceDate,
+          recordedBy: recordedBy,
+        )
+        .then((attendance) {
+          // On success: update with actual attendance data
+          // Replace optimistic record with actual record
+          final updatedRecords = state.recentRecords.map((r) {
+            if (r.contactId == attendance.contactId &&
+                r.serviceType == attendance.serviceType &&
+                r.serviceDate.year == attendance.serviceDate.year &&
+                r.serviceDate.month == attendance.serviceDate.month &&
+                r.serviceDate.day == attendance.serviceDate.day) {
+              return attendance;
+            }
+            return r;
+          }).toList();
 
-      state = state.copyWith(
-        isSyncing: false,
-        lastRecorded: attendance,
-        recentRecords: updatedRecords,
-      );
-    }).catchError((error) {
-      // On error: show subtle sync error but keep optimistic data in UI
-      final errorMessage = error is AttendanceException
-          ? error.message
-          : error.toString();
-      state = state.copyWith(
-        isSyncing: false,
-        syncError: 'Sync pending: $errorMessage',
-      );
-    });
+          state = state.copyWith(
+            isSyncing: false,
+            lastRecorded: attendance,
+            recentRecords: updatedRecords,
+          );
+        })
+        .catchError((error) {
+          // On error: show subtle sync error but keep optimistic data in UI
+          final errorMessage = error is AttendanceException
+              ? error.message
+              : error.toString();
+          state = state.copyWith(
+            isSyncing: false,
+            syncError: 'Sync pending: $errorMessage',
+          );
+        });
 
     // Return optimistic attendance immediately
     return optimisticAttendance;
@@ -217,40 +228,43 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     await _triggerSuccessHaptic();
 
     // Run actual repository call in background
-    _repository.recordAttendanceByPhone(
-      phone: phone,
-      serviceType: serviceType,
-      serviceDate: serviceDate,
-      recordedBy: recordedBy,
-    ).then((attendance) {
-      // On success: update with actual attendance data
-      // Replace optimistic record with actual record
-      final updatedRecords = state.recentRecords.map((r) {
-        if (r.phone == attendance.phone &&
-            r.serviceType == attendance.serviceType &&
-            r.serviceDate.year == attendance.serviceDate.year &&
-            r.serviceDate.month == attendance.serviceDate.month &&
-            r.serviceDate.day == attendance.serviceDate.day) {
-          return attendance;
-        }
-        return r;
-      }).toList();
+    _repository
+        .recordAttendanceByPhone(
+          phone: phone,
+          serviceType: serviceType,
+          serviceDate: serviceDate,
+          recordedBy: recordedBy,
+        )
+        .then((attendance) {
+          // On success: update with actual attendance data
+          // Replace optimistic record with actual record
+          final updatedRecords = state.recentRecords.map((r) {
+            if (r.phone == attendance.phone &&
+                r.serviceType == attendance.serviceType &&
+                r.serviceDate.year == attendance.serviceDate.year &&
+                r.serviceDate.month == attendance.serviceDate.month &&
+                r.serviceDate.day == attendance.serviceDate.day) {
+              return attendance;
+            }
+            return r;
+          }).toList();
 
-      state = state.copyWith(
-        isSyncing: false,
-        lastRecorded: attendance,
-        recentRecords: updatedRecords,
-      );
-    }).catchError((error) {
-      // On error: show subtle sync error but keep optimistic data in UI
-      final errorMessage = error is AttendanceException
-          ? error.message
-          : error.toString();
-      state = state.copyWith(
-        isSyncing: false,
-        syncError: 'Sync pending: $errorMessage',
-      );
-    });
+          state = state.copyWith(
+            isSyncing: false,
+            lastRecorded: attendance,
+            recentRecords: updatedRecords,
+          );
+        })
+        .catchError((error) {
+          // On error: show subtle sync error but keep optimistic data in UI
+          final errorMessage = error is AttendanceException
+              ? error.message
+              : error.toString();
+          state = state.copyWith(
+            isSyncing: false,
+            syncError: 'Sync pending: $errorMessage',
+          );
+        });
 
     // Return optimistic attendance immediately
     return optimisticAttendance;
@@ -301,63 +315,63 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
     );
 
     // Run actual operations in background
-    _repository.createQuickContact(
-      phone: phone,
-      name: name,
-      isMember: isMember,
-      location: location,
-    ).then((contact) async {
-      // Check if attendance already exists
-      final alreadyMarked = await _repository.checkAttendanceExists(
-        contactId: contact.id,
-        date: serviceDate,
-        serviceType: serviceType,
-      );
+    _repository
+        .createQuickContact(
+          phone: phone,
+          name: name,
+          isMember: isMember,
+          location: location,
+        )
+        .then((contact) async {
+          // Check if attendance already exists
+          final alreadyMarked = await _repository.checkAttendanceExists(
+            contactId: contact.id,
+            date: serviceDate,
+            serviceType: serviceType,
+          );
 
-      if (alreadyMarked) {
-        state = state.copyWith(
-          isSyncing: false,
-          lastRecorded: null,
-        );
-        return;
-      }
+          if (alreadyMarked) {
+            state = state.copyWith(isSyncing: false, lastRecorded: null);
+            return;
+          }
 
-      // Record attendance
-      final attendance = await _repository.recordAttendance(
-        contactId: contact.id,
-        phone: phone,
-        serviceType: serviceType,
-        serviceDate: serviceDate,
-        recordedBy: recordedBy,
-      );
+          // Record attendance
+          final attendance = await _repository.recordAttendance(
+            contactId: contact.id,
+            phone: phone,
+            serviceType: serviceType,
+            serviceDate: serviceDate,
+            recordedBy: recordedBy,
+          );
 
-      // Replace optimistic record with actual record
-      final updatedRecords = state.recentRecords.map((r) {
-        if (r.phone == attendance.phone &&
-            r.serviceType == attendance.serviceType &&
-            r.serviceDate.year == attendance.serviceDate.year &&
-            r.serviceDate.month == attendance.serviceDate.month &&
-            r.serviceDate.day == attendance.serviceDate.day) {
-          return attendance;
-        }
-        return r;
-      }).toList();
+          // Replace optimistic record with actual record
+          final updatedRecords = state.recentRecords.map((r) {
+            if (r.phone == attendance.phone &&
+                r.serviceType == attendance.serviceType &&
+                r.serviceDate.year == attendance.serviceDate.year &&
+                r.serviceDate.month == attendance.serviceDate.month &&
+                r.serviceDate.day == attendance.serviceDate.day) {
+              return attendance;
+            }
+            return r;
+          }).toList();
 
-      state = state.copyWith(
-        isSyncing: false,
-        lastRecorded: attendance,
-        recentRecords: updatedRecords,
-      );
-    }).catchError((error) {
-      // On error: show subtle sync error but keep optimistic data in UI
-      final errorMessage = error is AttendanceException
-          ? error.message
-          : error.toString();
-      state = state.copyWith(
-        isSyncing: false,
-        syncError: 'Sync pending: $errorMessage',
-      );
-    });
+          state = state.copyWith(
+            isSyncing: false,
+            lastRecorded: attendance,
+            recentRecords: updatedRecords,
+          );
+        })
+        .catchError((error) {
+          // On error: show subtle sync error but keep optimistic data in UI
+          final errorMessage = error is AttendanceException
+              ? error.message
+              : error.toString();
+          state = state.copyWith(
+            isSyncing: false,
+            syncError: 'Sync pending: $errorMessage',
+          );
+        });
 
     return optimisticResult;
   }
@@ -407,6 +421,7 @@ class AttendanceNotifier extends Notifier<AttendanceState> {
 }
 
 /// Provider for AttendanceNotifier
-final attendanceProvider = NotifierProvider<AttendanceNotifier, AttendanceState>(() {
-  return AttendanceNotifier();
-});
+final attendanceProvider =
+    NotifierProvider<AttendanceNotifier, AttendanceState>(() {
+      return AttendanceNotifier();
+    });

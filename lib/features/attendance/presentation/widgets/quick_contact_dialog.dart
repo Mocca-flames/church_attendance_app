@@ -4,6 +4,7 @@ import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 import 'package:church_attendance_app/core/widgets/gradient_button.dart';
 import 'package:church_attendance_app/features/attendance/presentation/providers/attendance_provider.dart';
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
+import 'package:church_attendance_app/features/contacts/presentation/widgets/location_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/main.dart';
@@ -54,14 +55,13 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
-  late final TextEditingController _locationController;
-  
-  
+
   bool _isMember = false;
   bool _isLoading = false;
-  bool _showLocationField = true;
+  bool _showLocationSelector = false;
+  String? _selectedLocation;
   Contact? _existingContact;
-  
+
   GradientButtonState get buttonState {
     if (_isLoading) {
       return GradientButtonState.loading;
@@ -74,8 +74,7 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
     super.initState();
     _nameController = TextEditingController();
     _phoneController = TextEditingController(text: widget.phone);
-    _locationController = TextEditingController();
-    
+
     // Check if contact exists and has location
     _checkExistingContact();
   }
@@ -83,7 +82,7 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
   Future<void> _checkExistingContact() async {
     final database = ref.read(databaseProvider);
     final contactData = await database.getContactByPhone(widget.phone);
-    
+
     if (contactData != null && mounted) {
       // Convert to JSON and parse as Contact
       final json = contactData.toJson();
@@ -93,18 +92,21 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
       if (json.containsKey('createdAt') && !json.containsKey('created_at')) {
         json['created_at'] = json.remove('createdAt');
       }
-      
+
       try {
         final contact = Contact.fromJson(json);
         setState(() {
           _existingContact = contact;
-          // Hide location field if contact already has a location
-          _showLocationField = !contact.hasLocation;
+          // Hide location selector if contact already has a location
+          _showLocationSelector = !contact.hasLocation;
+          if (contact.hasLocation) {
+            _selectedLocation = contact.location;
+          }
         });
       } catch (e) {
-        // If parsing fails, show location field
+        // If parsing fails, show location selector
         setState(() {
-          _showLocationField = true;
+          _showLocationSelector = true;
         });
       }
     }
@@ -114,40 +116,39 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _locationController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     // Hide keyboard
     FocusScope.of(context).unfocus();
 
     // Capture context-dependent objects BEFORE async gap
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    
 
     setState(() => _isLoading = true);
 
     try {
-      final result = await ref.read(attendanceProvider.notifier)
+      final result = await ref
+          .read(attendanceProvider.notifier)
           .createContactAndRecordAttendance(
-        phone: _phoneController.text.trim(),
-        name: _nameController.text.trim(),
-        serviceType: widget.serviceType,
-        serviceDate: widget.serviceDate,
-        recordedBy: widget.recordedBy,
-        isMember: _isMember,
-        location: _locationController.text.trim().isEmpty 
-            ? null 
-            : _locationController.text.trim(),
-      );
+            phone: _phoneController.text.trim(),
+            name: _nameController.text.trim(),
+            serviceType: widget.serviceType,
+            serviceDate: widget.serviceDate,
+            recordedBy: widget.recordedBy,
+            isMember: _isMember,
+            location: _selectedLocation,
+          );
 
       // Validate widget is still mounted before using captured references
       if (!mounted) {
-        debugPrint('_QuickContactSheet: Widget unmounted after async, aborting UI update');
+        debugPrint(
+          '_QuickContactSheet: Widget unmounted after async, aborting UI update',
+        );
         return;
       }
 
@@ -155,18 +156,20 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
         // Contact saved but already marked for today
         scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: const Text('Contact saved! Already marked for this service today.'),
+            content: const Text(
+              'Contact saved! Already marked for this service today.',
+            ),
             behavior: SnackBarBehavior.floating,
             backgroundColor: Theme.of(context).colorScheme.errorContainer,
           ),
         );
         await HapticService.medium();
-        
+
         // Trigger immediate sync to push new contact to server
         Future.microtask(() {
           ref.read(smartSyncProvider.notifier).triggerImmediateSync();
         });
-        
+
         navigator.pop(result);
       } else if (result.error != null) {
         // Show error
@@ -183,36 +186,41 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
         final contactName = _nameController.text.trim();
         scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('Contact saved and attendance recorded for $contactName!'),
+            content: Text(
+              'Contact saved and attendance recorded for $contactName!',
+            ),
             behavior: SnackBarBehavior.floating,
             backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
         await HapticService.medium();
-        
+
         // Trigger immediate sync to push new contact and attendance to server
         Future.microtask(() {
           ref.read(smartSyncProvider.notifier).triggerImmediateSync();
         });
-        
+
         navigator.pop(result);
       }
     } catch (e) {
       String friendlyMessage;
-      if (e.toString().contains('SocketException') || e.toString().contains('Connection')) {
+      if (e.toString().contains('SocketException') ||
+          e.toString().contains('Connection')) {
         friendlyMessage = 'No internet connection. Attendance saved locally.';
       } else if (e.toString().contains('already marked')) {
         friendlyMessage = 'Already marked for this service';
       } else {
         friendlyMessage = 'Something went wrong. Please try again.';
       }
-      
+
       // Validate widget is still mounted before using captured reference
       if (!mounted) {
-        debugPrint('_QuickContactSheet: Widget unmounted in catch block, aborting UI update');
+        debugPrint(
+          '_QuickContactSheet: Widget unmounted in catch block, aborting UI update',
+        );
         return;
       }
-      
+
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(friendlyMessage),
@@ -266,9 +274,13 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close, color: theme.colorScheme.onSurfaceVariant),
+                    icon: Icon(
+                      Icons.close,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                     style: IconButton.styleFrom(
-                      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                      backgroundColor:
+                          theme.colorScheme.surfaceContainerHighest,
                     ),
                   ),
                 ],
@@ -281,9 +293,8 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
                 label: 'Phone Number',
                 icon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
-                validator: (value) => (value?.length ?? 0) < 2 
-                    ? 'Invalid phone number' 
-                    : null,
+                validator: (value) =>
+                    (value?.length ?? 0) < 2 ? 'Invalid phone number' : null,
               ),
               const SizedBox(height: 16),
 
@@ -293,68 +304,96 @@ class _QuickContactSheetState extends ConsumerState<_QuickContactSheet> {
                 label: 'Full Name',
                 icon: Icons.person_outline_rounded,
                 textCapitalization: TextCapitalization.words,
-                validator: (value) => (value?.isEmpty ?? true) 
-                    ? 'Name is required' 
-                    : null,
+                validator: (value) =>
+                    (value?.isEmpty ?? true) ? 'Name is required' : null,
               ),
               const SizedBox(height: 16),
 
-              // Location Field - only show if contact doesn't have location
-              if (_showLocationField) ...[
-                _ModernTextField(
-                  controller: _locationController,
-                  label: 'Location (Optional)',
-                  icon: Icons.location_on_outlined,
-                  textCapitalization: TextCapitalization.words,
-                  isLast: true,
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              // Show info if contact has existing location
-              if (_existingContact?.hasLocation == true)
+              // Location Section
+              if (_existingContact?.hasLocation == true && !_showLocationSelector) ...[
+                // Show existing location with option to change
                 Container(
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.tertiaryContainer,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.tertiary.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.location_on, color: Theme.of(context).colorScheme.onTertiaryContainer, size: 20),
+                      Icon(
+                        Icons.location_on,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onTertiaryContainer,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Location: ${_existingContact!.location}',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onTertiaryContainer,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onTertiaryContainer,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
+                      TextButton(
+                        onPressed: () => setState(() => _showLocationSelector = true),
+                        child: const Text('Change'),
+                      ),
                     ],
                   ),
                 ),
+              ] else ...[
+                // Show location selector
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Location (Optional)',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    LocationSelector(
+                      selectedLocation: _selectedLocation,
+                      onLocationSelected: (location) {
+                        setState(() => _selectedLocation = location);
+                      },
+                      compact: true,
+                      showDeleteOption: false,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // Modern Checkbox (Selectable Card)
               _ModernMembershipSelector(
                 isMember: _isMember,
                 onChanged: (val) => setState(() => _isMember = val),
               ),
-              
+
               const SizedBox(height: 32),
 
               // Submit Button
-              
               GradientButton(
-                  onPressed: _isLoading ? null : _submit,
-                  state: buttonState,
-                  isFullWidth: true,
-                  text: 'Save & Mark',
-                  errorText: 'Error saving contact',
-                ),
+                onPressed: _isLoading ? null : _submit,
+                state: buttonState,
+                isFullWidth: true,
+                text: 'Save & Mark',
+                errorText: 'Error saving contact',
+              ),
             ],
           ),
         ),
@@ -381,13 +420,14 @@ class _ModernTextField extends StatelessWidget {
     this.keyboardType,
     this.textCapitalization = TextCapitalization.none,
     this.validator,
+    // ignore: unused_element_parameter
     this.isLast = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -396,7 +436,11 @@ class _ModernTextField extends StatelessWidget {
       style: const TextStyle(fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, size: 22, color: theme.colorScheme.onSurfaceVariant),
+        prefixIcon: Icon(
+          icon,
+          size: 22,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
         filled: true,
         fillColor: theme.colorScheme.surfaceContainerHighest,
         border: OutlineInputBorder(
@@ -409,21 +453,15 @@ class _ModernTextField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: theme.primaryColor,
-            width: 1.5
-          ),
+          borderSide: BorderSide(color: theme.primaryColor, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: theme.colorScheme.error,
-            width: 1.5
-          ),
+          borderSide: BorderSide(color: theme.colorScheme.error, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
-          vertical: 18
+          vertical: 18,
         ),
       ),
       validator: validator,
@@ -470,13 +508,15 @@ class _ModernMembershipSelector extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isMember
-                    ? activeColor.withValues(alpha:0.15)
+                    ? activeColor.withValues(alpha: 0.15)
                     : colorScheme.surfaceContainerHighest,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.contact_phone_rounded,
-                color: isMember ? colorScheme.secondary : colorScheme.onSurfaceVariant,
+                color: isMember
+                    ? colorScheme.secondary
+                    : colorScheme.onSurfaceVariant,
                 size: 24,
               ),
             ),
@@ -490,7 +530,9 @@ class _ModernMembershipSelector extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
-                      color: isMember ? colorScheme.secondary : colorScheme.onSurface,
+                      color: isMember
+                          ? colorScheme.secondary
+                          : colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -498,7 +540,9 @@ class _ModernMembershipSelector extends StatelessWidget {
                     'Is this person a registered member?',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -509,7 +553,9 @@ class _ModernMembershipSelector extends StatelessWidget {
               height: 24,
               width: 24,
               decoration: BoxDecoration(
-                color: isMember ? colorScheme.secondary : colorScheme.surfaceContainerHighest,
+                color: isMember
+                    ? colorScheme.secondary
+                    : colorScheme.surfaceContainerHighest,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isMember ? colorScheme.secondary : colorScheme.outline,

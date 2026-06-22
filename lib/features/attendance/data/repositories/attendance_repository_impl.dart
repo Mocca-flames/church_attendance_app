@@ -9,6 +9,7 @@ import 'package:church_attendance_app/features/attendance/domain/models/attendan
 import 'package:church_attendance_app/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:church_attendance_app/features/contacts/domain/models/contact.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:drift/drift.dart' as drift;
 
 /// Implementation of [AttendanceRepository].
 ///
@@ -20,14 +21,17 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   final AttendanceLocalDataSource _localDataSource;
   final AttendanceRemoteDataSource _remoteDataSource;
   final DioClient _dioClient;
+  final AppDatabase _db;
 
   AttendanceRepositoryImpl({
     required AttendanceLocalDataSource localDataSource,
     required AttendanceRemoteDataSource remoteDataSource,
     required DioClient dioClient,
+    required AppDatabase db,
   }) : _localDataSource = localDataSource,
        _remoteDataSource = remoteDataSource,
-       _dioClient = dioClient;
+       _dioClient = dioClient,
+       _db = db;
 
   @override
   Future<Attendance> recordAttendance({
@@ -479,5 +483,85 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     return lowerMessage.contains('already recorded') ||
         lowerMessage.contains('already exists') ||
         lowerMessage.contains('duplicate');
+  }
+
+  /// Syncs attendance data from server to local database.
+  /// Uses server as source of truth - existing local records are updated,
+  /// but unsynced local records are preserved.
+  Future<void> syncFromServer({
+    required DateTime dateFrom,
+    required DateTime dateTo,
+    ServiceType? serviceType,
+  }) async {
+    if (!await _isOnline()) return;
+
+    try {
+      final serverRecords = await _remoteDataSource.getAttendanceRecords(
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        serviceType: serviceType,
+      );
+
+      for (final record in serverRecords) {
+        try {
+          final phone = record.phone;
+          final serviceDate = record.serviceDate;
+          final recordedBy = record.recordedBy;
+          final serverId = record.serverId;
+
+          final contact = await _localDataSource.getContactByPhone(phone);
+          if (contact == null) continue;
+
+          final dateOnly = DateTime(
+            serviceDate.year,
+            serviceDate.month,
+            serviceDate.day,
+          );
+          final serviceTypeEnum = record.serviceType;
+
+          final exists = await _localDataSource.checkAttendanceExists(
+            contactId: contact.id,
+            date: dateOnly,
+            serviceType: serviceTypeEnum,
+          );
+
+          if (exists) {
+            final existingAttendances = await _localDataSource
+                .getAttendanceRecords(contactId: contact.id);
+            final matching = existingAttendances.where((a) {
+              final aDate = DateTime(
+                a.serviceDate.year,
+                a.serviceDate.month,
+                a.serviceDate.day,
+              );
+              return aDate == dateOnly && a.serviceType == serviceTypeEnum;
+            }).toList();
+
+            if (matching.isNotEmpty) {
+              await _localDataSource.markAsSynced(
+                matching.first.id,
+                serverId ?? 0,
+              );
+            }
+          } else {
+            final companion = AttendancesCompanion(
+              contactId: drift.Value(contact.id),
+              phone: drift.Value(phone),
+              serviceType: drift.Value(serviceTypeEnum.backendValue),
+              serviceDate: drift.Value(dateOnly),
+              recordedBy: drift.Value(recordedBy),
+              recordedAt: drift.Value(DateTime.now()),
+              serverId: drift.Value(serverId),
+              isSynced: const drift.Value(true),
+            );
+            await _db.insertAttendance(companion);
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+    } catch (e) {
+      rethrow;
+    }
   }
 }
