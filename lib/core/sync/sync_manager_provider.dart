@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:church_attendance_app/core/enums/service_type.dart';
 import 'package:church_attendance_app/core/sync/sync_manager.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
-import 'package:church_attendance_app/features/contacts/presentation/providers/contact_count_provider.dart';
 import 'package:church_attendance_app/features/contacts/presentation/providers/contact_provider.dart';
-import 'package:church_attendance_app/features/contacts/presentation/providers/tag_statistics_provider.dart';
 import 'package:church_attendance_app/features/home/presentation/providers/dashboard_providers.dart';
 import 'package:church_attendance_app/main.dart';
 
@@ -207,28 +206,11 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
   }
 
   /// Invalidate all data providers to trigger UI refresh after sync.
-  /// This ensures Contact List and Home Screen show updated data.
+  /// Uses dashboardRefreshTriggerProvider as the single refresh signal.
   void _invalidateDataProviders() {
-    // Trigger the dashboard refresh
     ref.read(dashboardRefreshTriggerProvider.notifier).triggerRefresh();
-
-    // Contact list providers
-    ref.invalidate(contactListProvider);
-    ref.invalidate(offlineContactCountProvider);
-    ref.invalidate(offlineContactStoreInfoProvider);
-
-    // Tag statistics providers
-    ref.invalidate(tagDistributionProvider);
-    ref.invalidate(locationTagDistributionProvider);
-    ref.invalidate(roleTagDistributionProvider);
-    ref.invalidate(membershipDistributionProvider);
-    ref.invalidate(totalContactCountProvider);
-    ref.invalidate(dynamicLocationTagDistributionProvider);
-
-    // Attendance providers (Home screen)
-    // Note: These are invalidated in HomeScreen's _refreshDataProviders method
-    // Include basic providers that may exist here
     ref.invalidate(pendingSyncCountProvider);
+    ref.invalidate(contactListProvider);
   }
 
   /// Pull contacts from server and update sync status.
@@ -325,11 +307,39 @@ class SyncStatusNotifier extends Notifier<SyncStatus> {
   /// Pull attendance data from server.
   /// Critical for multi-user scenarios where users need to see
   /// when contacts have already been marked by other users.
-  Future<void> pullAttendance() async {
+  Future<void> pullAttendance({
+    DateTime? date,
+    ServiceType? serviceType,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) async {
+    try {
+      final targetDate = date ?? DateTime.now();
+      await _syncManager.pullAttendance(
+        date: targetDate,
+        serviceType: serviceType,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+      );
+    } catch (e) {
+      // Silently fail - will retry on next sync
+    }
+  }
+
+  /// Pull a broader attendance history range for the dashboard.
+  /// Uses server data as source of truth so charts reflect backend deletes.
+  Future<void> syncAttendanceRange({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) async {
     try {
       final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      await _syncManager.pullAttendance(date: today);
+      final start = dateFrom ?? now.subtract(const Duration(days: 30));
+      final end = dateTo ?? now;
+      await _syncManager.pullAttendance(
+        dateFrom: start,
+        dateTo: end,
+      );
     } catch (e) {
       // Silently fail - will retry on next sync
     }

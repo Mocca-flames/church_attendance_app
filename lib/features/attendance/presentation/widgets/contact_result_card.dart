@@ -53,21 +53,6 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
   @override
   void initState() {
     super.initState();
-    // Initialize from provider state
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _syncWithProvider();
-    });
-  }
-
-  void _syncWithProvider() {
-    final providerMarked = ref.read(markedContactIdsProvider.select(
-      (state) => state.markedIds.contains(_contact.id),
-    ));
-    if (mounted && _localIsMarked != providerMarked) {
-      setState(() {
-        _localIsMarked = providerMarked;
-      });
-    }
   }
 
   List<String> get _tags {
@@ -443,9 +428,13 @@ class _ContactResultCardState extends ConsumerState<ContactResultCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Use local state for instant UI feedback - updates immediately when tapped
-    // Once marked, stay marked (don't sync backwards from provider)
-    final isAlreadyMarked = _localIsMarked;
+    // Watch provider for reactive updates - this rebuilds when markedContactIdsProvider changes
+    final providerMarked = ref.watch(markedContactIdsProvider.select(
+      (state) => state.markedIds.contains(_contact.id),
+    ));
+    
+    // Use provider state as source of truth, fall back to local for instant feedback
+    final isAlreadyMarked = providerMarked || _localIsMarked;
 
     return Container(
       margin: const EdgeInsets.symmetric(

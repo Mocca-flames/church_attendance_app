@@ -846,9 +846,24 @@ class SyncManager {
   /// [date] - The single date to pull attendance for (YYYY-MM-DD)
   /// [serviceType] - Optional service type filter
   Future<void> pullAttendance({
-    required DateTime date,
+    DateTime? date,
     ServiceType? serviceType,
+    DateTime? dateFrom,
+    DateTime? dateTo,
   }) async {
+    final useRange = dateFrom != null && dateTo != null;
+
+    DateTime effectiveFrom;
+    DateTime effectiveTo;
+
+    if (useRange) {
+      effectiveFrom = DateTime(dateFrom.year, dateFrom.month, dateFrom.day);
+      effectiveTo = DateTime(dateTo.year, dateTo.month, dateTo.day, 23, 59, 59);
+    } else {
+      effectiveFrom = date ?? DateTime.now();
+      effectiveTo = effectiveFrom.add(const Duration(days: 1));
+    }
+
     if (!await hasInternetConnection()) {
       _logger.w('No internet connection, skipping attendance pull');
       return;
@@ -856,12 +871,17 @@ class SyncManager {
 
     try {
       _logger.i(
-        'Pulling attendance from server: $date, serviceType: $serviceType',
+        'Pulling attendance from server: ${useRange ? 'range' : 'single date'}: $effectiveFrom -> $effectiveTo, serviceType: $serviceType',
       );
 
       final queryParams = <String, dynamic>{};
-      queryParams['date'] =
-          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      if (useRange) {
+        queryParams['date_from'] = effectiveFrom.toUtc().toIso8601String();
+        queryParams['date_to'] = effectiveTo.toUtc().toIso8601String();
+      } else {
+        queryParams['date'] =
+            '${effectiveFrom.year}-${effectiveFrom.month.toString().padLeft(2, '0')}-${effectiveFrom.day.toString().padLeft(2, '0')}';
+      }
       if (serviceType != null) {
         queryParams['service_type'] = serviceType.backendValue;
       }
@@ -954,8 +974,6 @@ class SyncManager {
         }
       }
 
-      // Delete local records not on server (server as source of truth)
-      // Build server key set using date-only portion (YYYY-MM-DD)
       final serverKeys = <String>{};
       for (final record in serverRecords) {
         final phone = record['phone'] as String?;
@@ -964,7 +982,6 @@ class SyncManager {
         if (phone != null && serviceDateStr != null && serviceTypeStr != null) {
           final normalizedPhone = PhoneUtils.normalizeSouthAfricanPhone(phone);
           if (normalizedPhone != null) {
-            // Extract date portion only from server datetime
             final dateOnly = serviceDateStr.split('T')[0];
             final key = '$normalizedPhone|$serviceTypeStr|$dateOnly';
             serverKeys.add(key);
@@ -973,21 +990,15 @@ class SyncManager {
       }
 
       final localRecords = await _db.getAttendancesByDateRange(
-        date,
-        date.add(const Duration(days: 1)),
+        effectiveFrom,
+        effectiveTo,
       );
       int deleted = 0;
       for (final local in localRecords) {
-        // If a service type filter was applied, skip records of other types
-        // to avoid incorrectly deleting them (server only returned filtered type)
-        if (serviceType != null &&
-            local.serviceType != serviceType.backendValue) {
+        if (serviceType != null && local.serviceType != serviceType.backendValue) {
           continue;
         }
 
-        // Only delete records that are already synced to server.
-        // Unsynced local records (freshly created) must be preserved
-        // so they can be uploaded later.
         if (!local.isSynced) continue;
 
         final key =

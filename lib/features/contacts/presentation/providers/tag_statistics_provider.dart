@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:church_attendance_app/core/enums/contact_tag.dart';
 import 'package:church_attendance_app/main.dart';
-import 'package:church_attendance_app/features/contacts/presentation/providers/contact_provider.dart';
 import 'package:church_attendance_app/features/home/presentation/providers/dashboard_providers.dart';
 import 'package:church_attendance_app/core/sync/sync_manager_provider.dart';
 
@@ -38,16 +37,18 @@ List<String> _extractTags(String? metadata) {
   return [];
 }
 
+/// Shared provider for synced contacts — single DB query feeding all tag/membership providers.
+final syncedContactsProvider = FutureProvider<List<dynamic>>((ref) async {
+  ref.watch(dashboardRefreshTriggerProvider);
+  final database = ref.watch(databaseProvider);
+  return await database.getContactsWithSuccessfulSync();
+});
+
 /// Provider that calculates tag distribution from contacts.
 /// Returns a Map<ContactTag, int with counts for each tag.
 /// Only includes tags that have count > 0.
 final tagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) async {
-  // Watch the refresh trigger to rebuild on refresh
-  ref.watch(dashboardRefreshTriggerProvider);
-  
-  final database = ref.watch(databaseProvider);
-  // Use getContactsWithSuccessfulSync for accurate statistics
-  final contacts = await database.getContactsWithSuccessfulSync();
+  final contacts = await ref.watch(syncedContactsProvider.future);
   
   // Map to store tag counts
   final Map<ContactTag, int> tagCounts = {};
@@ -74,12 +75,7 @@ final tagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) async
 /// Returns a MapContactTag, int with counts for location tags only
 /// FIXED: Count unique contacts per location instead of tag occurrences
 final locationTagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) async {
-  // Watch the refresh trigger to rebuild on refresh
-  ref.watch(dashboardRefreshTriggerProvider);
-  
-  final database = ref.watch(databaseProvider);
-  // Use getContactsWithSuccessfulSync for accurate statistics
-  final contacts = await database.getContactsWithSuccessfulSync();
+  final contacts = await ref.watch(syncedContactsProvider.future);
   
   // Map to store unique contact counts per location
   final Map<ContactTag, Set<int>> locationContacts = {};
@@ -112,12 +108,7 @@ final locationTagDistributionProvider = FutureProvider<Map<ContactTag, int>>((re
 /// Returns a MapContactTag, int> with counts for role tags only
 /// FIXED: Count unique contacts per role instead of tag occurrences
 final roleTagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) async {
-  // Watch the refresh trigger to rebuild on refresh
-  ref.watch(dashboardRefreshTriggerProvider);
-  
-  final database = ref.watch(databaseProvider);
-  // Use getContactsWithSuccessfulSync for accurate statistics
-  final contacts = await database.getContactsWithSuccessfulSync();
+  final contacts = await ref.watch(syncedContactsProvider.future);
   
   // Map to store unique contact counts per role
   final Map<ContactTag, Set<int>> roleContacts = {};
@@ -149,12 +140,7 @@ final roleTagDistributionProvider = FutureProvider<Map<ContactTag, int>>((ref) a
 /// Returns a MapString, int with 'Member' and 'Non-Member' counts
 /// This correctly counts each contact once (they're mutually exclusive)
 final membershipDistributionProvider = FutureProvider<Map<String, int>>((ref) async {
-  // Watch the refresh trigger to rebuild on refresh
-  ref.watch(dashboardRefreshTriggerProvider);
-  
-  final database = ref.watch(databaseProvider);
-  // Use getContactsWithSuccessfulSync for accurate statistics
-  final contacts = await database.getContactsWithSuccessfulSync();
+  final contacts = await ref.watch(syncedContactsProvider.future);
   
   int memberCount = 0;
   int nonMemberCount = 0;
@@ -203,33 +189,27 @@ class ContactCountData {
 /// Shows both counts and indicates which source is being displayed
 /// Correctly handles offline state by using local data when offline
 final contactCountDataProvider = FutureProvider<ContactCountData>((ref) async {
-  // Watch the refresh trigger to rebuild on refresh
   ref.watch(dashboardRefreshTriggerProvider);
-  
-  // Watch online status to handle offline state correctly
   final isOnline = ref.watch(isOnlineProvider);
-  
-  // Get local count - use valid contacts only
-  final database = ref.watch(databaseProvider);
-  final contacts = await database.getContactsWithSuccessfulSync();
+
+  // Get local count from shared provider
+  final contacts = await ref.watch(syncedContactsProvider.future);
   final localCount = contacts.length;
 
-  // Try to get server count only when online
+  // When online, use dashboardStatisticsProvider for server count (same API call as membership)
   int serverCount = localCount;
   bool isFromServer = false;
 
   if (isOnline) {
     try {
-      final repository = ref.watch(contactRepositoryProvider);
-      serverCount = await repository.getTotalContacts();
-      isFromServer = true;
+      final dashboardStats = await ref.watch(dashboardStatisticsProvider.future);
+      if (dashboardStats != null) {
+        serverCount = dashboardStats.totalContacts;
+        isFromServer = true;
+      }
     } catch (e) {
-      // Server unavailable, will use local count
       isFromServer = false;
     }
-  } else {
-    // Offline - use local count
-    isFromServer = false;
   }
 
   return ContactCountData(
@@ -251,12 +231,8 @@ final totalContactCountProvider = FutureProvider<int>((ref) async {
 /// Sorted by count descending, limited to top 5
 /// FIXED: Count unique contacts per location instead of tag occurrences
 final dynamicLocationTagDistributionProvider = FutureProvider<List<DynamicLocationData>>((ref) async {
-  // Watch the refresh trigger to rebuild on refresh
-  ref.watch(dashboardRefreshTriggerProvider);
-  
+  final contacts = await ref.watch(syncedContactsProvider.future);
   final database = ref.watch(databaseProvider);
-  // Use getContactsWithSuccessfulSync for accurate statistics
-  final contacts = await database.getContactsWithSuccessfulSync();
   final locations = await database.getAllLocations();
   
   // Map to store unique contact IDs per location

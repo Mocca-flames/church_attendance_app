@@ -10,6 +10,7 @@ import 'package:church_attendance_app/features/attendance/presentation/providers
 import 'package:church_attendance_app/features/attendance/presentation/screens/qr_scanner_screen.dart';
 import 'package:church_attendance_app/features/attendance/presentation/widgets/contact_result_card.dart';
 import 'package:church_attendance_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:church_attendance_app/core/database/database.dart';
 import 'package:church_attendance_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +28,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen>
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   Timer? _autoRefreshTimer;
+  List<ContactEntity> _recentMarkedContacts = [];
 
   // Store the smart sync notifier to safely use in dispose()
   late final SmartSyncNotifier _smartSyncNotifier;
@@ -106,6 +108,25 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen>
         .toSet();
 
     ref.read(markedContactIdsProvider.notifier).setAll(markedIds);
+
+    // Only refresh recent contacts when there's no active search,
+    // so the list is preserved when user clears a search.
+    final currentQuery = ref.read(contactSearchProvider).query;
+    if (currentQuery.isEmpty) {
+      final recentAttendances = attendances
+          .where((a) => a.serviceType == _currentServiceType.backendValue)
+          .toList()
+        ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+      final recentContacts = <ContactEntity>[];
+      for (final a in recentAttendances.take(10)) {
+        if (!mounted) return;
+        final contact = await database.getContactById(a.contactId);
+        if (contact != null) recentContacts.add(contact);
+      }
+      if (mounted) {
+        setState(() => _recentMarkedContacts = recentContacts);
+      }
+    }
 
     // Also refresh search results if there's an active search query
     // Skip if refreshSearch is false (e.g., when marking attendance)
@@ -497,7 +518,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen>
   }
 
   Widget _buildResultsList(ContactSearchState searchState) {
-    // Get the current authenticated user's ID for recording attendance
+    final hasMarkedContacts = _recentMarkedContacts.isNotEmpty;
     final currentUser = ref.read(currentUserProvider);
     final userId = currentUser?.id ?? 1;
 
@@ -542,36 +563,91 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen>
     }
 
     if (searchState.query.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search,
-              size: 64,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: AppDimens.paddingM),
-            Text(
-              'Search for a contact',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppDimens.paddingS),
-            Text(
-              'Type a name or phone number to mark attendance',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+      if (!hasMarkedContacts) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search,
+                size: 64,
                 color: Theme.of(
                   context,
-                ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                ).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
               ),
-              textAlign: TextAlign.center,
+              const SizedBox(height: AppDimens.paddingM),
+              Text(
+                'Search for a contact',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: AppDimens.paddingS),
+              Text(
+                'Type a name or phone number to mark attendance',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      }
+
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.paddingM,
+              vertical: AppDimens.paddingS,
             ),
-          ],
-        ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.history,
+                  size: 16,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Recently Marked',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Opacity(
+              opacity: 0.45,
+              child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 80),
+                itemCount: _recentMarkedContacts.length,
+                itemBuilder: (context, index) {
+                  final contact = _recentMarkedContacts[index];
+                  return AbsorbPointer(
+                    child: ContactResultCard(
+                      key: ValueKey('recent_${contact.id}'),
+                      contact: contact,
+                      serviceType: _currentServiceType,
+                      serviceDate: _currentServiceDate,
+                      recordedBy: userId,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       );
     }
 

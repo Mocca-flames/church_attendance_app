@@ -303,6 +303,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     // Refresh data when app comes back to foreground
     // This ensures the home screen shows updated data after recording attendance
     if (state == AppLifecycleState.resumed) {
+      _refreshAttendanceHistory();
       _refreshDataProviders();
       // Restart auto-refresh timer if it was stopped
       _startAutoRefreshTimer();
@@ -344,28 +345,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
   }
 
   /// Refresh all data providers to get fresh data
-  /// This ensures the home screen shows updated data when navigating back
+  /// Uses dashboardRefreshTriggerProvider as the single refresh signal —
+  /// all providers that need refresh watch this trigger.
   Future<void> _refreshDataProviders() async {
-    // Trigger the refresh trigger to signal all providers to rebuild
     ref.read(dashboardRefreshTriggerProvider.notifier).triggerRefresh();
-    
-    // Invalidate all attendance-related providers to fetch fresh data
-    ref.invalidate(attendanceByServiceTypeProvider);
-    ref.invalidate(weeklyAttendanceCountProvider);
-    ref.invalidate(recentAttendanceProvider);
-    ref.invalidate(attendanceTrendProvider);
-    
-    // Invalidate contact-related providers
-    ref.invalidate(totalContactCountProvider);
-    ref.invalidate(tagDistributionProvider);
-    ref.invalidate(offlineContactCountProvider);
-    ref.invalidate(offlineContactStoreInfoProvider);
-    
-    // Invalidate sync-related providers
     ref.invalidate(pendingSyncCountProvider);
-    
-    // Invalidate daily progress provider
-    ref.invalidate(dailyProgressProvider);
+  }
+
+  /// Refresh local attendance from server using a history range.
+  /// This catches backend deletions that would otherwise leave stale
+  /// counts in the local DB and show wrong dashboard chart values.
+  Future<void> _refreshAttendanceHistory() async {
+    try {
+      await ref
+          .read(syncStatusProvider.notifier)
+          .syncAttendanceRange();
+    } catch (_) {
+      // Silently fail - will retry on next refresh
+    }
   }
 
   /// Trigger initial sync if not done yet
@@ -375,6 +372,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     _isInitialSyncDone = true;
 
     try {
+      // Sync attendance from server before dashboard stats load.
+      // This ensures charts and recent activity are not stale after
+      // backend-side attendance deletions.
+      await ref.read(syncStatusProvider.notifier).syncAttendanceRange();
+
       // First, sync any pending offline items (attendance, contacts) to server 
       await ref.read(syncStatusProvider.notifier).syncAll();
 

@@ -109,21 +109,26 @@ class DashboardStatistics {
   final int totalContacts;
   final int memberCount;
   final int nonMemberCount;
+  final Map<String, int> locations;
 
   const DashboardStatistics({
     required this.totalContacts,
     required this.memberCount,
     required this.nonMemberCount,
+    this.locations = const {},
   });
 
   factory DashboardStatistics.fromJson(Map<String, dynamic> json) {
-    // Extract membership data from the response
     final membership = json['membership'] as Map<String, dynamic>? ?? {};
-    
+    final locationsJson = json['locations'] as Map<String, dynamic>? ?? {};
+
     return DashboardStatistics(
       totalContacts: json['total_contacts'] as int? ?? 0,
       memberCount: membership['member'] as int? ?? 0,
       nonMemberCount: membership['non_member'] as int? ?? 0,
+      locations: Map<String, int>.from(
+        locationsJson.map((key, value) => MapEntry(key, value as int? ?? 0)),
+      ),
     );
   }
 }
@@ -508,23 +513,18 @@ final widgetLoadingStateProvider =
 
 /// Provider for syncing local locations with server locations
 /// This runs on app startup to remove locally cached locations
-/// that have been deleted on the server
+/// that have been deleted on the server.
+/// Reuses dashboardStatisticsProvider to avoid a duplicate API call.
 final locationSyncProvider = FutureProvider<void>((ref) async {
-  // Check if device is online
   final isOnline = ref.watch(isOnlineProvider);
   if (!isOnline) {
-    return; // Skip sync when offline
+    return;
   }
 
   try {
-    final dioClient = ref.read(dioClientProvider);
-    final response = await dioClient.getDashboardStatistics();
-    
-    if (response.statusCode == 200 && response.data != null) {
-      final locationsJson = response.data['locations'] as Map<String, dynamic>? ?? {};
-      final serverLocationValues = locationsJson.keys.toSet();
-      
-      // Get the location service and sync
+    final stats = await ref.watch(dashboardStatisticsProvider.future);
+    if (stats != null && stats.locations.isNotEmpty) {
+      final serverLocationValues = stats.locations.keys.toSet();
       final locationService = ref.read(locationServiceProvider);
       await locationService.syncLocationsWithServer(serverLocationValues);
     }
